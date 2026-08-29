@@ -34,10 +34,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# OS & IDE
+# Local Databases & Clusters
+infra/postgres-data/
+*.db
+
 .DS_Store
-*.pem
-.vscode/
-.idea/
-*.swp
-*.swo
+**/.DS_Store

@@ -11,17 +11,45 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=apps/admin",
+    "build": "npm run build --workspace=packages/api-client && npm run build --workspace=apps/admin && npm run build --workspace=apps/api",
     "dev:admin": "npm run dev --workspace=apps/admin",
     "dev:api": "npm run start:dev --workspace=apps/api",
     "build:admin": "npm run build --workspace=apps/admin",
     "build:api": "npm run build --workspace=apps/api",
     "test:api": "npm run test --workspace=apps/api",
     "lint:admin": "npm run lint --workspace=apps/admin",
-    "prisma:generate": "npm run prisma:generate --workspace=packages/database",
-    "prisma:migrate": "npm run prisma:migrate --workspace=packages/database"
+    "postinstall": "prisma generate --schema=apps/api/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema=apps/api/prisma/schema.prisma",
+    "prisma:migrate": "npm run prisma:migrate --workspace=packages/database",
+    "db:start": "node scripts/postgres-server.js",
+    "db:push": "npx prisma db push --schema=apps/api/prisma/schema.prisma",
+    "db:seed": "npm run seed --workspace=apps/api",
+    "db:verify": "npm run db:verify --workspace=apps/api"
   },
   "devDependencies": {
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "embedded-postgres": "^18.4.0-beta.17"
+  },
+  "allowScripts": {
+    "@embedded-postgres/darwin-x64@18.4.0-beta.17": true,
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "unrs-resolver": true,
+    "bcrypt": true,
+    "msgpackr-extract": true,
+    "@scarf/scarf": true
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-x64-gnu": "4.3.3",
+    "@tailwindcss/oxide-linux-x64-musl": "4.3.3",
+    "@tailwindcss/oxide-linux-arm64-gnu": "4.3.3",
+    "@tailwindcss/oxide-linux-arm64-musl": "4.3.3",
+    "lightningcss-linux-x64-gnu": "1.32.0",
+    "lightningcss-linux-x64-musl": "1.32.0",
+    "lightningcss-linux-arm64-gnu": "1.32.0",
+    "lightningcss-linux-arm64-musl": "1.32.0"
   }
 }
