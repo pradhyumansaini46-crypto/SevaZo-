@@ -91,45 +91,39 @@ export interface SharedApplicationsStore {
   vendors: SharedVendorApplication[];
 }
 
-const resolveStorePath = (): string => {
-  const possiblePaths = [
-    path.resolve(process.cwd(), 'shared-applications.json'),
-    path.resolve(process.cwd(), '../shared-applications.json'),
-    path.resolve(process.cwd(), '../../shared-applications.json'),
-    '/Users/pradhyumansaini/Documents/sevzo/Sevaa1/shared-applications.json',
-  ];
+let inMemoryStore: SharedApplicationsStore = {
+  riders: [],
+  vendors: [],
+};
 
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) return p;
-  }
-  return '/Users/pradhyumansaini/Documents/sevzo/Sevaa1/shared-applications.json';
+const getStoreFilePath = (): string => {
+  return path.join(process.cwd(), 'shared-applications.json');
 };
 
 export const getSharedStore = (): SharedApplicationsStore => {
-  const filePath = resolveStorePath();
   try {
-    if (!fs.existsSync(filePath)) {
-      const initial: SharedApplicationsStore = { riders: [], vendors: [] };
-      fs.writeFileSync(filePath, JSON.stringify(initial, null, 2), 'utf-8');
-      return initial;
+    const filePath = getStoreFilePath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(raw);
+      inMemoryStore = {
+        riders: Array.isArray(data.riders) ? data.riders : inMemoryStore.riders,
+        vendors: Array.isArray(data.vendors) ? data.vendors : inMemoryStore.vendors,
+      };
     }
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const data = JSON.parse(raw);
-    return {
-      riders: Array.isArray(data.riders) ? data.riders : [],
-      vendors: Array.isArray(data.vendors) ? data.vendors : [],
-    };
-  } catch (e) {
-    return { riders: [], vendors: [] };
+  } catch {
+    // Fall back to in-memory store in read-only / serverless environments
   }
+  return inMemoryStore;
 };
 
 export const saveSharedStore = (store: SharedApplicationsStore): void => {
-  const filePath = resolveStorePath();
+  inMemoryStore = store;
   try {
+    const filePath = getStoreFilePath();
     fs.writeFileSync(filePath, JSON.stringify(store, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Failed to save shared store:', e);
+  } catch {
+    // Read-only filesystem on Vercel
   }
 };
 

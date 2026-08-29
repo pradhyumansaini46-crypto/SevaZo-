@@ -2,8 +2,11 @@
   "name": "@sevazo/validation",
   "version": "1.0.0",
   "description": "Shared Zod Validation Schemas for Sevazo Platform",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "build": "tsc"
   },

@@ -19,7 +19,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@sevazo/types": ["../../packages/types/src/index.ts"],
+      "@sevazo/types/*": ["../../packages/types/src/*"],
+      "@sevazo/validation": ["../../packages/validation/src/index.ts"],
+      "@sevazo/validation/*": ["../../packages/validation/src/*"],
+      "@sevazo/api-client": ["../../packages/api-client/src/index.ts"],
+      "@sevazo/api-client/*": ["../../packages/api-client/src/*"],
+      "@sevazo/ui": ["../../packages/ui/src/index.ts"],
+      "@sevazo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [

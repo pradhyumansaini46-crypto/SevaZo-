@@ -1,10 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: [
+    '@sevazo/types',
+    '@sevazo/validation',
+    '@sevazo/api-client',
+    '@sevazo/ui',
+  ],
   devIndicators: false,
   onDemandEntries: {
-    maxInactiveAge: 1000 * 60 * 60, // Keep in buffer for 1 hour
-    pagesBufferLength: 100, // Keep up to 100 pages in memory so they never need re-compiling
+    maxInactiveAge: 1000 * 60 * 60,
+    pagesBufferLength: 100,
   },
   allowedDevOrigins: [
     '192.168.1.7',
