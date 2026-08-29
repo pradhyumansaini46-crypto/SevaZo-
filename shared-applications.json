@@ -1,0 +1,167 @@
+{
+  "riders": [
+    {
+      "id": "rdr-681764",
+      "name": "pappu",
+      "phone": "+91 7878787878",
+      "email": "ddasdsa@gmail.com",
+      "avatar": "",
+      "status": "active",
+      "approvalStatus": "APPROVED",
+      "vehicleType": "bike",
+      "vehicleNumber": "RJ 14 AB 1234",
+      "zone": "jaipur",
+      "deliveriesCount": 0,
+      "rating": 5,
+      "totalEarnings": 0,
+      "isOnline": true,
+      "documents": [
+        {
+          "id": "rd-1787860681764-dl",
+          "type": "driving_license",
+          "number": "DL-VERIFIED",
+          "fileUrl": "/docs/dl.pdf",
+          "verified": true
+        }
+      ],
+      "createdAt": "2026-08-27T19:58:01.870Z",
+      "submittedAt": "2026-08-27T19:58:01.870Z",
+      "updatedAt": "2026-08-28T18:48:06.550Z",
+      "draftData": {
+        "personal": {
+          "firstName": "pappu",
+          "lastName": "",
+          "phone": "+91 7878787878",
+          "email": "ddasdsa@gmail.com"
+        },
+        "vehicle": {
+          "vehicleType": "bike",
+          "registrationNumber": "RJ 14 AB 1234"
+        },
+        "serviceArea": {
+          "zoneName": "jaipur"
+        }
+      }
+    },
+    {
+      "id": "rdr-569075",
+      "name": "Devendra Shekhawat",
+      "phone": "+91 9829012345",
+      "email": "devendra@sevazo.com",
+      "avatar": "",
+      "status": "active",
+      "approvalStatus": "APPROVED",
+      "vehicleType": "bike",
+      "vehicleNumber": "RJ 14 SK 1111",
+      "zone": "Vaishali Nagar, Jaipur",
+      "deliveriesCount": 0,
+      "rating": 5,
+      "totalEarnings": 0,
+      "isOnline": true,
+      "documents": [
+        {
+          "id": "doc-1787860569075-dl",
+          "type": "driving_license",
+          "number": "DL-RJ14SK1111",
+          "fileUrl": "/docs/dl.pdf",
+          "verified": true
+        }
+      ],
+      "createdAt": "2026-08-27T19:56:09.075Z",
+      "submittedAt": "2026-08-27T19:56:09.075Z",
+      "updatedAt": "2026-08-27T19:56:09.075Z",
+      "draftData": {
+        "personal": {
+          "firstName": "Devendra",
+          "lastName": "Shekhawat",
+          "phone": "+91 9829012345",
+          "email": "devendra@sevazo.com"
+        },
+        "vehicle": {
+          "vehicleType": "bike",
+          "registrationNumber": "RJ 14 SK 1111"
+        },
+        "serviceArea": {
+          "zoneName": "Vaishali Nagar, Jaipur"
+        }
+      }
+    }
+  ],
+  "vendors": [
+    {
+      "id": "vnd-456789",
+      "storeName": "Saini Gourmet Provisions",
+      "ownerName": "Pradhyuman Saini",
+      "email": "pradhyuman.store@sevazo.com",
+      "phone": "+91 91234 56789",
+      "logo": "",
+      "status": "rejected",
+      "approvalStatus": "rejected",
+      "category": "Gourmet Foods",
+      "address": {
+        "line1": "Plot 15, Sector 5, Mansarovar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "302020"
+      },
+      "productsCount": 0,
+      "ordersCount": 0,
+      "rating": 5,
+      "commissionRate": 10,
+      "totalRevenue": 0,
+      "documents": [
+        {
+          "id": "doc-1787857653900-gst",
+          "type": "gst",
+          "number": "08BKAPS1234P1Z5",
+          "fileUrl": "/docs/gst.pdf",
+          "verified": false
+        },
+        {
+          "id": "doc-1787857653900-fssai",
+          "type": "fssai",
+          "number": "12224026000789",
+          "fileUrl": "/docs/fssai.pdf",
+          "verified": false
+        },
+        {
+          "id": "doc-1787857653900-pan",
+          "type": "pan",
+          "number": "BKAPS1234P",
+          "fileUrl": "/docs/pan.pdf",
+          "verified": false
+        },
+        {
+          "id": "doc-1787857653900-bank",
+          "type": "bank_cheque",
+          "number": "987654321098",
+          "fileUrl": "/docs/cheque.pdf",
+          "verified": false
+        }
+      ],
+      "submittedAt": "2026-08-27T19:07:33.901Z",
+      "updatedAt": "2026-08-28T18:37:07.603Z",
+      "draftData": {
+        "storeName": "Saini Gourmet Provisions",
+        "ownerName": "Pradhyuman Saini",
+        "phone": "+91 91234 56789",
+        "email": "pradhyuman.store@sevazo.com",
+        "category": "Gourmet Foods",
+        "gstin": "08BKAPS1234P1Z5",
+        "fssaiNumber": "12224026000789",
+        "panNumber": "BKAPS1234P",
+        "banking": {
+          "accountNumber": "987654321098",
+          "ifscCode": "HDFC0001234",
+          "bankName": "HDFC Bank"
+        },
+        "address": {
+          "line1": "Plot 15, Sector 5, Mansarovar",
+          "city": "Jaipur",
+          "state": "Rajasthan",
+          "pincode": "302020"
+        }
+      }
+    }
+  ]
+}

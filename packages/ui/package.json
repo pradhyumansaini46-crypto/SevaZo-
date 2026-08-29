@@ -1,0 +1,13 @@
+{
+  "name": "@sevazo/ui",
+  "version": "1.0.0",
+  "description": "Design tokens and shared UI utilities for Sevazo",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

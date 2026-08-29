@@ -1,0 +1,77 @@
+name: Sevazo CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Build & Validate Monorepo
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sevazo
+          POSTGRES_PASSWORD: sevazopassword
+          POSTGRES_DB: sevazo_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: 'Sevaa1/package-lock.json'
+
+      - name: Install Monorepo Dependencies
+        working-directory: Sevaa1
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: Sevaa1
+        run: npm run prisma:generate --workspace=packages/database
+        env:
+          DATABASE_URL: postgresql://sevazo:sevazopassword@localhost:5432/sevazo_db?schema=public
+
+      - name: Build Core Packages
+        working-directory: Sevaa1
+        run: |
+          npm run build --workspace=packages/types
+          npm run build --workspace=packages/validation
+          npm run build --workspace=packages/config
+          npm run build --workspace=packages/api-client
+          npm run build --workspace=packages/ui
+
+      - name: Build Backend API (apps/api)
+        working-directory: Sevaa1
+        run: npm run build --workspace=apps/api
+
+      - name: Build Admin Portal (apps/admin)
+        working-directory: Sevaa1
+        run: npm run build --workspace=apps/admin
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000

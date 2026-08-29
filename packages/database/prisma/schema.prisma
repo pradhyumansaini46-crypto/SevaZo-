@@ -1,0 +1,1459 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  SUSPENDED
+  DELETED
+}
+
+enum VendorStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  ADJUSTMENT
+  RESERVATION
+  RELEASE
+  SALE
+  RETURN
+  DAMAGE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+}
+
+enum VehicleType {
+  BIKE
+  SCOOTER
+  BICYCLE
+  ELECTRIC_VEHICLE
+  CAR
+  VAN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum DeliveryStatus {
+  PENDING_ASSIGNMENT
+  ASSIGNMENT_OFFERED
+  RIDER_ACCEPTED
+  RIDER_AT_VENDOR
+  PICKUP_VERIFIED
+  PICKED_UP
+  IN_TRANSIT
+  RIDER_AT_CUSTOMER
+  DELIVERY_VERIFIED
+  DELIVERED
+  CANCELLED
+  FAILED
+  RETURN_REQUIRED
+  RETURNED
+}
+
+enum AssignmentStatus {
+  OFFERED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum ProofType {
+  PHOTO
+  SIGNATURE
+  OTP
+  CUSTOMER_CONFIRMATION
+}
+
+enum VerificationMode {
+  OTP_ONLY
+  QR_ONLY
+  PHOTO_ONLY
+  OTP_OR_PHOTO
+  ANY
+}
+
+enum EarningType {
+  BASE_FARE
+  DISTANCE_PAY
+  WAIT_TIME_PAY
+  SURGE_PAY
+  TIPS
+  INCENTIVE_BONUS
+  PENALTY
+}
+
+enum RiderEarningStatus {
+  PENDING
+  AVAILABLE
+  WITHDRAWN
+  HELD
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  UPI
+  CREDIT_CARD
+  DEBIT_CARD
+  NET_BANKING
+  WALLET
+}
+
+enum RefundStatus {
+  REQUESTED
+  PENDING_APPROVAL
+  APPROVED
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  SETTLED
+  ON_HOLD
+  FAILED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DisputeStatus {
+  OPENED
+  UNDER_REVIEW
+  EVIDENCE_REQUIRED
+  RESOLVED_REFUND
+  RESOLVED_REJECTED
+  CLOSED
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FLAT_AMOUNT
+  FREE_DELIVERY
+}
+
+// -----------------------------------------------------------------------------
+// 1. ADMIN IDENTITY & RBAC
+// -----------------------------------------------------------------------------
+
+model AdminUser {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  phone        String?
+  avatar       String?
+  status       UserStatus  @default(ACTIVE)
+  roleId       String
+  role         Role        @relation(fields: [roleId], references: [id])
+  mfaEnabled   Boolean     @default(false)
+  mfaSecret    String?
+  lastLoginAt  DateTime?
+  refreshToken String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  auditLogs    AuditLog[]
+
+  @@map("admin_users")
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  slug        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  adminUsers  AdminUser[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  action      String           // e.g. "users:read", "orders:cancel"
+  module      String           // e.g. "orders", "users", "settlements"
+  description String?
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+
+  @@unique([module, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model AuditLog {
+  id           String     @id @default(uuid())
+  adminUserId  String?
+  adminUser    AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+  action       String     // e.g. "VENDOR_APPROVED", "ORDER_CANCELLED"
+  module       String     // e.g. "vendors", "orders"
+  entityId     String?
+  ipAddress    String?
+  userAgent    String?
+  changes      Json?      // Old vs new state
+  createdAt    DateTime   @default(now())
+
+  @@map("audit_logs")
+}
+
+// -----------------------------------------------------------------------------
+// 2. USERS (Customers, Vendors, Riders)
+// -----------------------------------------------------------------------------
+
+model Customer {
+  id           String          @id @default(uuid())
+  name         String
+  email        String          @unique
+  phone        String          @unique
+  avatar       String?
+  status       UserStatus      @default(ACTIVE)
+  isVerified   Boolean         @default(false)
+  totalSpent   Decimal         @default(0) @db.Decimal(12, 2)
+  ordersCount  Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  tickets       SupportTicket[]
+  couponUsages  CouponUsage[]
+  devices       UserDevice[]
+  wishlists     Wishlist[]
+  carts         Cart[]
+  reviews       Review[]
+  notifications Notification[]
+
+  @@map("customers")
+}
+
+model Address {
+  id          String    @id @default(uuid())
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  vendorId    String?   @unique
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  label       String    @default("Home") // Home, Work, Store
+  line1       String
+  line2       String?
+  landmark    String?
+  city        String
+  state       String
+  pincode     String
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  orders      Order[]
+
+  @@map("addresses")
+}
+
+model UserDevice {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String   @default("ANDROID") // IOS, ANDROID, WEB
+  appVersion String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("user_devices")
+}
+
+model Wishlist {
+  id         String         @id @default(uuid())
+  customerId String
+  customer   Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String         @default("My Wishlist")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  items      WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+  @@map("wishlist_items")
+}
+
+model Cart {
+  id         String     @id @default(uuid())
+  customerId String     @unique
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  couponId   String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  items      CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id            String          @id @default(uuid())
+  cartId        String
+  cart          Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId     String?
+  variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  quantity      Int             @default(1)
+  priceSnapshot Decimal         @db.Decimal(10, 2)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("cart_items")
+}
+
+model Review {
+  id               String    @id @default(uuid())
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId          String?
+  order            Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  storeId          String?
+  store            Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  rating           Int       @default(5)
+  comment          String?
+  images           String[]  @default([])
+  verifiedPurchase Boolean   @default(true)
+  likesCount       Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("reviews")
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId    String?
+  order      Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  title      String
+  body       String
+  type       String    @default("GENERAL") // ORDER, PROMO, DELIVERY, SYSTEM
+  data       Json?
+  isRead     Boolean   @default(false)
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@map("notifications")
+}
+
+model Vendor {
+  id                   String               @id @default(uuid())
+  phone                String               @unique
+  email                String               @unique
+  passwordHash         String?
+  ownerName            String
+  firstName            String?
+  lastName             String?
+  dateOfBirth          String?
+  profilePhoto         String?
+  businessName         String?
+  displayName          String?
+  businessType         String?              // RETAIL_STORE, GROCERY_STORE, RESTAURANT, PHARMACY, ELECTRONICS, FASHION, BEAUTY, HOME_LIVING, LOCAL_SERVICES, OTHER
+  businessCategory     String?
+  legalEntityType      String?              // PROPRIETORSHIP, PARTNERSHIP, LLP, PVT_LTD, OTHER
+  yearEstablished      String?
+  businessDescription  String?
+  businessPhone        String?
+  businessEmail        String?
+  website              String?
+  avatar               String?
+
+  // Category-specific compliance fields
+  foodCategory         String?              // VEG, NON_VEG, PURE_VEG, BAKERY
+  kitchenType          String?              // CLOUD_KITCHEN, DINE_IN_TAKEAWAY, QSR, BAKERY
+  drugLicenseNumber    String?
+  pharmacistName       String?
+  pharmacistRegNumber  String?
+  tradeLicenseNumber   String?
+  panNumber            String?
+  gstin                String?
+  fssaiNumber          String?
+
+  // Payout preferences
+  payoutPreference     String?              @default("BANK_ACCOUNT") // BANK_ACCOUNT, UPI
+  upiId                String?
+
+  // Delivery & Handling Preferences
+  pickupInstructions   String?
+  packagingType        String?              // SPILL_PROOF, THERMAL_BAG, SEALED_BOX, STANDARD
+  temperatureHandling  String?              // HOT, CHILLED, ROOM_TEMP
+  isFragile            Boolean              @default(false)
+  isBulky              Boolean              @default(false)
+  specialHandling      String?
+
+  // Legal & Terms Audit Trail
+  agreementVersion     String?              @default("v2.4")
+  agreedAt             DateTime?
+  agreementIp          String?
+
+  status               VendorStatus         @default(DRAFT)
+  currentOnboardingStep Int                 @default(1)
+  completionPercentage Int                  @default(0)
+  serviceAreaPincodes  String[]             @default([])
+  deliveryPreference   String?              @default("SEVAZO_LOGISTICS") // SEVAZO_LOGISTICS, SELF_DELIVERY, HYBRID
+  rejectionReason      String?
+  rejectionDetails     Json?
+  rating               Decimal              @default(0) @db.Decimal(3, 2)
+  commissionRate       Decimal              @default(10) @db.Decimal(5, 2) // % platform commission
+  totalRevenue         Decimal              @default(0) @db.Decimal(12, 2)
+  ordersCount          Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  address              Address?
+  documents            VendorDocument[]
+  bankAccounts         VendorBankAccount[]
+  addresses            VendorAddress[]
+  stores               Store[]
+  products             Product[]
+  orders               Order[]
+  commissions          Commission[]
+  settlements          Settlement[]
+  inventoryLogs        InventoryLog[]
+  onboarding           VendorOnboarding?
+  onboardingSections   VendorOnboardingSection[]
+
+  @@map("vendors")
+}
+
+model VendorOnboarding {
+  id              String                    @id @default(uuid())
+  vendorId        String                    @unique
+  vendor          Vendor                    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  currentStep     Int                       @default(1)
+  completedSteps  Int[]                     @default([])
+  status          String                    @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  sections        VendorOnboardingSection[]
+
+  @@map("vendor_onboarding")
+}
+
+model VendorOnboardingSection {
+  id              String            @id @default(uuid())
+  vendorId        String
+  vendor          Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  onboardingId    String?
+  onboarding      VendorOnboarding? @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+  section         String            // ACCOUNT, OWNER, BUSINESS, ADDRESS, KYC, BANKING, STORE, HOURS, SERVICE_AREA, PRODUCTS, DELIVERY, AGREEMENTS
+  status          String            @default("VERIFIED") // PENDING, VERIFIED, REJECTED, ACTION_REQUIRED
+  rejectionReason String?
+  requiredAction  String?
+  completedAt     DateTime?         @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([vendorId, section])
+  @@map("vendor_onboarding_sections")
+}
+
+model VendorDocument {
+  id             String         @id @default(uuid())
+  vendorId       String
+  vendor         Vendor         @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  type           String         // GST, PAN, FSSAI, SHOP_ESTABLISHMENT, CHEQUE, DRUG_LICENSE, TRADE_LICENSE, OWNER_ID
+  documentNumber String
+  fileUrl        String
+  fileKey        String?
+  status         String         @default("UPLOADED") // NOT_UPLOADED, UPLOADED, UNDER_REVIEW, VERIFIED, REJECTED, EXPIRED
+  documentExpiry DateTime?
+  rejectionReason String?
+  verified       Boolean        @default(false)
+  verifiedAt     DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@map("vendor_documents")
+}
+
+model VendorBankAccount {
+  id                  String    @id @default(uuid())
+  vendorId            String
+  vendor              Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  bankName            String
+  branchName          String?
+  accountNumber       String
+  maskedAccountNumber String?
+  ifsc                String
+  accountHolder       String
+  accountType         String    @default("CURRENT") // CURRENT, SAVINGS
+  upiId               String?
+  isVerified          Boolean   @default(false)
+  isPrimary           Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("vendor_bank_accounts")
+}
+
+model VendorAddress {
+  id          String    @id @default(uuid())
+  vendorId    String
+  vendor      Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  label       String    @default("Business") // Business, Warehouse, Store
+  line1       String
+  line2       String?
+  area        String?
+  landmark    String?
+  city        String
+  state       String
+  pincode     String
+  country     String    @default("India")
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("vendor_addresses")
+}
+
+model Store {
+  id                   String                 @id @default(uuid())
+  vendorId             String
+  vendor               Vendor                 @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name                 String
+  slug                 String                 @unique
+  description          String?
+  logo                 String?
+  banner               String?
+  categoryId           String?
+  category             Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  isOpen               Boolean                @default(true)
+  isAcceptingOrders    Boolean                @default(true)
+  prepTimeMinutes      Int                    @default(15)
+  deliveryRadiusKm     Decimal                @default(10.0) @db.Decimal(5, 2)
+  commissionRate       Decimal                @default(10) @db.Decimal(5, 2)
+  rating               Decimal                @default(0) @db.Decimal(3, 2)
+  ordersCount          Int                    @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  businessHours        VendorBusinessHours[]
+  products             Product[]
+  inventories          Inventory[]
+  inventoryTransactions InventoryTransaction[]
+  orders               Order[]
+  reviews              Review[]
+
+  @@map("stores")
+}
+
+model VendorBusinessHours {
+  id                   String     @id @default(uuid())
+  storeId              String
+  store                Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  dayOfWeek            DayOfWeek
+  openTime             String     @default("08:00")
+  closeTime            String     @default("23:00")
+  isClosed             Boolean    @default(false)
+  slotIntervalMinutes  Int        @default(30)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  @@unique([storeId, dayOfWeek])
+  @@map("vendor_business_hours")
+}
+
+model InventoryLog {
+  id            String          @id @default(uuid())
+  vendorId      String
+  vendor        Vendor          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId     String?
+  variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  changeQty     Int             // e.g. +10, -5
+  previousStock Int
+  newStock      Int
+  reason        String          // RESTOCK, DAMAGE, RETURN, CORRECTION, SALE
+  notes         String?
+  createdAt     DateTime        @default(now())
+
+  @@map("inventory_logs")
+}
+
+model Inventory {
+  id                String                 @id @default(uuid())
+  storeId           String
+  store             Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId         String?
+  variant           ProductVariant?        @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  sku               String
+  physicalStock     Int                    @default(0)
+  reservedStock     Int                    @default(0)
+  availableStock    Int                    @default(0)
+  damagedStock      Int                    @default(0)
+  soldStock         Int                    @default(0)
+  lowStockThreshold Int                    @default(5)
+  isLowStock        Boolean                @default(false)
+  updatedAt         DateTime               @updatedAt
+
+  transactions      InventoryTransaction[]
+
+  @@unique([storeId, productId, sku])
+  @@map("inventory")
+}
+
+model InventoryTransaction {
+  id              String                   @id @default(uuid())
+  inventoryId     String?
+  inventory       Inventory?               @relation(fields: [inventoryId], references: [id], onDelete: SetNull)
+  storeId         String
+  store           Store                    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId       String?
+  variant         ProductVariant?          @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  type            InventoryTransactionType @default(ADJUSTMENT)
+  quantityChange  Int
+  previousStock   Int
+  newStock        Int
+  referenceId     String?                  // e.g. orderId, shipmentId
+  notes           String?
+  createdAt       DateTime                 @default(now())
+
+  @@map("inventory_transactions")
+}
+
+model Rider {
+  id              String                    @id @default(uuid())
+  name            String
+  email           String?                   @unique
+  phone           String                    @unique
+  passwordHash    String?
+  avatar          String?
+  status          UserStatus                @default(INACTIVE)
+  approvalStatus  ApprovalStatus            @default(PENDING)
+  rejectionReason String?
+  vehicleType     VehicleType               @default(BIKE)
+  vehicleNumber   String?
+  zoneId          String?
+  zone            DeliveryZone?             @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  isOnline        Boolean                   @default(false)
+  currentLat      Float?
+  currentLng      Float?
+  rating          Decimal                   @default(0) @db.Decimal(3, 2)
+  acceptanceRate  Decimal                   @default(100) @db.Decimal(5, 2)
+  cancellationRate Decimal                  @default(0) @db.Decimal(5, 2)
+  totalEarnings   Decimal                   @default(0) @db.Decimal(12, 2)
+  walletBalance   Decimal                   @default(0) @db.Decimal(12, 2)
+  deliveriesCount Int                       @default(0)
+  currentShiftId  String?
+  firstName       String?
+  lastName        String?
+  dob             DateTime?
+  gender          String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelation String?
+  addressLine1    String?
+  addressLine2    String?
+  locality        String?
+  city            String?
+  state           String?
+  pincode         String?
+  postalCode      String?
+  country         String?                   @default("India")
+  residentialLat  Float?
+  residentialLng  Float?
+  vehicleCategory String?                   // MOTORCYCLE, SCOOTER, BICYCLE, ELECTRIC_BIKE, CAR, THREE_WHEELER, OTHER
+  vehicleOwnership String?                  // SELF, COMPANY, FAMILY, RENTED_LEASED
+  vehicleMake     String?
+  vehicleModel    String?
+  vehicleYear     Int?
+  vehicleColor    String?
+  bicycleType     String?                   // STANDARD, ELECTRIC, CARGO
+  bicycleBrand    String?
+  bicycleModel    String?
+  bicycleColor    String?
+  bicyclePurchaseYear Int?
+  dlNumber        String?
+  dlState         String?
+  dlIssueDate     DateTime?
+  dlExpiryDate    DateTime?
+  dlFrontUrl      String?
+  dlBackUrl       String?
+  rcDocUrl        String?
+  insuranceDocUrl String?
+  pucDocUrl       String?
+  isDlRequired    Boolean?                  @default(true)
+  bankName        String?
+  accountNumber   String?
+  ifsc            String?
+  accountHolder   String?
+  upiId           String?
+  preferredPayoutMethod String?                 @default("BANK_ACCOUNT") // BANK_ACCOUNT, UPI
+  panNumber       String?
+  aadhaarNumber   String?
+  preferredCity   String?
+  preferredZones  String[]                  @default([])
+  preferredCategories String[]              @default([])
+  workingHours    Json?
+  serviceRadiusKm Decimal?                  @db.Decimal(5, 2)
+  deliveryPreferences Json?
+  applicationId   String?                   @unique
+  operationalStatus String                  @default("OFFLINE") // OFFLINE, ONLINE, BUSY, ON_DELIVERY, SUSPENDED
+  agreementVersion String?                  @default("v1.2")
+  agreementsList  String[]                  @default([])
+  agreementAcceptedAt DateTime?
+  termsAccepted   Boolean                   @default(false)
+  termsAcceptedAt DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  documents         RiderDocument[]
+  vehicles          RiderVehicle[]
+  availabilityLogs  RiderAvailability[]
+  locations         RiderLocation[]
+  deliveries        Delivery[]
+  assignments       DeliveryAssignment[]
+  locationHistories DeliveryLocationHistory[]
+  earnings          RiderEarning[]
+  onboarding        RiderOnboarding?
+  onboardingSections RiderOnboardingSection[]
+
+  @@map("riders")
+}
+
+model RiderOnboarding {
+  id                    String                    @id @default(uuid())
+  riderId               String                    @unique
+  rider                 Rider                     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  applicationId         String?                   @unique
+  currentStep           Int                       @default(1)
+  completedSteps        Int[]                     @default([])
+  progress              Json?                     // { totalSections: 14, completedSections: 0, sectionProgress: {} }
+  status                String                    @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, SUSPENDED, DEACTIVATED
+  completionPercentage  Int                       @default(0)
+  draftData             Json?
+  correctionItems       Json?
+  submittedAt           DateTime?
+  reviewedAt            DateTime?
+  approvedAt            DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  sections              RiderOnboardingSection[]
+
+  @@map("rider_onboarding")
+}
+
+model RiderOnboardingSection {
+  id              String            @id @default(uuid())
+  riderId         String
+  rider           Rider             @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  onboardingId    String?
+  onboarding      RiderOnboarding?  @relation(fields: [onboardingId], references: [id], onDelete: Cascade)
+  section         String            // ACCOUNT, PERSONAL, ADDRESS, EMERGENCY_CONTACT, VEHICLE, IDENTITY, DRIVING_LICENSE, VEHICLE_DOCUMENTS, BANKING, SERVICE_AREA, DELIVERY_PREFERENCES, AVAILABILITY, AGREEMENTS, REVIEW
+  status          String            @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED, REJECTED
+  rejectionReason String?
+  requiredAction  String?
+  completedAt     DateTime?         @default(now())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([riderId, section])
+  @@map("rider_onboarding_sections")
+}
+
+model RiderVehicle {
+  id                  String          @id @default(uuid())
+  riderId             String
+  rider               Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicleType         String          @default("MOTORCYCLE") // MOTORCYCLE, SCOOTER, BICYCLE, ELECTRIC_BIKE, CAR, THREE_WHEELER, OTHER
+  ownershipType       String          @default("OWNED") // OWNED, COMPANY, FAMILY, RENTED_LEASED
+  make                String?         // e.g. Honda, Hero, TVS, Ather
+  model               String?         // e.g. Shine, Activa 6G, Splendor, 450X
+  manufacturingYear   Int?            // e.g. 2024
+  color               String?         // e.g. Black, Red, Silver
+  registrationNumber  String?         // e.g. RJ14AB1234
+  status              String          @default("PENDING") // PENDING, VERIFIED, REJECTED, SUSPENDED
+  isPrimary           Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  documents           RiderDocument[]
+
+  @@map("rider_vehicles")
+}
+
+model RiderDocument {
+  id              String         @id @default(uuid())
+  riderId         String
+  rider           Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicleId       String?
+  vehicle         RiderVehicle?  @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  documentType    String         // DRIVING_LICENSE, PAN, AADHAAR_FRONT, AADHAAR_BACK, VEHICLE_RC, VEHICLE_INSURANCE, PUC, ADDRESS_PROOF, OTHER_APPROVED_ID
+  documentNumber  String?
+  fileKey         String         // S3/GCS Object Storage key (never binary in PostgreSQL)
+  fileUrl         String?
+  status          String         @default("PENDING") // PENDING, VERIFIED, REJECTED, EXPIRED
+  issuedAt        DateTime?
+  expiresAt       DateTime?
+  verifiedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("rider_documents")
+}
+
+model RiderAvailability {
+  id                String    @id @default(uuid())
+  riderId           String
+  rider             Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  isOnline          Boolean   @default(false)
+  shiftStartedAt    DateTime?
+  shiftEndedAt      DateTime?
+  batteryPercentage Int?
+  deviceInfo        Json?
+  currentZoneId     String?
+  activeOrdersCount Int       @default(0)
+  lastPingAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("rider_availability")
+}
+
+model RiderLocation {
+  id        String   @id @default(uuid())
+  riderId   String
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  latitude  Float
+  longitude Float
+  heading   Float?   // degrees 0-360
+  speed     Float?   // m/s or km/h
+  accuracy  Float?   // meters
+  altitude  Float?
+  timestamp DateTime @default(now())
+
+  @@map("rider_locations")
+}
+
+// -----------------------------------------------------------------------------
+// 3. CATALOG (Categories, Brands, Products)
+// -----------------------------------------------------------------------------
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  status      UserStatus @default(ACTIVE)
+  sortOrder   Int        @default(0)
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("SubCategories")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  products    Product[]
+  stores      Store[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  logo        String?
+  description String?
+  status      UserStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  products    Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id                    String                 @id @default(uuid())
+  name                  String
+  slug                  String                 @unique
+  description           String
+  categoryId            String
+  category              Category               @relation(fields: [categoryId], references: [id])
+  brandId               String?
+  brand                 Brand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  vendorId              String
+  vendor                Vendor                 @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  storeId               String?
+  store                 Store?                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  price                 Decimal                @db.Decimal(10, 2)
+  compareAtPrice        Decimal?               @db.Decimal(10, 2)
+  costPrice             Decimal?               @db.Decimal(10, 2)
+  taxRate               Decimal                @default(0) @db.Decimal(5, 2) // e.g. 5.0, 12.0, 18.0% GST
+  hsnCode               String?
+  weightGrams           Int?                   // Weight in grams
+  sku                   String                 @unique
+  stock                 Int                    @default(0)
+  unit                  String                 @default("piece") // kg, piece, pack, litre
+  status                UserStatus             @default(ACTIVE)
+  approvalStatus        ApprovalStatus         @default(PENDING)
+  rejectionReason       String?
+  rating                Decimal                @default(0) @db.Decimal(3, 2)
+  reviewsCount          Int                    @default(0)
+  tags                  String[]               @default([])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  images                ProductImage[]
+  variants              ProductVariant[]
+  orderItems            OrderItem[]
+  inventoryLogs         InventoryLog[]
+  inventories           Inventory[]
+  inventoryTransactions InventoryTransaction[]
+  wishlistItems         WishlistItem[]
+  cartItems             CartItem[]
+  reviews               Review[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id                    String                 @id @default(uuid())
+  productId             String
+  product               Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name                  String   // e.g. "Size: L, Color: Red"
+  sku                   String   @unique
+  price                 Decimal  @db.Decimal(10, 2)
+  compareAtPrice        Decimal? @db.Decimal(10, 2)
+  costPrice             Decimal? @db.Decimal(10, 2)
+  weightGrams           Int?
+  stock                 Int      @default(0)
+  attributes            Json     // e.g. { "size": "L", "color": "Red" }
+  inventoryLogs         InventoryLog[]
+  inventories           Inventory[]
+  inventoryTransactions InventoryTransaction[]
+  cartItems             CartItem[]
+  createdAt             DateTime @default(now())
+
+  @@map("product_variants")
+}
+
+// -----------------------------------------------------------------------------
+// 4. ORDERS & LOGISTICS
+// -----------------------------------------------------------------------------
+
+model Order {
+  id                String         @id @default(uuid())
+  orderNumber       String         @unique // SVZ-YYYYMMDD-XXXX
+  customerId        String
+  customer          Customer       @relation(fields: [customerId], references: [id])
+  vendorId          String
+  vendor            Vendor         @relation(fields: [vendorId], references: [id])
+  storeId           String?
+  store             Store?         @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  deliveryAddressId String
+  deliveryAddress   Address        @relation(fields: [deliveryAddressId], references: [id])
+  status            OrderStatus    @default(PENDING)
+  paymentStatus     PaymentStatus  @default(PENDING)
+  paymentMethod     PaymentMethod  @default(UPI)
+  subtotal          Decimal        @db.Decimal(10, 2)
+  deliveryFee       Decimal        @default(0) @db.Decimal(10, 2)
+  discount          Decimal        @default(0) @db.Decimal(10, 2)
+  tax               Decimal        @default(0) @db.Decimal(10, 2)
+  total             Decimal        @db.Decimal(10, 2)
+  couponId          String?
+  coupon            Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  notes             String?
+  cancellationReason String?
+  cancelledBy       String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  items             OrderItem[]
+  delivery          Delivery?
+  payment           Payment?
+  refunds           Refund[]
+  commission        Commission?
+  disputes          Dispute[]
+  reviews           Review[]
+  notifications     Notification[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  name      String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  total     Decimal  @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+model DeliveryZone {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  city        String
+  coordinates Json       // GeoJSON polygon coordinates
+  baseFee     Decimal    @default(30) @db.Decimal(8, 2)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  riders      Rider[]
+  deliveries  Delivery[]
+
+  @@map("delivery_zones")
+}
+
+model Delivery {
+  id               String           @id @default(uuid())
+  orderId          String           @unique
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  riderId          String?
+  rider            Rider?           @relation(fields: [riderId], references: [id], onDelete: SetNull)
+  zoneId           String?
+  zone             DeliveryZone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  status           DeliveryStatus   @default(PENDING_ASSIGNMENT)
+  verificationMode VerificationMode @default(ANY)
+  pickupOtp        String?          // 4-6 digit OTP for store handover verification
+  pickupQrCode     String?          // QR code token for store handover verification
+  deliveryOtp      String?          // 4-6 digit OTP for customer handover verification
+  deliveryQrCode   String?          // QR code token for customer handover verification
+  pickupTime       DateTime?
+  deliveredTime    DateTime?
+  estimatedTime    DateTime?
+  distanceKm       Decimal?         @db.Decimal(6, 2)
+  deliveryFee      Decimal          @default(0) @db.Decimal(8, 2)
+  riderEarning     Decimal          @default(0) @db.Decimal(8, 2)
+  trackingNotes    String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  assignments     DeliveryAssignment[]
+  statusHistory   DeliveryStatusHistory[]
+  locationHistory DeliveryLocationHistory[]
+  proofs          DeliveryProof[]
+  earnings        RiderEarning[]
+
+  @@map("deliveries")
+}
+
+model DeliveryAssignment {
+  id              String           @id @default(uuid())
+  deliveryId      String
+  delivery        Delivery         @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  riderId         String
+  rider           Rider            @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  status          AssignmentStatus @default(OFFERED)
+  offeredAt       DateTime         @default(now())
+  respondedAt     DateTime?
+  expireAt        DateTime
+  rejectionReason String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("delivery_assignments")
+}
+
+model DeliveryStatusHistory {
+  id          String          @id @default(uuid())
+  deliveryId  String
+  delivery    Delivery        @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  fromStatus  DeliveryStatus?
+  toStatus    DeliveryStatus
+  changedBy   String          // RIDER, VENDOR, ADMIN, SYSTEM
+  changedById String?
+  latitude    Float?
+  longitude   Float?
+  notes       String?
+  createdAt   DateTime        @default(now())
+
+  @@map("delivery_status_history")
+}
+
+model DeliveryLocationHistory {
+  id         String   @id @default(uuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  riderId    String
+  rider      Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  latitude   Float
+  longitude  Float
+  speed      Float?
+  heading    Float?
+  battery    Int?
+  recordedAt DateTime @default(now())
+
+  @@map("delivery_location_history")
+}
+
+model DeliveryProof {
+  id           String    @id @default(uuid())
+  deliveryId   String
+  delivery     Delivery  @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  proofType    ProofType @default(PHOTO)
+  mediaUrl     String?
+  otpEntered   String?
+  signatureUrl String?
+  latitude     Float?
+  longitude    Float?
+  submittedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  @@map("delivery_proofs")
+}
+
+model RiderEarning {
+  id              String             @id @default(uuid())
+  riderId         String
+  rider           Rider              @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  deliveryId      String?
+  delivery        Delivery?          @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+  earningType     EarningType        @default(BASE_FARE)
+  amount          Decimal            @db.Decimal(10, 2) // net calculated amount
+  baseFee         Decimal            @default(0) @db.Decimal(10, 2)
+  distanceFee     Decimal            @default(0) @db.Decimal(10, 2)
+  surgeFee        Decimal            @default(0) @db.Decimal(10, 2)
+  incentive       Decimal            @default(0) @db.Decimal(10, 2)
+  bonus           Decimal            @default(0) @db.Decimal(10, 2)
+  penalty         Decimal            @default(0) @db.Decimal(10, 2)
+  surgeMultiplier Decimal            @default(1.0) @db.Decimal(3, 2)
+  distanceKm      Decimal?           @db.Decimal(6, 2)
+  description     String?
+  settlementId    String?
+  status          RiderEarningStatus @default(AVAILABLE)
+  createdAt       DateTime           @default(now())
+
+  @@map("rider_earnings")
+}
+
+// -----------------------------------------------------------------------------
+// 5. FINANCE (Payments, Refunds, Commissions, Settlements)
+// -----------------------------------------------------------------------------
+
+model Payment {
+  id            String        @id @default(uuid())
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  transactionId String        @unique
+  gateway       String        // RAZORPAY, STRIPE, CASH
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  currency      String        @default("INR")
+  gatewayMeta   Json?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model Refund {
+  id          String       @id @default(uuid())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount      Decimal      @db.Decimal(10, 2)
+  reason      String
+  status      RefundStatus @default(PENDING_APPROVAL)
+  processedBy String?      // Admin user ID
+  processedAt DateTime?
+  gatewayRef  String?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("refunds")
+}
+
+model Commission {
+  id           String   @id @default(uuid())
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  vendorId     String
+  vendor       Vendor   @relation(fields: [vendorId], references: [id])
+  orderAmount  Decimal  @db.Decimal(10, 2)
+  ratePercent  Decimal  @db.Decimal(5, 2)
+  commissionFee Decimal @db.Decimal(10, 2)
+  vendorPayout Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+
+  @@map("commissions")
+}
+
+model Settlement {
+  id              String           @id @default(uuid())
+  vendorId        String
+  vendor          Vendor           @relation(fields: [vendorId], references: [id])
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalGrossSales Decimal          @db.Decimal(12, 2)
+  totalCommission Decimal          @db.Decimal(12, 2)
+  totalRefunds    Decimal          @default(0) @db.Decimal(12, 2)
+  netPayout       Decimal          @db.Decimal(12, 2)
+  status          SettlementStatus @default(PENDING)
+  bankReference   String?
+  settledAt       DateTime?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("settlements")
+}
+
+// -----------------------------------------------------------------------------
+// 6. MARKETING (Coupons, Promotions, Banners)
+// -----------------------------------------------------------------------------
+
+model Coupon {
+  id             String             @id @default(uuid())
+  code           String             @unique
+  description    String?
+  discountType   CouponDiscountType @default(PERCENTAGE)
+  discountValue  Decimal            @db.Decimal(10, 2)
+  minOrderAmount Decimal            @default(0) @db.Decimal(10, 2)
+  maxDiscount    Decimal?           @db.Decimal(10, 2)
+  usageLimit     Int?
+  usageCount     Int                @default(0)
+  validFrom      DateTime
+  validUntil     DateTime
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  orders         Order[]
+  usages         CouponUsage[]
+
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id         String   @id @default(uuid())
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderId    String
+  usedAt     DateTime @default(now())
+
+  @@map("coupon_usages")
+}
+
+model Promotion {
+  id          String     @id @default(uuid())
+  title       String
+  subtitle    String?
+  bannerUrl   String?
+  targetType  String     // CATEGORY, VENDOR, PRODUCT, GENERAL
+  targetId    String?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("promotions")
+}
+
+model Banner {
+  id        String     @id @default(uuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  position  String     @default("HOME_HERO") // HOME_HERO, CATEGORY_TOP, POPUP
+  sortOrder Int        @default(0)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("banners")
+}
+
+// -----------------------------------------------------------------------------
+// 7. SUPPORT & DISPUTES
+// -----------------------------------------------------------------------------
+
+model SupportTicket {
+  id          String         @id @default(uuid())
+  ticketNumber String        @unique // TKT-XXXX
+  customerId  String?
+  customer    Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  subject     String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  assignedTo  String?        // Admin ID
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  messages    TicketMessage[]
+
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderType String       // CUSTOMER, ADMIN, VENDOR
+  senderId  String
+  message   String
+  createdAt DateTime      @default(now())
+
+  @@map("ticket_messages")
+}
+
+model Dispute {
+  id             String        @id @default(uuid())
+  disputeNumber  String        @unique // DSP-XXXX
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  raisedBy       String        // CUSTOMER, VENDOR
+  reason         String
+  status         DisputeStatus @default(OPENED)
+  claimAmount    Decimal?      @db.Decimal(10, 2)
+  resolutionNotes String?
+  resolvedBy     String?       // Admin ID
+  resolvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("disputes")
+}
+
+// -----------------------------------------------------------------------------
+// 8. SYSTEM CONFIGURATION & SETTINGS
+// -----------------------------------------------------------------------------
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g. "PLATFORM_COMMISSION_DEFAULT", "TAX_GST_RATE"
+  value       String   // JSON stringified value
+  description String?
+  group       String   @default("GENERAL") // GENERAL, COMMERCE, LOGISTICS, FINANCE
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}

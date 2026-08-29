@@ -1,0 +1,21 @@
+{
+  "name": "@sevazo/database",
+  "version": "1.0.0",
+  "description": "Prisma ORM & PostgreSQL Database Client for Sevazo",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "ts-node src/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.4.1",
+    "typescript": "^5.7.3",
+    "ts-node": "^10.9.2"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@sevazo/config",
+  "version": "1.0.0",
+  "description": "Shared Configuration and Constants for Sevazo Platform",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
