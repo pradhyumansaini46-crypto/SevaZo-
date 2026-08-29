@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build --workspace=apps/admin",
     "dev:admin": "npm run dev --workspace=apps/admin",
     "dev:api": "npm run start:dev --workspace=apps/api",
     "build:admin": "npm run build --workspace=apps/admin",
