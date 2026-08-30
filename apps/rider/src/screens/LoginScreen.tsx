@@ -7,23 +7,22 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  ScrollView,
 } from 'react-native';
-import { ArrowRight, CheckCircle2, Phone, Sparkles } from 'lucide-react-native';
+import { ArrowRight, CheckCircle2, Phone, ShieldCheck } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { useAuthStore } from '../store/authStore';
-import { useThemeStore } from '../store/themeStore';
-import { Button } from '../components/Button';
 import { phoneSchema } from '../validation/authValidation';
+import { InteractiveLamp } from '../components/InteractiveLamp';
 
 export const LoginScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
+  const [isLampOn, setIsLampOn] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { sendOtp, isLoading, error, clearError } = useAuthStore();
   const colors = useAppColors();
-  const isDark = useThemeStore((state) => state.isDark);
 
-  const isValidPhone = phone.length === 10;
+  const isPhoneValid = phone.replace(/\D/g, '').length === 10;
 
   const handleContinue = async () => {
     clearError();
@@ -49,138 +48,181 @@ export const LoginScreen = ({ navigation }: any) => {
     if (validationError) setValidationError(null);
   };
 
-  const isButtonDisabled = phone.length < 10 || isLoading;
+  const isButtonDisabled = !isPhoneValid || isLoading;
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Sleek Top Brand Header Bar */}
-      <View style={styles.brandRow}>
-        <Image
-          source={require('../../assets/sevazo-logo.png')}
-          style={styles.brandLogoSmall}
-          resizeMode="contain"
-        />
-        <Text style={[styles.brandText, { color: colors.textSecondary }]}>SEVAZO RIDER</Text>
-      </View>
-
-      {/* Main Form Card */}
-      <View
-        style={[
-          styles.mainCard,
-          {
-            backgroundColor: isDark ? colors.surface : '#FFFFFF',
-            borderColor: isDark ? colors.border : '#E2E8F0',
-          },
-        ]}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Title & Micro-Copy */}
-        <View style={styles.titleSection}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Sign in</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Welcome back. Enter your registered mobile number to receive your OTP.
-          </Text>
-        </View>
+        {/* Interactive Hanging Lamp */}
+        <InteractiveLamp
+          isLampOn={isLampOn}
+          onToggle={(state) => setIsLampOn(state)}
+        />
 
-        {/* Mobile Input Field */}
-        <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Mobile Number</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              {
-                backgroundColor: isDark ? colors.surfaceElevated : '#F8FAFC',
-                borderColor: validationError
-                  ? '#EF4444'
-                  : isValidPhone
-                  ? '#10B981'
-                  : isDark
-                  ? 'rgba(255, 255, 255, 0.12)'
-                  : '#E2E8F0',
-              },
-            ]}
-          >
-            <View style={styles.countryCodeContainer}>
-              <Phone size={18} color={colors.primary} />
-              <Text style={[styles.countryCodeText, { color: colors.textPrimary }]}>+91</Text>
-            </View>
-            <TextInput
-              style={[styles.textInput, { color: colors.textPrimary }]}
-              value={phone}
-              onChangeText={handlePhoneChange}
-              placeholder="98765 43210"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="phone-pad"
-              maxLength={10}
-              autoFocus
-              accessible={true}
-              accessibilityLabel="Mobile Number input"
-            />
-            {isValidPhone && (
-              <View style={styles.validCheckBadge}>
-                <CheckCircle2 size={18} color="#10B981" />
+        {/* Modern Logic Card */}
+        <View
+          style={[
+            styles.card,
+            isLampOn ? styles.cardIlluminated : styles.cardDimmed,
+          ]}
+        >
+          {/* Top Brand & Mode Switcher */}
+          <View style={styles.topRow}>
+            <View style={styles.brandBadge}>
+              <View style={styles.brandIconCircle}>
+                <Text style={styles.brandIconText}>S</Text>
               </View>
+              <View>
+                <Text style={styles.brandLabel}>SEVAZO FLEET</Text>
+                <Text style={styles.brandSubLabel}>Partner Portal</Text>
+              </View>
+            </View>
+
+            {/* Mode Switcher Tabs */}
+            <View style={styles.tabContainer}>
+              <View style={styles.tabActive}>
+                <Text style={styles.tabActiveText}>Sign in</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.tabInactive}
+                onPress={() => navigation.navigate('Register')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tabInactiveText}>Register</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Heading Greeting */}
+          <View style={styles.headingBlock}>
+            <Text style={styles.headingTitle}>Sign in to Sevazo</Text>
+            <Text style={styles.headingSubtitle}>
+              Welcome back. Enter your mobile number to receive a secure OTP.
+            </Text>
+          </View>
+
+          {/* Form Fields */}
+          <View style={styles.formGroup}>
+            {/* Mobile Number */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Mobile Number *</Text>
+                {isPhoneValid && (
+                  <View style={styles.verifiedTag}>
+                    <CheckCircle2 size={12} color="#10B981" />
+                    <Text style={styles.verifiedText}>Valid</Text>
+                  </View>
+                )}
+              </View>
+
+              <View
+                style={[
+                  styles.inputRow,
+                  Boolean(validationError) && styles.inputErrorRow,
+                ]}
+              >
+                <View style={styles.countryCodeBadge}>
+                  <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  placeholder="Enter 10-digit number"
+                  placeholderTextColor="#64748B"
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  accessible={true}
+                  accessibilityLabel="Mobile Number"
+                />
+              </View>
+            </View>
+
+            {validationError && (
+              <Text style={styles.errorText} accessibilityRole="alert">
+                {validationError}
+              </Text>
             )}
+
+            {error && (
+              <Text style={styles.errorText} accessibilityRole="alert">
+                {error}
+              </Text>
+            )}
+
+            {/* Floating Action Pill & Target Track */}
+            <View style={styles.actionTrack}>
+              <View style={styles.targetDottedSlot}>
+                <Text style={styles.targetDottedText}>
+                  {isLoading ? 'VERIFYING...' : isPhoneValid ? 'READY TO SIGN IN' : 'ENTER 10 DIGITS'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitPill,
+                  isPhoneValid ? styles.submitPillActive : styles.submitPillInactive,
+                ]}
+                onPress={handleContinue}
+                disabled={isButtonDisabled}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.submitPillText,
+                    isPhoneValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
+                  ]}
+                >
+                  {isLoading ? 'Sending Code...' : 'Get Verification Code'}
+                </Text>
+                <ArrowRight
+                  size={18}
+                  color={isPhoneValid ? '#FFFFFF' : '#64748B'}
+                  strokeWidth={2.5}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Progress Bullet Hint */}
+            <View style={styles.progressHintContainer}>
+              <View
+                style={[
+                  styles.progressDot,
+                  { backgroundColor: isPhoneValid ? '#10B981' : '#FF6600' },
+                ]}
+              />
+              <Text style={styles.progressHintText}>
+                {isPhoneValid
+                  ? 'One tap away — ready to receive OTP.'
+                  : 'Enter your 10-digit registered number.'}
+              </Text>
+            </View>
           </View>
 
-          {validationError && (
-            <Text style={styles.errorText} accessibilityRole="alert">
-              {validationError}
-            </Text>
-          )}
+          {/* Switch to Register Link */}
+          <View style={styles.switchModeContainer}>
+            <Text style={styles.switchModeText}>New to Sevazo? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.switchModeLink}>Register as Rider</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {error && (
-          <Text style={styles.errorText} accessibilityRole="alert">
-            {error}
+        {/* Security Trust Footer */}
+        <View style={styles.trustFooter}>
+          <ShieldCheck size={15} color="#10B981" />
+          <Text style={styles.trustFooterText}>
+            Official verified delivery partner login portal
           </Text>
-        )}
-
-        {/* Action Button Container */}
-        <View style={styles.actionContainer}>
-          <Button
-            title="Log in with OTP"
-            variant="primary"
-            size="large"
-            onPress={handleContinue}
-            isLoading={isLoading}
-            disabled={isButtonDisabled}
-            rightIcon={<ArrowRight size={20} color="#FFFFFF" />}
-            accessibilityLabel="Log in with OTP"
-          />
-
-          {/* Micro Helper State Indicator */}
-          <View style={styles.helperStatusRow}>
-            <View style={[styles.statusDot, { backgroundColor: isValidPhone ? '#10B981' : colors.primary }]} />
-            <Text style={[styles.helperStatusText, { color: colors.textSecondary }]}>
-              {isValidPhone ? 'Ready to receive OTP verification code' : '10-digit number required for login'}
-            </Text>
-          </View>
         </View>
-
-        {/* Bottom Switch Link */}
-        <View style={styles.switchRow}>
-          <Text style={[styles.switchText, { color: colors.textSecondary }]}>No account yet? </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Register')}
-            accessible={true}
-            accessibilityRole="link"
-            accessibilityLabel="Register as Rider"
-          >
-            <Text style={[styles.switchLink, { color: colors.primary }]}>Create one</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Trust Footer */}
-      <View style={styles.trustFooter}>
-        <Sparkles size={14} color={colors.accentGreen} />
-        <Text style={[styles.trustText, { color: colors.textSecondary }]}>
-          Instant store pickup & short-distance drops • 100% Secure
-        </Text>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -188,140 +230,281 @@ export const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#06080F',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingTop: 50,
-    paddingBottom: 30,
-    justifyContent: 'space-between',
+    paddingVertical: 40,
   },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  brandLogoSmall: {
-    width: 36,
-    height: 36,
-  },
-  brandText: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    fontSize: 12,
-  },
-  mainCard: {
+  card: {
     borderRadius: 28,
     borderWidth: 1,
     padding: Spacing.xl,
-    ...Shadows.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowRadius: 30,
+    elevation: 10,
   },
-  titleSection: {
-    marginBottom: Spacing.xl,
+  cardIlluminated: {
+    backgroundColor: '#0E1422',
+    borderColor: '#1E293B',
+    shadowOpacity: 0.6,
   },
-  title: {
-    ...Typography.hero,
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+  cardDimmed: {
+    backgroundColor: '#0A0D15',
+    borderColor: '#161F2E',
+    shadowOpacity: 0.3,
   },
-  subtitle: {
-    ...Typography.bodyMedium,
-    marginTop: Spacing.xs,
-    lineHeight: 22,
-  },
-  inputGroup: {
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.lg,
   },
-  inputLabel: {
-    ...Typography.bodySmall,
+  brandBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs + 2,
+  },
+  brandIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#FF6600',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandIconText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+  brandLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FF6600',
+    letterSpacing: 0.5,
+  },
+  brandSubLabel: {
+    fontSize: 9,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#05070C',
+    borderRadius: BorderRadius.full,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+  },
+  tabActive: {
+    backgroundColor: '#FF6600',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.full,
+  },
+  tabActiveText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '700',
-    marginBottom: Spacing.sm,
-    fontSize: 13,
-    letterSpacing: 0.2,
+  },
+  tabInactive: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 5,
+  },
+  tabInactiveText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  headingBlock: {
+    marginBottom: Spacing.xl,
+  },
+  headingTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  headingSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  formGroup: {
+    gap: Spacing.md,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    paddingHorizontal: Spacing.md,
-    height: 54,
+    gap: 6,
   },
-  countryCodeContainer: {
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#CBD5E1',
+  },
+  verifiedTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    paddingRight: Spacing.sm,
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#07090E',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  inputErrorRow: {
+    borderColor: '#EF4444',
+  },
+  countryCodeBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
     borderRightWidth: 1,
-    borderRightColor: '#CBD5E1',
+    borderRightColor: '#1E293B',
+    backgroundColor: '#0B0F19',
   },
   countryCodeText: {
-    ...Typography.titleSmall,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
-    fontSize: 16,
   },
   textInput: {
     flex: 1,
-    paddingHorizontal: Spacing.md,
-    fontSize: 18,
-    fontWeight: '700',
-    height: '100%',
-  },
-  validCheckBadge: {
-    paddingLeft: Spacing.xs,
-  },
-  errorText: {
-    color: '#EF4444',
-    marginTop: Spacing.xs,
-    ...Typography.bodySmall,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
   },
-  actionContainer: {
-    marginTop: Spacing.md,
+  actionTrack: {
+    position: 'relative',
+    height: 56,
+    backgroundColor: '#05070C',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    overflow: 'hidden',
   },
-  helperStatusRow: {
+  targetDottedSlot: {
+    position: 'absolute',
+    width: '80%',
+    height: 38,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#334155',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  targetDottedText: {
+    color: '#475569',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  submitPill: {
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    top: 4,
+    bottom: 4,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    marginTop: Spacing.md,
   },
-  statusDot: {
+  submitPillActive: {
+    backgroundColor: '#FF6600',
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  submitPillInactive: {
+    backgroundColor: '#1E293B',
+  },
+  submitPillText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  submitPillTextActive: {
+    color: '#FFFFFF',
+  },
+  submitPillTextInactive: {
+    color: '#64748B',
+  },
+  progressHintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  progressDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  helperStatusText: {
-    ...Typography.bodySmall,
-    fontSize: 12,
+  progressHintText: {
+    fontSize: 11,
+    color: '#94A3B8',
     fontWeight: '500',
   },
-  switchRow: {
+  switchModeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.xl,
-    paddingTop: Spacing.md,
+    marginTop: Spacing.lg,
   },
-  switchText: {
-    ...Typography.bodyMedium,
-    fontSize: 14,
+  switchModeText: {
+    color: '#94A3B8',
+    fontSize: 12,
   },
-  switchLink: {
-    ...Typography.bodyMedium,
+  switchModeLink: {
+    color: '#FF6600',
+    fontSize: 12,
     fontWeight: '800',
-    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   trustFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xs,
+    gap: 6,
+    marginTop: Spacing.xl,
   },
-  trustText: {
-    ...Typography.bodySmall,
+  trustFooterText: {
     fontSize: 11,
-    fontWeight: '600',
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  errorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontSize: 11,
+    marginTop: 2,
   },
 });
 
