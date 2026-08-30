@@ -1,6 +1,34 @@
 {
   "riders": [
     {
+      "id": "rdr-879797",
+      "name": "Delivery Partner",
+      "email": "partner@example.com",
+      "phone": "+91 9876543210",
+      "avatar": "",
+      "status": "pending",
+      "approvalStatus": "PENDING",
+      "vehicleType": "motorcycle",
+      "vehicleNumber": "RJ 14 AB 1234",
+      "zone": "Central Hub",
+      "deliveriesCount": 0,
+      "rating": 5,
+      "totalEarnings": 0,
+      "isOnline": false,
+      "documents": [
+        {
+          "id": "doc-rdr-879797-kyc",
+          "type": "identity_proof",
+          "number": "Submitted",
+          "fileUrl": "/docs/kyc.pdf",
+          "verified": false
+        }
+      ],
+      "submittedAt": "2026-08-30T10:20:53.173Z",
+      "updatedAt": "2026-08-30T10:20:53.176Z",
+      "draftData": {}
+    },
+    {
       "id": "rdr-681764",
       "name": "pappu",
       "phone": "+91 7878787878",

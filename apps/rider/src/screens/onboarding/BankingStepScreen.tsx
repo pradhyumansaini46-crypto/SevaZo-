@@ -112,11 +112,11 @@ export const BankingStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={9}
-      totalSteps={14}
+      currentStep={5}
+      totalSteps={9}
       stepTitle="Bank & Payout Details"
       completionPercentage={completionPercentage}
-      onBack={() => navigation.navigate('OnboardingVehicleDocuments')}
+      onBack={() => navigation.navigate('OnboardingVehicle')}
       onSaveContinue={handleSubmit(onSubmit)}
       onSaveExit={handleSaveExit}
       isLoading={isSaving}

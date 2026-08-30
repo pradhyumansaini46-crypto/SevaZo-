@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import * as Location from 'expo-location';
 import { zodResolver } from '../../utils/zodResolver';
-import { MapPin, Navigation, ShieldCheck } from 'lucide-react-native';
+import { ShieldCheck } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { StepContainer } from '../../components/onboarding/StepContainer';
@@ -15,17 +14,9 @@ export const AddressScreen = ({ navigation }: any) => {
   const { draftData, completionPercentage, saveSection, isSaving, error, clearError } =
     useOnboardingStore();
 
-  const [isLocating, setIsLocating] = useState(false);
-  const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(
-    draftData?.address?.latitude && draftData?.address?.longitude
-      ? { lat: draftData.address.latitude, lng: draftData.address.longitude }
-      : null
-  );
-
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
@@ -37,99 +28,29 @@ export const AddressScreen = ({ navigation }: any) => {
       state: draftData?.address?.state || '',
       postalCode: draftData?.address?.postalCode || draftData?.address?.pincode || '',
       country: draftData?.address?.country || 'India',
-      latitude: gpsCoordinates?.lat,
-      longitude: gpsCoordinates?.lng,
     },
   });
 
   const onSubmit = async (data: AddressFormValues) => {
     clearError();
-    const payload = {
-      ...data,
-      latitude: gpsCoordinates?.lat,
-      longitude: gpsCoordinates?.lng,
-    };
-    const success = await saveSection('address', payload, true);
+    const success = await saveSection('address', data, true);
     if (success) {
-      navigation.navigate('OnboardingEmergencyContact');
+      // Step 3 is Identity Verification (comes before Vehicle)
+      navigation.navigate('OnboardingIdentity');
     }
   };
 
   const handleSaveExit = async () => {
     handleSubmit(async (data) => {
-      await saveSection('address', { ...data, ...gpsCoordinates }, false);
+      await saveSection('address', data, false);
       navigation.navigate('OnboardingResume');
     })();
   };
 
-  const handleUseCurrentLocation = async () => {
-    setIsLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Location Permission Required',
-          'Please grant location permissions in your phone settings to detect your current address.'
-        );
-        setIsLocating(false);
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      const { latitude, longitude } = location.coords;
-      const detected = { lat: latitude, lng: longitude };
-      setGpsCoordinates(detected);
-      setValue('latitude', latitude);
-      setValue('longitude', longitude);
-
-      // Reverse geocode to extract address details
-      try {
-        const reverseResults = await Location.reverseGeocodeAsync({
-          latitude,
-          longitude,
-        });
-
-        if (reverseResults && reverseResults.length > 0) {
-          const item = reverseResults[0];
-          if (item.name || item.street) {
-            setValue('addressLine1', [item.name, item.street].filter(Boolean).join(', '));
-          }
-          if (item.district || item.subregion) {
-            setValue('locality', item.district || item.subregion || '');
-          }
-          if (item.city) {
-            setValue('city', item.city);
-          }
-          if (item.region) {
-            setValue('state', item.region);
-          }
-          if (item.postalCode) {
-            setValue('postalCode', item.postalCode);
-          }
-          if (item.country) {
-            setValue('country', item.country);
-          }
-        }
-      } catch {
-        // Continue even if geocoding fails, coordinates are captured
-      }
-    } catch (e: any) {
-      Alert.alert(
-        'GPS Location Notice',
-        'Could not fetch real-time GPS location. Please ensure Location services are turned on.'
-      );
-    } finally {
-      setIsLocating(false);
-    }
-  };
-
   return (
     <OnboardingLayout
-      currentStep={3}
-      totalSteps={14}
+      currentStep={2}
+      totalSteps={9}
       stepTitle="Residential Address"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingPersonal')}
@@ -139,37 +60,9 @@ export const AddressScreen = ({ navigation }: any) => {
     >
       <StepContainer
         title="Residential Address"
-        subtitle="Where do you currently reside? This helps determine your nearest fulfillment hubs and dispatch zones."
+        subtitle="Please enter your complete residential address manually. This is used for compliance and hub allocation."
         error={error}
       >
-        {/* GPS Quick Location Button */}
-        <TouchableOpacity
-          style={styles.locationButton}
-          onPress={handleUseCurrentLocation}
-          disabled={isLocating}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Use current location via GPS"
-        >
-          {isLocating ? (
-            <ActivityIndicator size="small" color="#FF6600" />
-          ) : (
-            <Navigation size={18} color="#FF6600" />
-          )}
-          <Text style={styles.locationButtonText}>
-            {isLocating ? 'Detecting GPS coordinates...' : 'Use Current Location'}
-          </Text>
-        </TouchableOpacity>
-
-        {gpsCoordinates && (
-          <View style={styles.gpsBadge}>
-            <MapPin size={14} color="#10B981" />
-            <Text style={styles.gpsBadgeText}>
-              GPS Coordinates: {gpsCoordinates.lat.toFixed(4)}, {gpsCoordinates.lng.toFixed(4)}
-            </Text>
-          </View>
-        )}
-
         {/* Address Line 1 */}
         <Controller
           control={control}
@@ -227,7 +120,7 @@ export const AddressScreen = ({ navigation }: any) => {
                 <Input
                   label="City"
                   required
-                  placeholder="e.g. Bengaluru"
+                  placeholder="e.g. Jaipur"
                   value={value}
                   onChangeText={onChange}
                   error={errors.city?.message}
@@ -244,7 +137,7 @@ export const AddressScreen = ({ navigation }: any) => {
                 <Input
                   label="State"
                   required
-                  placeholder="e.g. Karnataka"
+                  placeholder="e.g. Rajasthan"
                   value={value}
                   onChangeText={onChange}
                   error={errors.state?.message}
@@ -264,7 +157,7 @@ export const AddressScreen = ({ navigation }: any) => {
                 <Input
                   label="Postal Code / PIN"
                   required
-                  placeholder="e.g. 560038"
+                  placeholder="e.g. 302021"
                   value={value}
                   onChangeText={onChange}
                   error={errors.postalCode?.message}
@@ -303,40 +196,6 @@ export const AddressScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  locationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: 'rgba(255, 102, 0, 0.12)',
-    borderWidth: 1,
-    borderColor: '#FF6600',
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
-  },
-  locationButtonText: {
-    ...Typography.bodyMedium,
-    color: '#FF6600',
-    fontWeight: '700',
-  },
-  gpsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#052E16',
-    borderWidth: 1,
-    borderColor: '#10B981',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
-    gap: Spacing.xs,
-  },
-  gpsBadgeText: {
-    ...Typography.bodySmall,
-    color: '#10B981',
-    fontWeight: '600',
-  },
   row: {
     flexDirection: 'row',
     gap: Spacing.md,

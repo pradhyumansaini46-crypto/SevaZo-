@@ -5,10 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
-import { Camera, Image as ImageIcon, CheckCircle, User, ShieldCheck } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, CheckCircle, User, ShieldCheck, Lock, HeartHandshake } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { StepContainer } from '../../components/onboarding/StepContainer';
@@ -16,10 +17,9 @@ import { Input } from '../../components/Input';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useAuthStore } from '../../store/authStore';
 import { personalInfoSchema, PersonalInfoFormValues } from '../../validation/onboardingValidation';
-
-import * as ImagePicker from 'expo-image-picker';
 import { ImagePickerModal } from '../../components/ImagePickerModal';
-import { Alert } from 'react-native';
+
+const RELATIONSHIPS = ['Father', 'Mother', 'Spouse', 'Brother', 'Sister', 'Friend', 'Other'] as const;
 
 export const PersonalInfoScreen = ({ route, navigation }: any) => {
   const routeEmail = route?.params?.email;
@@ -50,6 +50,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<PersonalInfoFormValues>({
     resolver: zodResolver(personalInfoSchema),
@@ -61,8 +62,22 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
       gender: draftData?.personal?.gender || 'MALE',
       phone: rider?.phone || draftData?.personal?.phone || '',
       email: userEmail,
+      emergencyContactName:
+        draftData?.personal?.emergencyContactName ||
+        draftData?.emergencyContact?.fullName ||
+        '',
+      emergencyRelationship:
+        draftData?.personal?.emergencyRelationship ||
+        draftData?.emergencyContact?.relationship ||
+        'Father',
+      emergencyPhone:
+        draftData?.personal?.emergencyPhone ||
+        draftData?.emergencyContact?.mobileNumber ||
+        '',
     },
   });
+
+  const selectedRelation = watch('emergencyRelationship');
 
   useEffect(() => {
     setValue('profilePhoto', profilePhoto);
@@ -70,6 +85,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
 
   const onSubmit = async (data: PersonalInfoFormValues) => {
     clearError();
+    // Save to 'personal' section and also keep 'emergencyContact' in draftData for complete syncing
     const success = await saveSection('personal', data, true);
     if (success) {
       navigation.navigate('OnboardingAddress');
@@ -83,71 +99,23 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
     })();
   };
 
-  const handleSelectPhoto = async (type: 'camera' | 'gallery') => {
-    try {
-      if (type === 'camera') {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert(
-            'Camera Permission Required',
-            'Please grant camera permissions in your phone settings to take a profile photo.'
-          );
-          return;
-        }
-        const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.85,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-          const pickedUri = result.assets[0].uri;
-          setProfilePhoto(pickedUri);
-          setValue('profilePhoto', pickedUri, { shouldValidate: true });
-        }
-      } else {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert(
-            'Gallery Permission Required',
-            'Please grant photo library permissions in your phone settings to select a profile photo.'
-          );
-          return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.85,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-          const pickedUri = result.assets[0].uri;
-          setProfilePhoto(pickedUri);
-          setValue('profilePhoto', pickedUri, { shouldValidate: true });
-        }
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Could not open camera or gallery. Please try again.');
-    }
-  };
-
   return (
     <OnboardingLayout
-      currentStep={2}
-      totalSteps={14}
-      stepTitle="Personal Information"
+      currentStep={1}
+      totalSteps={9}
+      stepTitle="Personal & Emergency Details"
       completionPercentage={completionPercentage}
-      onBack={() => navigation.navigate('OnboardingResume')}
+      onBack={() => navigation.navigate('Welcome')}
       onSaveContinue={handleSubmit(onSubmit)}
       onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer
-        title="Personal Details"
-        subtitle="Provide your legal name and a clear front-facing photo for customer & delivery identification."
+        title="Personal Information"
+        subtitle="Provide your legal personal details and nominate a trusted emergency contact for on-road safety."
         error={error}
       >
-        {/* Profile Photo Section (Point 11) */}
+        {/* Profile Photo Section */}
         <View style={styles.photoCard}>
           <Text style={styles.photoLabel}>Profile Photo *</Text>
           <Text style={styles.photoHint}>
@@ -168,24 +136,13 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
             <View style={styles.photoActions}>
               <TouchableOpacity
                 style={styles.photoBtn}
-                onPress={() => handleSelectPhoto('camera')}
+                onPress={() => setShowPickerModal(true)}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel="Take photo with camera"
+                accessibilityLabel="Upload Profile Photo"
               >
                 <Camera size={16} color="#FF6600" />
-                <Text style={styles.photoBtnText}>Take Photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.photoBtn, styles.galleryBtn]}
-                onPress={() => handleSelectPhoto('gallery')}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Choose photo from gallery"
-              >
-                <ImageIcon size={16} color={Colors.textSecondary} />
-                <Text style={[styles.photoBtnText, { color: Colors.textSecondary }]}>Gallery</Text>
+                <Text style={styles.photoBtnText}>Upload Photo</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -232,7 +189,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
-        {/* Date of Birth & Age Validation */}
+        {/* Date of Birth */}
         <Controller
           control={control}
           name="dob"
@@ -314,14 +271,102 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
           )}
         />
 
+        {/* ========================================================= */}
+        {/* MERGED: Emergency Contact Section (Point 3)               */}
+        {/* ========================================================= */}
+        <View style={styles.divider} />
+
+        <View style={styles.sectionHeader}>
+          <HeartHandshake size={20} color="#FF6600" />
+          <Text style={styles.sectionTitle}>Emergency Contact Details</Text>
+        </View>
+
+        {/* Confidentiality Privacy Banner */}
+        <View style={styles.privacyBanner}>
+          <Lock size={16} color="#065F46" />
+          <View style={styles.privacyTextContainer}>
+            <Text style={styles.privacyTitle}>Strictly Confidential</Text>
+            <Text style={styles.privacyDesc}>
+              This information is strictly reserved for rider safety emergencies and is NEVER exposed to customers or vendors.
+            </Text>
+          </View>
+        </View>
+
+        {/* Emergency Contact Name */}
+        <Controller
+          control={control}
+          name="emergencyContactName"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              label="Emergency Contact Name"
+              required
+              placeholder="e.g. Ramesh Sharma"
+              value={value}
+              onChangeText={onChange}
+              error={errors.emergencyContactName?.message}
+            />
+          )}
+        />
+
+        {/* Quick Relationship Chips */}
+        <View style={styles.relationContainer}>
+          <Text style={styles.inputLabel}>Relationship *</Text>
+          <View style={styles.chipsRow}>
+            {RELATIONSHIPS.map((rel) => (
+              <TouchableOpacity
+                key={rel}
+                style={[
+                  styles.chip,
+                  selectedRelation === rel && styles.chipSelected,
+                ]}
+                onPress={() => setValue('emergencyRelationship', rel, { shouldValidate: true })}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Relationship: ${rel}`}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    selectedRelation === rel && styles.chipTextSelected,
+                  ]}
+                >
+                  {rel}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.emergencyRelationship && (
+            <Text style={styles.errorText}>{errors.emergencyRelationship.message}</Text>
+          )}
+        </View>
+
+        {/* Emergency Contact Mobile Number */}
+        <Controller
+          control={control}
+          name="emergencyPhone"
+          render={({ field: { onChange, value } }) => (
+            <Input
+              label="Emergency Contact Mobile"
+              required
+              placeholder="10-digit mobile number"
+              value={value}
+              onChangeText={(txt) => onChange(txt.replace(/\D/g, ''))}
+              error={errors.emergencyPhone?.message}
+              keyboardType="phone-pad"
+              maxLength={10}
+              leftIcon={<Text style={styles.countryCode}>+91</Text>}
+            />
+          )}
+        />
+
         <View style={styles.trustBadge}>
           <ShieldCheck size={16} color="#10B981" />
           <Text style={styles.trustText}>
-            Personal data is encrypted and securely stored for partner verification.
+            Personal and emergency data is encrypted and securely stored for partner verification.
           </Text>
         </View>
 
-        {/* Native Image Picker Modal */}
+        {/* Native Image Picker Modal for Profile Photo */}
         <ImagePickerModal
           visible={showPickerModal}
           onClose={() => setShowPickerModal(false)}
@@ -331,6 +376,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
           }}
           title="Upload Profile Photo"
           aspect={[1, 1]}
+          showDocumentOption={false}
         />
       </StepContainer>
     </OnboardingLayout>
@@ -383,7 +429,6 @@ const styles = StyleSheet.create({
   },
   photoActions: {
     flex: 1,
-    gap: Spacing.sm,
   },
   photoBtn: {
     flexDirection: 'row',
@@ -393,12 +438,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 102, 0, 0.12)',
     borderWidth: 1,
     borderColor: '#FF6600',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
-  },
-  galleryBtn: {
-    backgroundColor: Colors.surfaceElevated,
-    borderColor: Colors.border,
   },
   photoBtnText: {
     ...Typography.bodySmall,
@@ -446,6 +487,85 @@ const styles = StyleSheet.create({
   genderOptionTextSelected: {
     color: '#FF6600',
     fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    ...Typography.titleMedium,
+    color: Colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  privacyBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  privacyTextContainer: {
+    flex: 1,
+  },
+  privacyTitle: {
+    ...Typography.titleSmall,
+    color: '#065F46',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  privacyDesc: {
+    ...Typography.bodySmall,
+    color: '#047857',
+    marginTop: 2,
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  relationContainer: {
+    marginBottom: Spacing.md,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  chip: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  chipSelected: {
+    borderColor: '#FF6600',
+    backgroundColor: '#FFF7ED',
+  },
+  chipText: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  chipTextSelected: {
+    color: '#FF6600',
+    fontWeight: '700',
+  },
+  countryCode: {
+    ...Typography.bodyMedium,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    marginRight: 4,
   },
   errorText: {
     ...Typography.bodySmall,

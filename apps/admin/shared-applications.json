@@ -1,0 +1,48 @@
+{
+  "riders": [
+    {
+      "id": "rdr-543210",
+      "name": "Delivery Partner",
+      "email": "partner@example.com",
+      "phone": "+91 9876543210",
+      "avatar": "",
+      "status": "blocked",
+      "approvalStatus": "REJECTED",
+      "vehicleType": "motorcycle",
+      "vehicleNumber": "RJ 14 AB 1234",
+      "zone": "Central Hub",
+      "deliveriesCount": 0,
+      "rating": 5,
+      "totalEarnings": 0,
+      "isOnline": false,
+      "documents": [
+        {
+          "id": "doc-rdr-543210-kyc",
+          "type": "identity_proof",
+          "number": "Submitted",
+          "fileUrl": "/docs/kyc.pdf",
+          "verified": false
+        }
+      ],
+      "submittedAt": "2026-08-30T08:01:35.037Z",
+      "updatedAt": "2026-08-30T08:03:17.178Z",
+      "draftData": {
+        "DELIVERY_PREFERENCES": {
+          "agreementVersion": "v1.2",
+          "agreementsList": [
+            "I confirm that the information provided is accurate.",
+            "I agree to Sevazo Rider Terms.",
+            "I agree to Sevazo Privacy Policy.",
+            "I agree to the Rider Agreement.",
+            "I authorize Sevazo to verify my submitted information.",
+            "I understand that rider activation is subject to verification."
+          ],
+          "termsAccepted": true,
+          "acceptedAt": "2026-08-30T08:01:22.786Z"
+        },
+        "applicationId": "SVZ-RID-000123"
+      }
+    }
+  ],
+  "vendors": []
+}

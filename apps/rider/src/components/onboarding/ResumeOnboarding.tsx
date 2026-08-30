@@ -72,7 +72,7 @@ export const ResumeOnboarding: React.FC<ResumeOnboardingProps> = ({
 
         <Text style={styles.heroTitle}>Rider Onboarding</Text>
         <Text style={styles.heroSubtitle}>
-          Complete all 14 sections to submit your profile for instant verification.
+          Complete all 9 sections to submit your profile for instant verification.
         </Text>
 
         <View style={styles.progressTrack}>

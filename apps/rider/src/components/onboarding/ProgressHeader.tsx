@@ -47,7 +47,7 @@ export const ProgressHeader: React.FC<ProgressHeaderProps> = ({
         },
       ]}
     >
-      {/* Top Navigation Row: Back | Step Badge | Cancel */}
+      {/* Top Navigation Row: Back | Centered Title | Cancel */}
       <View style={styles.topRow}>
         {showBack && onBack ? (
           <TouchableOpacity
@@ -71,17 +71,12 @@ export const ProgressHeader: React.FC<ProgressHeaderProps> = ({
           <View style={styles.placeholder} />
         )}
 
-        <View
-          style={[
-            styles.stepCountBadge,
-            {
-              backgroundColor: isDark ? colors.surfaceElevated : '#FFF7ED',
-              borderColor: isDark ? 'rgba(255, 102, 0, 0.35)' : '#FFEDD5',
-            },
-          ]}
-        >
-          <Text style={[styles.stepCountText, { color: colors.primary }]}>
-            Step {currentStep} of {totalSteps}
+        <View style={styles.headerTitleContainer}>
+          <Text
+            style={[styles.headerTitle, { color: colors.textPrimary }]}
+            numberOfLines={1}
+          >
+            {stepTitle}
           </Text>
         </View>
 
@@ -106,16 +101,6 @@ export const ProgressHeader: React.FC<ProgressHeaderProps> = ({
         ) : (
           <View style={styles.placeholder} />
         )}
-      </View>
-
-      {/* Step Title & Progress Percentage */}
-      <View style={styles.titleRow}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {stepTitle}
-        </Text>
-        <Text style={[styles.percentageText, { color: colors.accentGreen }]}>
-          {Math.round(completionPercentage)}%
-        </Text>
       </View>
 
       {/* Modern Progress Line */}
@@ -162,35 +147,17 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 38,
   },
-  stepCountBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-  },
-  stepCountText: {
-    ...Typography.bodySmall,
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-    marginTop: 2,
-  },
-  stepTitle: {
-    ...Typography.titleMedium,
-    fontSize: 17,
-    fontWeight: '700',
+  headerTitleContainer: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
   },
-  percentageText: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
-    marginLeft: Spacing.sm,
-    fontSize: 13,
+  headerTitle: {
+    ...Typography.titleMedium,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   track: {
     height: 5,

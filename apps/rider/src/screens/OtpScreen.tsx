@@ -12,6 +12,7 @@ import {
 import { ArrowRight, ShieldCheck, RotateCcw, CheckCircle } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { useAuthStore } from '../store/authStore';
+import { useOnboardingStore } from '../store/onboardingStore';
 import { useThemeStore } from '../store/themeStore';
 import { Button } from '../components/Button';
 import { otpStringSchema } from '../validation/authValidation';
@@ -80,17 +81,36 @@ export const OtpScreen = ({ route, navigation }: any) => {
         if (isApproved) {
           // If approved by admin, redirect straight to Rider Dashboard
           navigation.replace('Main');
-        } else if (isRegister && res?.isNewUser) {
+        } else if (
+          res?.isNewUser ||
+          isRegister ||
+          res?.status === 'DRAFT' ||
+          res?.nextAction === 'RESUME_REGISTRATION'
+        ) {
+          const isPersonalDone = Boolean((res as any)?.onboarding?.draftData?.personal?.firstName);
+          if (!isPersonalDone) {
+            useOnboardingStore.getState().resetOnboarding(cleanPhone, email || res?.rider?.email);
+            navigation.replace('OnboardingPersonal', {
+              phone: cleanPhone,
+              email: email || res?.rider?.email || '',
+            });
+          } else {
+            navigation.replace('OnboardingResume');
+          }
+        } else if (
+          res?.nextAction === 'OPEN_VERIFICATION_STATUS' ||
+          res?.status === 'UNDER_REVIEW' ||
+          res?.status === 'SUBMITTED'
+        ) {
+          navigation.replace('ApplicationStatus');
+        } else if (res?.nextAction === 'OPEN_CORRECTION' || res?.status === 'REJECTED') {
+          navigation.replace('Correction', { rejectionReason: res?.rejectionReason });
+        } else {
+          useOnboardingStore.getState().resetOnboarding(cleanPhone, email || res?.rider?.email);
           navigation.replace('OnboardingPersonal', {
             phone: cleanPhone,
-            email: email || '',
+            email: email || res?.rider?.email || '',
           });
-        } else if (res?.nextAction === 'RESUME_REGISTRATION') {
-          navigation.replace('OnboardingResume');
-        } else if (res?.nextAction === 'OPEN_VERIFICATION_STATUS' || res?.status === 'UNDER_REVIEW') {
-          navigation.replace('ApplicationStatus');
-        } else {
-          navigation.replace('Main');
         }
       }, 600);
     }

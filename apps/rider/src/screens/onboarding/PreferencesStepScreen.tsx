@@ -82,8 +82,8 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={11}
-      totalSteps={14}
+      currentStep={7}
+      totalSteps={9}
       stepTitle="Delivery Preferences"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingServiceArea')}

@@ -19,41 +19,31 @@ export const OnboardingResumeScreen = ({ navigation }: any) => {
 
   const handleSelectStep = (stepNumber: number) => {
     switch (stepNumber) {
-      case 2:
+      case 1:
         navigation.navigate('OnboardingPersonal');
         break;
-      case 3:
+      case 2:
         navigation.navigate('OnboardingAddress');
         break;
-      case 4:
-        navigation.navigate('OnboardingEmergencyContact');
-        break;
-      case 5:
-        navigation.navigate('OnboardingVehicle');
-        break;
-      case 6:
+      case 3:
         navigation.navigate('OnboardingIdentity');
         break;
-      case 7:
-        navigation.navigate('OnboardingDrivingLicence');
+      case 4:
+        navigation.navigate('OnboardingVehicle');
         break;
-      case 8:
-        navigation.navigate('OnboardingVehicleDocuments');
-        break;
-      case 9:
+      case 5:
         navigation.navigate('OnboardingBanking');
         break;
-      case 10:
+      case 6:
         navigation.navigate('OnboardingServiceArea');
         break;
-      case 11:
+      case 7:
         navigation.navigate('OnboardingPreferences');
         break;
-      case 12:
+      case 8:
         navigation.navigate('OnboardingAvailability');
         break;
-      case 13:
-      case 14:
+      case 9:
       default:
         navigation.navigate('OnboardingReview');
         break;
@@ -65,16 +55,10 @@ export const OnboardingResumeScreen = ({ navigation }: any) => {
       navigation.navigate('OnboardingPersonal');
     } else if (sectionStatus.ADDRESS !== 'COMPLETED') {
       navigation.navigate('OnboardingAddress');
-    } else if (sectionStatus.EMERGENCY_CONTACT !== 'COMPLETED') {
-      navigation.navigate('OnboardingEmergencyContact');
-    } else if (sectionStatus.VEHICLE !== 'COMPLETED') {
-      navigation.navigate('OnboardingVehicle');
     } else if (sectionStatus.IDENTITY !== 'COMPLETED') {
       navigation.navigate('OnboardingIdentity');
-    } else if (sectionStatus.DRIVING_LICENSE !== 'COMPLETED') {
-      navigation.navigate('OnboardingDrivingLicence');
-    } else if (sectionStatus.VEHICLE_DOCUMENTS !== 'COMPLETED') {
-      navigation.navigate('OnboardingVehicleDocuments');
+    } else if (sectionStatus.VEHICLE !== 'COMPLETED') {
+      navigation.navigate('OnboardingVehicle');
     } else if (sectionStatus.BANKING !== 'COMPLETED') {
       navigation.navigate('OnboardingBanking');
     } else if (sectionStatus.SERVICE_AREA !== 'COMPLETED') {

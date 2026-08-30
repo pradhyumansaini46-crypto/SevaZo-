@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { phoneSchema } from './authValidation';
 
 /**
- * Prompt 04: Personal Information Zod Schema
+ * Step 1: Personal Information & Emergency Contact Schema (Merged)
  */
 export const personalInfoSchema = z.object({
   firstName: z
@@ -33,12 +33,21 @@ export const personalInfoSchema = z.object({
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
   phone: z.string().min(10, 'Valid phone is required'),
   email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
+  // Emergency Contact fields (Merged)
+  emergencyContactName: z
+    .string()
+    .min(2, 'Emergency contact full name must be at least 2 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Contact name should only contain letters'),
+  emergencyRelationship: z
+    .string()
+    .min(2, 'Relationship is required (e.g. Father, Mother, Spouse, Brother)'),
+  emergencyPhone: phoneSchema,
 });
 
 export type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
 
 /**
- * Prompt 05: Residential Address Zod Schema
+ * Step 2: Residential Address Schema (Manual Entry Only)
  */
 export const addressSchema = z.object({
   addressLine1: z.string().min(3, 'Address Line 1 is required (min 3 characters)'),
@@ -58,7 +67,7 @@ export const addressSchema = z.object({
 export type AddressFormValues = z.infer<typeof addressSchema>;
 
 /**
- * Prompt 05: Emergency Contact Zod Schema
+ * Emergency Contact Schema (Maintained for standalone type-safety)
  */
 export const emergencyContactSchema = z.object({
   fullName: z
@@ -74,22 +83,123 @@ export const emergencyContactSchema = z.object({
 export type EmergencyContactFormValues = z.infer<typeof emergencyContactSchema>;
 
 /**
- * Prompt 06: Vehicle Registration Schema
+ * Step 3: Identity & Driving Licence Verification Schema (Merged)
+ */
+export const identitySchema = z
+  .object({
+    panNumber: z
+      .string()
+      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Enter a valid 10-character PAN (e.g. ABCDE1234F)'),
+    idType: z.enum(['AADHAAR', 'VOTER_ID', 'PASSPORT']),
+    idNumber: z.string().min(4, 'Enter a valid ID number'),
+    frontImage: z.string().min(1, 'Front photo of government ID is required'),
+    backImage: z.string().min(1, 'Back photo of government ID is required'),
+    // Driving Licence fields (Merged)
+    isBicycle: z.boolean().optional(),
+    licenseNumber: z.string().optional(),
+    expiryDate: z.string().optional(),
+    licenseFrontImage: z.string().optional(),
+    licenseBackImage: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.idType === 'AADHAAR') {
+      const clean = data.idNumber.replace(/\s/g, '');
+      if (!/^\d{12}$/.test(clean)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: 'Aadhaar must be a 12-digit number (e.g. 1234 5678 9012)',
+        });
+      }
+    } else if (data.idType === 'VOTER_ID') {
+      if (!/^[A-Z0-9]{8,14}$/i.test(data.idNumber.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: 'Enter a valid Voter ID / EPIC number (e.g. ABC1234567)',
+        });
+      }
+    } else if (data.idType === 'PASSPORT') {
+      if (!/^[A-Z][0-9]{7,8}$/i.test(data.idNumber.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: 'Enter a valid Passport number (e.g. A1234567)',
+        });
+      }
+    }
+
+    if (!data.isBicycle) {
+      if (!data.licenseNumber || data.licenseNumber.trim().length < 5) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['licenseNumber'],
+          message: 'Valid Driving Licence number is required',
+        });
+      }
+      if (!data.expiryDate || data.expiryDate.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['expiryDate'],
+          message: 'Licence expiry date is required (YYYY-MM-DD)',
+        });
+      }
+      if (!data.licenseFrontImage) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['licenseFrontImage'],
+          message: 'Front photo of driving licence is required',
+        });
+      }
+      if (!data.licenseBackImage) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['licenseBackImage'],
+          message: 'Back photo of driving licence is required',
+        });
+      }
+    }
+  });
+
+export type IdentityFormValues = z.infer<typeof identitySchema>;
+
+/**
+ * Driving Licence Schema (Maintained for backward compatibility)
+ */
+export const drivingLicenceSchema = z.object({
+  licenseNumber: z
+    .string()
+    .min(5, 'Valid Driving Licence number is required')
+    .regex(/^[A-Z0-9\s-]+$/i, 'Invalid Driving Licence format'),
+  expiryDate: z.string().min(4, 'Licence expiry date is required (YYYY-MM-DD)'),
+  frontImage: z.string().min(1, 'Front photo of driving licence is required'),
+  backImage: z.string().min(1, 'Back photo of driving licence is required'),
+});
+
+export type DrivingLicenceFormValues = z.infer<typeof drivingLicenceSchema>;
+
+/**
+ * Step 4: Vehicle Registration & Documents Schema (Merged)
  */
 export const vehicleSchema = z
   .object({
     vehicleType: z.enum(['MOTORCYCLE', 'SCOOTER', 'BICYCLE', 'CAR', 'OTHER']),
     ownershipType: z.enum(['OWNED', 'FAMILY', 'RENTED', 'COMPANY']),
-    // Motor vehicle fields
     make: z.string().optional(),
     model: z.string().optional(),
     manufacturingYear: z.string().optional(),
     color: z.string().min(1, 'Vehicle color is required'),
     registrationNumber: z.string().optional(),
-    // Bicycle specific fields
     bicycleType: z.enum(['STANDARD', 'ELECTRIC', 'CARGO']).optional(),
     bicycleBrand: z.string().optional(),
     bicycleModel: z.string().optional(),
+    // Vehicle Document fields (Merged)
+    rcNumber: z.string().optional(),
+    rcImage: z.string().optional(),
+    insuranceNumber: z.string().optional(),
+    insuranceExpiry: z.string().optional(),
+    insuranceImage: z.string().optional(),
+    pucImage: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.vehicleType !== 'BICYCLE') {
@@ -121,6 +231,34 @@ export const vehicleSchema = z
           message: 'Vehicle registration number is required (e.g. DL 01 AB 1234)',
         });
       }
+      if (!data.rcImage) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['rcImage'],
+          message: 'RC document upload is required',
+        });
+      }
+      if (!data.insuranceNumber || data.insuranceNumber.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['insuranceNumber'],
+          message: 'Insurance policy number is required',
+        });
+      }
+      if (!data.insuranceExpiry || data.insuranceExpiry.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['insuranceExpiry'],
+          message: 'Insurance expiry date is required (YYYY-MM-DD)',
+        });
+      }
+      if (!data.insuranceImage) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['insuranceImage'],
+          message: 'Insurance policy document upload is required',
+        });
+      }
     } else {
       if (!data.bicycleBrand || data.bicycleBrand.trim().length < 2) {
         ctx.addIssue({
@@ -135,66 +273,7 @@ export const vehicleSchema = z
 export type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 /**
- * Prompt 07: Identity Verification Schema
- */
-export const identitySchema = z
-  .object({
-    panNumber: z
-      .string()
-      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Enter a valid 10-character PAN (e.g. ABCDE1234F)'),
-    idType: z.enum(['AADHAAR', 'VOTER_ID', 'PASSPORT']),
-    idNumber: z.string().min(4, 'Enter a valid ID number'),
-    frontImage: z.string().min(1, 'Front photo of government ID is required'),
-    backImage: z.string().min(1, 'Back photo of government ID is required'),
-  })
-  .superRefine((data, ctx) => {
-    if (data.idType === 'AADHAAR') {
-      const clean = data.idNumber.replace(/\s/g, '');
-      if (!/^\d{12}$/.test(clean)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['idNumber'],
-          message: 'Aadhaar must be a 12-digit number (e.g. 1234 5678 9012)',
-        });
-      }
-    } else if (data.idType === 'VOTER_ID') {
-      if (!/^[A-Z0-9]{8,14}$/i.test(data.idNumber.trim())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['idNumber'],
-          message: 'Enter a valid Voter ID / EPIC number (e.g. ABC1234567)',
-        });
-      }
-    } else if (data.idType === 'PASSPORT') {
-      if (!/^[A-Z][0-9]{7,8}$/i.test(data.idNumber.trim())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['idNumber'],
-          message: 'Enter a valid Passport number (e.g. A1234567)',
-        });
-      }
-    }
-  });
-
-export type IdentityFormValues = z.infer<typeof identitySchema>;
-
-/**
- * Prompt 07: Driving Licence Schema
- */
-export const drivingLicenceSchema = z.object({
-  licenseNumber: z
-    .string()
-    .min(5, 'Valid Driving Licence number is required')
-    .regex(/^[A-Z0-9\s-]+$/i, 'Invalid Driving Licence format'),
-  expiryDate: z.string().min(4, 'Licence expiry date is required (YYYY-MM-DD)'),
-  frontImage: z.string().min(1, 'Front photo of driving licence is required'),
-  backImage: z.string().min(1, 'Back photo of driving licence is required'),
-});
-
-export type DrivingLicenceFormValues = z.infer<typeof drivingLicenceSchema>;
-
-/**
- * Prompt 08: Vehicle Documents Schema (RC, Insurance, PUC)
+ * Vehicle Documents Schema (Maintained for backward compatibility)
  */
 export const vehicleDocumentsSchema = z.object({
   rcNumber: z.string().min(4, 'Registration Certificate number is required'),
@@ -208,7 +287,7 @@ export const vehicleDocumentsSchema = z.object({
 export type VehicleDocumentsFormValues = z.infer<typeof vehicleDocumentsSchema>;
 
 /**
- * Prompt 09: Banking & Payout Schema
+ * Step 5: Banking & Payout Schema
  */
 export const bankingSchema = z
   .object({
@@ -222,6 +301,7 @@ export const bankingSchema = z
     ifsc: z.string().optional(),
     bankName: z.string().optional(),
     upiId: z.string().optional(),
+    chequePassbookImage: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.preferredPayoutMethod === 'UPI') {
@@ -273,7 +353,7 @@ export const bankingSchema = z
 export type BankingFormValues = z.infer<typeof bankingSchema>;
 
 /**
- * Prompt 10: Service Area & Delivery Preferences
+ * Step 6: Service Area
  */
 export const serviceAreaSchema = z.object({
   city: z.string().min(2, 'City is required'),
@@ -284,8 +364,11 @@ export const serviceAreaSchema = z.object({
 
 export type ServiceAreaFormValues = z.infer<typeof serviceAreaSchema>;
 
+/**
+ * Step 7: Delivery Preferences
+ */
 export const deliveryPreferencesSchema = z.object({
-  maxDistanceKm: z.number().min(1).max(50),
+  maxDistanceKm: z.number().min(1).max(8),
   categories: z.array(z.string()).min(1, 'Select at least one delivery category'),
   acceptHeavyItems: z.boolean(),
   acceptSpecialHandling: z.boolean(),
@@ -294,7 +377,7 @@ export const deliveryPreferencesSchema = z.object({
 export type DeliveryPreferencesFormValues = z.infer<typeof deliveryPreferencesSchema>;
 
 /**
- * Prompt 11: Availability Schema
+ * Step 8: Availability Schema
  */
 export const availabilitySlotSchema = z.object({
   day: z.string(),

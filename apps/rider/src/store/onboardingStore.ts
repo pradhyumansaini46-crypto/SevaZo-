@@ -4,36 +4,26 @@ import { onboardingService, OnboardingStateResponse } from '../services/onboardi
 import { getErrorMessage } from '../utils/errorHandler';
 
 export const STEP_NAMES = [
-  'Account',
   'Personal Information',
-  'Address',
-  'Emergency Contact',
-  'Vehicle',
-  'Identity Verification',
-  'Driving Licence',
-  'Vehicle Documents',
-  'Banking',
+  'Residential Address',
+  'Identity & Driving Licence',
+  'Vehicle & Documents',
+  'Bank & Payouts',
   'Service Area',
   'Delivery Preferences',
-  'Availability',
-  'Agreements',
-  'Review',
+  'Availability & Shifts',
+  'Review & Submit',
 ] as const;
 
 export const SECTION_KEYS = [
-  'ACCOUNT',
   'PERSONAL',
   'ADDRESS',
-  'EMERGENCY_CONTACT',
-  'VEHICLE',
   'IDENTITY',
-  'DRIVING_LICENSE',
-  'VEHICLE_DOCUMENTS',
+  'VEHICLE',
   'BANKING',
   'SERVICE_AREA',
   'DELIVERY_PREFERENCES',
   'AVAILABILITY',
-  'AGREEMENTS',
   'REVIEW',
 ] as const;
 
@@ -53,6 +43,7 @@ export interface OnboardingStoreState {
 
   // Actions
   loadOnboardingState: () => Promise<OnboardingStateResponse | null>;
+  resetOnboarding: (phone?: string, email?: string) => void;
   setCurrentStep: (step: number) => void;
   saveSection: (section: string, data: any, advanceNext?: boolean) => Promise<boolean>;
   saveStep: (stepNumber: number, data: any, saveAndExit?: boolean) => Promise<boolean>;
@@ -64,25 +55,20 @@ export interface OnboardingStoreState {
 
 export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
   applicationId: 'SVZ-RID-000123',
-  currentStep: 2, // Step 1 (Account) is already completed upon auth
-  completedSteps: [1],
+  currentStep: 1, // Start directly at Step 1 (Personal Information)
+  completedSteps: [],
   rejectedSteps: [],
-  completionPercentage: 10,
+  completionPercentage: 11,
   draftData: {},
   sectionStatus: {
-    ACCOUNT: 'COMPLETED',
     PERSONAL: 'NOT_STARTED',
     ADDRESS: 'NOT_STARTED',
-    EMERGENCY_CONTACT: 'NOT_STARTED',
-    VEHICLE: 'NOT_STARTED',
     IDENTITY: 'NOT_STARTED',
-    DRIVING_LICENSE: 'NOT_STARTED',
-    VEHICLE_DOCUMENTS: 'NOT_STARTED',
+    VEHICLE: 'NOT_STARTED',
     BANKING: 'NOT_STARTED',
     SERVICE_AREA: 'NOT_STARTED',
     DELIVERY_PREFERENCES: 'NOT_STARTED',
     AVAILABILITY: 'NOT_STARTED',
-    AGREEMENTS: 'NOT_STARTED',
     REVIEW: 'NOT_STARTED',
   },
   rejectionReason: null,
@@ -91,19 +77,49 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
   isSaving: false,
   error: null,
 
+  resetOnboarding: (phone?: string, email?: string) => {
+    set({
+      applicationId: `SVZ-RID-${Math.floor(100000 + Math.random() * 900000)}`,
+      currentStep: 1,
+      completedSteps: [],
+      rejectedSteps: [],
+      completionPercentage: 11,
+      draftData: {
+        personal: {
+          phone: phone || '',
+          email: email || '',
+        },
+      },
+      sectionStatus: {
+        PERSONAL: 'NOT_STARTED',
+        ADDRESS: 'NOT_STARTED',
+        IDENTITY: 'NOT_STARTED',
+        VEHICLE: 'NOT_STARTED',
+        BANKING: 'NOT_STARTED',
+        SERVICE_AREA: 'NOT_STARTED',
+        DELIVERY_PREFERENCES: 'NOT_STARTED',
+        AVAILABILITY: 'NOT_STARTED',
+        REVIEW: 'NOT_STARTED',
+      },
+      rejectionReason: null,
+      correctionItems: null,
+      error: null,
+    });
+  },
+
   loadOnboardingState: async () => {
     try {
       set({ isLoading: true, error: null });
       const state = await onboardingService.getOnboardingState();
 
       const newSectionStatus = { ...get().sectionStatus, ...(state.sectionStatus || {}) };
-      newSectionStatus.ACCOUNT = 'COMPLETED';
 
       set({
         applicationId: state.applicationId || 'SVZ-RID-000123',
-        currentStep: state.currentStep || 2,
-        completedSteps: state.completedSteps?.length ? state.completedSteps : [1],
-        completionPercentage: state.completionPercentage || 10,
+        currentStep: Math.max(1, state.currentStep || 1),
+        completedSteps: state.completedSteps || [],
+        rejectedSteps: (state as any).rejectedSteps || [],
+        completionPercentage: Math.max(11, state.completionPercentage || 11),
         draftData: state.draftData || {},
         sectionStatus: newSectionStatus,
         rejectionReason: state.rejectionReason || null,
@@ -113,102 +129,135 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
 
       return state;
     } catch (err: any) {
-      set({ isLoading: false, error: getErrorMessage(err) });
+      set({
+        error: getErrorMessage(err),
+        isLoading: false,
+      });
       return null;
     }
   },
 
   setCurrentStep: (step: number) => {
-    if (step >= 1 && step <= 14) {
-      set({ currentStep: step });
-    }
+    const total = 9;
+    const clamped = Math.max(1, Math.min(step, total));
+    set({
+      currentStep: clamped,
+      completionPercentage: Math.round((clamped / total) * 100),
+    });
   },
 
-  saveSection: async (section: string, data: any, advanceNext = true) => {
+  saveSection: async (section: string, data: any, advanceNext: boolean = true) => {
     try {
       set({ isSaving: true, error: null });
-      await onboardingService.updateSection(section, data);
 
-      const sectionKey = section.toUpperCase().replace(/-/g, '_');
-      const stepIndex = SECTION_KEYS.indexOf(sectionKey as any) + 1;
+      const updatedDraft = {
+        ...get().draftData,
+        [section]: {
+          ...(get().draftData[section] || {}),
+          ...data,
+        },
+      };
 
-      const currentCompleted = new Set(get().completedSteps);
-      if (stepIndex > 0) currentCompleted.add(stepIndex);
+      const sectionKeyUpper = section.toUpperCase();
+      const updatedSectionStatus = {
+        ...get().sectionStatus,
+        [sectionKeyUpper]: 'COMPLETED' as SectionStatus,
+      };
 
-      const completedArr = Array.from(currentCompleted);
-      const percentage = Math.min(100, Math.round((completedArr.length / 14) * 100));
+      const current = get().currentStep;
+      const next = advanceNext ? Math.min(current + 1, 9) : current;
+      const total = 9;
 
-      const updatedDraft = { ...get().draftData, [section]: data };
-      const updatedStatuses = { ...get().sectionStatus, [sectionKey]: 'COMPLETED' as SectionStatus };
-
-      const nextStep = advanceNext && get().currentStep < 14 ? get().currentStep + 1 : get().currentStep;
+      const completed = Array.from(new Set([...get().completedSteps, current]));
 
       set({
         draftData: updatedDraft,
-        completedSteps: completedArr,
-        completionPercentage: percentage,
-        sectionStatus: updatedStatuses,
-        currentStep: nextStep,
+        sectionStatus: updatedSectionStatus,
+        completedSteps: completed,
+        currentStep: next,
+        completionPercentage: Math.round((completed.length / total) * 100),
         isSaving: false,
       });
+
+      // Async sync with backend
+      onboardingService
+        .updateSection(section, data)
+        .catch((err: any) => console.warn('Background sync failed:', err));
 
       return true;
     } catch (err: any) {
-      // Optimistic local update for offline resilience
-      const sectionKey = section.toUpperCase().replace(/-/g, '_');
-      const stepIndex = SECTION_KEYS.indexOf(sectionKey as any) + 1;
-      const currentCompleted = new Set(get().completedSteps);
-      if (stepIndex > 0) currentCompleted.add(stepIndex);
-      const completedArr = Array.from(currentCompleted);
-      const percentage = Math.min(100, Math.round((completedArr.length / 14) * 100));
-
       set({
-        draftData: { ...get().draftData, [section]: data },
-        completedSteps: completedArr,
-        completionPercentage: percentage,
-        sectionStatus: { ...get().sectionStatus, [sectionKey]: 'COMPLETED' },
-        currentStep: advanceNext && get().currentStep < 14 ? get().currentStep + 1 : get().currentStep,
+        error: getErrorMessage(err),
         isSaving: false,
-        error: null,
       });
-      return true;
+      return false;
     }
   },
 
-  saveStep: async (stepNumber: number, data: any, saveAndExit = false) => {
-    const section = SECTION_KEYS[stepNumber - 1];
-    if (!section) return false;
-    return get().saveSection(section, data, !saveAndExit);
+  saveStep: async (stepNumber: number, data: any, saveAndExit: boolean = false) => {
+    const stepName = STEP_NAMES[stepNumber - 1] || `Step ${stepNumber}`;
+    const sectionKey = SECTION_KEYS[stepNumber - 1]?.toLowerCase() || `step_${stepNumber}`;
+    return get().saveSection(sectionKey, data, !saveAndExit);
   },
 
   submitApplication: async () => {
     try {
       set({ isSaving: true, error: null });
-      const draft = get().draftData;
-      await onboardingService.submitApplication({ ...draft, applicationId: get().applicationId });
-      set({ isSaving: false });
-      return true;
+      const result = await onboardingService.submitApplication();
+      if (result.success) {
+        set({
+          sectionStatus: {
+            ...get().sectionStatus,
+            REVIEW: 'COMPLETED',
+          },
+          completionPercentage: 100,
+          isSaving: false,
+        });
+        return true;
+      }
+      set({
+        error: result.message || 'Submission failed. Please check all steps.',
+        isSaving: false,
+      });
+      return false;
     } catch (err: any) {
-      set({ isSaving: false, error: getErrorMessage(err) });
-      return true;
+      set({
+        error: getErrorMessage(err),
+        isSaving: false,
+      });
+      return false;
     }
   },
 
   resubmitCorrection: async (data: any) => {
     try {
       set({ isSaving: true, error: null });
-      await onboardingService.resubmitCorrection(data);
-      set({ isSaving: false });
-      return true;
+      const result = await onboardingService.resubmitCorrection(data);
+      if (result.success) {
+        set({
+          rejectionReason: null,
+          correctionItems: null,
+          isSaving: false,
+        });
+        return true;
+      }
+      set({
+        error: result.message || 'Correction resubmission failed.',
+        isSaving: false,
+      });
+      return false;
     } catch (err: any) {
-      set({ isSaving: false, error: getErrorMessage(err) });
-      return true;
+      set({
+        error: getErrorMessage(err),
+        isSaving: false,
+      });
+      return false;
     }
   },
 
-  getSectionStatus: (section: string): SectionStatus => {
-    const normalized = section.toUpperCase().replace(/-/g, '_');
-    return get().sectionStatus[normalized] || 'NOT_STARTED';
+  getSectionStatus: (section: string) => {
+    const key = section.toUpperCase();
+    return get().sectionStatus[key] || 'NOT_STARTED';
   },
 
   clearError: () => set({ error: null }),

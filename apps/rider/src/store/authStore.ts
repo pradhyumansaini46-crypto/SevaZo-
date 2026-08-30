@@ -225,9 +225,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false, error: friendlyError });
 
       // Admin sync fallback: check if rider application is already registered and approved
+      const clean10 = phone.replace(/\D/g, '').slice(-10);
       let fallbackRider: any = null;
       try {
-        const clean10 = phone.replace(/\D/g, '').slice(-10);
         const adminRes = await fetch('http://192.168.1.7:3000/api/applications/riders');
         const adminJson = await adminRes.json();
         if (adminJson?.data && Array.isArray(adminJson.data)) {
@@ -237,23 +237,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       } catch (e) {}
 
-      const isApproved =
-        fallbackRider?.approvalStatus === 'APPROVED' ||
-        fallbackRider?.status === 'active';
+      const isApproved = Boolean(
+        fallbackRider && (
+          fallbackRider?.approvalStatus === 'APPROVED' ||
+          fallbackRider?.status === 'active'
+        )
+      );
 
-      const isSubmitted =
-        fallbackRider?.approvalStatus === 'PENDING' ||
-        fallbackRider?.approvalStatus === 'UNDER_REVIEW';
+      const isSubmitted = Boolean(
+        fallbackRider && (
+          fallbackRider?.approvalStatus === 'UNDER_REVIEW' ||
+          fallbackRider?.status === 'submitted' ||
+          (fallbackRider?.approvalStatus === 'PENDING' && fallbackRider?.submittedAt)
+        )
+      );
+
+      const isNewUser = !fallbackRider;
 
       const mockResult: VerifyOtpResponse = {
         accessToken: 'jwt-token-rdr-' + (fallbackRider?.id || Date.now()),
-        isNewUser: !fallbackRider,
-        riderId: fallbackRider?.id || 'rdr-001',
+        isNewUser: isNewUser,
+        riderId: fallbackRider?.id || `rdr-${clean10}`,
         status: isApproved ? 'APPROVED' : isSubmitted ? 'UNDER_REVIEW' : 'DRAFT',
-        nextAction: isApproved ? 'OPEN_HOME' : isSubmitted ? 'OPEN_VERIFICATION_STATUS' : 'RESUME_REGISTRATION',
-        applicationId: fallbackRider?.id || 'SVZ-RID-000123',
+        nextAction: isApproved
+          ? 'OPEN_HOME'
+          : isSubmitted
+          ? 'OPEN_VERIFICATION_STATUS'
+          : 'RESUME_REGISTRATION',
+        applicationId: fallbackRider?.id || `SVZ-RID-${Math.floor(100000 + Math.random() * 900000)}`,
         rider: {
-          id: fallbackRider?.id || 'rdr-001',
+          id: fallbackRider?.id || `rdr-${clean10}`,
           applicationId: fallbackRider?.id || 'SVZ-RID-000123',
           name: fallbackRider?.name || '',
           phone: phone.startsWith('+91') ? phone : `+91 ${phone}`,

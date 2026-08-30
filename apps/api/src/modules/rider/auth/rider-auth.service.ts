@@ -60,12 +60,13 @@ export class RiderAuthService {
       };
     }
 
-    if (
+    // Check if the application was actually submitted by the rider
+    const isSubmitted =
       onboarding?.status === 'SUBMITTED' ||
       onboarding?.status === 'UNDER_REVIEW' ||
-      rider.approvalStatus === 'UNDER_REVIEW' ||
-      rider.approvalStatus === 'PENDING'
-    ) {
+      (rider.approvalStatus === 'UNDER_REVIEW' && onboarding?.status !== 'DRAFT' && onboarding?.status !== undefined);
+
+    if (isSubmitted) {
       return {
         status: 'UNDER_REVIEW',
         nextAction: 'OPEN_VERIFICATION_STATUS',
@@ -74,7 +75,7 @@ export class RiderAuthService {
       };
     }
 
-    const completionPercentage = onboarding?.completionPercentage || 9;
+    const completionPercentage = onboarding?.completionPercentage || 0;
     return {
       status: 'DRAFT',
       nextAction: 'RESUME_REGISTRATION',
@@ -200,8 +201,8 @@ export class RiderAuthService {
                   currentStep: 1,
                   completedSteps: [],
                   status: 'DRAFT',
-                  completionPercentage: 9,
-                  draftData: { step1: { phone: normalizedPhone, email: email || '' } },
+                  completionPercentage: 0,
+                  draftData: { personal: { phone: normalizedPhone, email: email || '' } },
                 },
               },
             },
@@ -217,7 +218,7 @@ export class RiderAuthService {
         // In-memory fallback for offline/mock DB
         if (!this.mockRiders.has(normalizedPhone)) {
           isNewUser = true;
-          const appNumber = '000123';
+          const appNumber = Math.floor(100000 + Math.random() * 900000);
           this.mockRiders.set(normalizedPhone, {
             id: `rdr-${normalizedPhone.slice(-6)}`,
             applicationId: `SVZ-RID-${appNumber}`,
@@ -225,7 +226,7 @@ export class RiderAuthService {
             email: email || '',
             name: `Rider ${normalizedPhone.slice(-4)}`,
             status: 'INACTIVE',
-            approvalStatus: 'PENDING',
+            approvalStatus: 'DRAFT',
             operationalStatus: 'OFFLINE',
             isOnline: false,
             rating: 5.0,
@@ -237,8 +238,8 @@ export class RiderAuthService {
               currentStep: 1,
               completedSteps: [],
               status: 'DRAFT',
-              completionPercentage: 9,
-              draftData: { step1: { phone: normalizedPhone, email: email || '' } },
+              completionPercentage: 0,
+              draftData: { personal: { phone: normalizedPhone, email: email || '' } },
             },
           });
         }

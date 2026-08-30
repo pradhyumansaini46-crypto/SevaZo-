@@ -10,16 +10,25 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import { Camera, Image as ImageIcon, FolderOpen, X } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../theme';
+
+export interface SelectedFilePayload {
+  uri: string;
+  name?: string;
+  size?: number;
+  mimeType?: string;
+}
 
 interface ImagePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onImageSelected: (uri: string) => void;
+  onImageSelected: (uri: string, filePayload?: SelectedFilePayload) => void;
   title?: string;
   allowsEditing?: boolean;
   aspect?: [number, number];
+  showDocumentOption?: boolean;
 }
 
 export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
@@ -29,6 +38,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   title = 'Select Image Source',
   allowsEditing = true,
   aspect = [4, 3],
+  showDocumentOption = false,
 }) => {
   const ensureCameraPermission = async (): Promise<boolean> => {
     try {
@@ -66,12 +76,19 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: false,
+        allowsEditing: allowsEditing,
+        aspect: aspect,
         quality: 0.85,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        onImageSelected(result.assets[0].uri);
+        const asset = result.assets[0];
+        onImageSelected(asset.uri, {
+          uri: asset.uri,
+          name: asset.fileName || `photo_${Date.now().toString().slice(-4)}.jpg`,
+          size: asset.fileSize,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
       }
     } catch (err: any) {
       console.warn('Camera launch error:', err);
@@ -94,15 +111,46 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: false,
+        allowsEditing: allowsEditing,
+        aspect: aspect,
         quality: 0.85,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        onImageSelected(result.assets[0].uri);
+        const asset = result.assets[0];
+        onImageSelected(asset.uri, {
+          uri: asset.uri,
+          name: asset.fileName || `gallery_image_${Date.now().toString().slice(-4)}.jpg`,
+          size: asset.fileSize,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
       }
     } catch (err: any) {
       console.warn('Gallery launch error:', err);
+    } finally {
+      onClose();
+    }
+  };
+
+  const doLaunchDocumentPicker = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        onImageSelected(asset.uri, {
+          uri: asset.uri,
+          name: asset.name,
+          size: asset.size,
+          mimeType: asset.mimeType || 'application/pdf',
+        });
+      }
+    } catch (err: any) {
+      console.warn('Document picker error:', err);
+      Alert.alert('Document Error', err?.message || 'Could not open document picker.');
     } finally {
       onClose();
     }
@@ -132,7 +180,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
               </View>
 
               <View style={styles.optionsList}>
-                {/* Take Photo Option */}
+                {/* Option 1: Take Photo */}
                 <TouchableOpacity
                   style={styles.optionItem}
                   onPress={doLaunchCamera}
@@ -150,7 +198,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   </View>
                 </TouchableOpacity>
 
-                {/* Choose from Gallery Option */}
+                {/* Option 2: Choose from Gallery */}
                 <TouchableOpacity
                   style={styles.optionItem}
                   onPress={doLaunchGallery}
@@ -167,6 +215,26 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                     <Text style={styles.optionSubtitle}>Select document from photo library</Text>
                   </View>
                 </TouchableOpacity>
+
+                {/* Option 3: Browse Files (PDF / Documents) */}
+                {showDocumentOption && (
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={doLaunchDocumentPicker}
+                    activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Browse Files (PDF / Documents)"
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
+                      <FolderOpen size={24} color="#8B5CF6" />
+                    </View>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Browse Files (PDF / Documents)</Text>
+                      <Text style={styles.optionSubtitle}>Select PDF or document file from device</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Cancel Button */}

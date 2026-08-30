@@ -231,8 +231,8 @@ export const AvailabilityStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={12}
-      totalSteps={14}
+      currentStep={8}
+      totalSteps={9}
       stepTitle="Working Hours & Availability"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingPreferences')}

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
-import { Upload, CheckCircle2, ShieldCheck, CreditCard } from 'lucide-react-native';
+import { Upload, CheckCircle2, ShieldCheck, CreditCard, FileCheck, AlertCircle } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { StepContainer } from '../../components/onboarding/StepContainer';
 import { Input } from '../../components/Input';
-import { ImagePickerModal } from '../../components/ImagePickerModal';
+import { ImagePickerModal, SelectedFilePayload } from '../../components/ImagePickerModal';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { identitySchema, IdentityFormValues } from '../../validation/onboardingValidation';
 
@@ -49,13 +49,14 @@ export const IdentityStepScreen = ({ navigation }: any) => {
   const { draftData, completionPercentage, saveSection, isSaving, error, clearError } =
     useOnboardingStore();
 
+  const isBicycle = draftData?.vehicle?.vehicleType === 'BICYCLE';
+
   const initialIdType = (
     draftData?.identity?.idType && draftData?.identity?.idType !== 'PAN'
       ? draftData.identity.idType
       : 'AADHAAR'
   ) as 'AADHAAR' | 'VOTER_ID' | 'PASSPORT';
 
-  // Track uploads independently per document type
   const [docUploads, setDocUploads] = useState<Record<string, DocState>>(() => ({
     AADHAAR: {
       idNumber: initialIdType === 'AADHAAR' ? draftData?.identity?.idNumber || '' : '',
@@ -74,7 +75,18 @@ export const IdentityStepScreen = ({ navigation }: any) => {
     },
   }));
 
-  const [activePickerSide, setActivePickerSide] = useState<'front' | 'back' | null>(null);
+  // Driving licence state
+  const [dlFrontImage, setDlFrontImage] = useState<string>(
+    draftData?.identity?.licenseFrontImage || draftData?.drivingLicence?.frontImage || ''
+  );
+  const [dlBackImage, setDlBackImage] = useState<string>(
+    draftData?.identity?.licenseBackImage || draftData?.drivingLicence?.backImage || ''
+  );
+
+  // Active modal picker target
+  const [activePickerTarget, setActivePickerTarget] = useState<
+    'id_front' | 'id_back' | 'dl_front' | 'dl_back' | null
+  >(null);
 
   const {
     control,
@@ -90,6 +102,13 @@ export const IdentityStepScreen = ({ navigation }: any) => {
       idNumber: docUploads[initialIdType]?.idNumber || '',
       frontImage: docUploads[initialIdType]?.frontImage || '',
       backImage: docUploads[initialIdType]?.backImage || '',
+      isBicycle: isBicycle,
+      licenseNumber:
+        draftData?.identity?.licenseNumber || draftData?.drivingLicence?.licenseNumber || '',
+      expiryDate:
+        draftData?.identity?.expiryDate || draftData?.drivingLicence?.expiryDate || '',
+      licenseFrontImage: dlFrontImage,
+      licenseBackImage: dlBackImage,
     },
   });
 
@@ -105,8 +124,8 @@ export const IdentityStepScreen = ({ navigation }: any) => {
     setValue('backImage', targetDoc.backImage, { shouldValidate: !!targetDoc.backImage });
   };
 
-  const handleImageSelected = (uri: string) => {
-    if (activePickerSide === 'front') {
+  const handleFileSelected = (uri: string) => {
+    if (activePickerTarget === 'id_front') {
       setDocUploads((prev) => ({
         ...prev,
         [selectedIdType]: {
@@ -115,7 +134,7 @@ export const IdentityStepScreen = ({ navigation }: any) => {
         },
       }));
       setValue('frontImage', uri, { shouldValidate: true });
-    } else if (activePickerSide === 'back') {
+    } else if (activePickerTarget === 'id_back') {
       setDocUploads((prev) => ({
         ...prev,
         [selectedIdType]: {
@@ -124,8 +143,14 @@ export const IdentityStepScreen = ({ navigation }: any) => {
         },
       }));
       setValue('backImage', uri, { shouldValidate: true });
+    } else if (activePickerTarget === 'dl_front') {
+      setDlFrontImage(uri);
+      setValue('licenseFrontImage', uri, { shouldValidate: true });
+    } else if (activePickerTarget === 'dl_back') {
+      setDlBackImage(uri);
+      setValue('licenseBackImage', uri, { shouldValidate: true });
     }
-    setActivePickerSide(null);
+    setActivePickerTarget(null);
   };
 
   const onSubmit = async (data: IdentityFormValues) => {
@@ -134,235 +159,348 @@ export const IdentityStepScreen = ({ navigation }: any) => {
       ...data,
       frontImage: currentDoc.frontImage || data.frontImage,
       backImage: currentDoc.backImage || data.backImage,
+      licenseFrontImage: dlFrontImage || data.licenseFrontImage,
+      licenseBackImage: dlBackImage || data.licenseBackImage,
     };
     const success = await saveSection('identity', payload, true);
     if (success) {
-      // If bicycle, skip Driving Licence and go to Banking
-      const isBicycle = draftData?.vehicle?.vehicleType === 'BICYCLE';
-      if (isBicycle) {
-        navigation.navigate('OnboardingBanking');
-      } else {
-        navigation.navigate('OnboardingDrivingLicence');
-      }
+      // Step 4 is Vehicle Registration
+      navigation.navigate('OnboardingVehicle');
     }
   };
 
   const handleSaveExit = async () => {
     handleSubmit(async (data) => {
-      const payload = {
-        ...data,
-        frontImage: currentDoc.frontImage || data.frontImage,
-        backImage: currentDoc.backImage || data.backImage,
-      };
-      await saveSection('identity', payload, false);
+      await saveSection(
+        'identity',
+        {
+          ...data,
+          frontImage: currentDoc.frontImage || data.frontImage,
+          backImage: currentDoc.backImage || data.backImage,
+          licenseFrontImage: dlFrontImage,
+          licenseBackImage: dlBackImage,
+        },
+        false
+      );
       navigation.navigate('OnboardingResume');
     })();
   };
 
   return (
     <OnboardingLayout
-      currentStep={6}
-      totalSteps={14}
-      stepTitle="Identity Verification"
+      currentStep={3}
+      totalSteps={9}
+      stepTitle="Identity & Licence"
       completionPercentage={completionPercentage}
-      onBack={() => navigation.navigate('OnboardingVehicle')}
+      onBack={() => navigation.navigate('OnboardingAddress')}
       onSaveContinue={handleSubmit(onSubmit)}
       onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer
-        title="Verify Your Identity"
-        subtitle="Provide your PAN details and upload a government-approved identity document for KYC compliance."
+        title="Identity & Licence Verification"
+        subtitle="Submit government-issued identification (PAN, Aadhaar/Passport) and your Driving Licence."
         error={error}
       >
-        {/* ================= 1. MANDATORY PAN NUMBER (TOP POSITION) ================= */}
-        <View style={styles.panCardBox}>
-          <View style={styles.panHeaderRow}>
-            <CreditCard size={18} color="#FF6600" />
-            <Text style={styles.panHeaderTitle}>Permanent Account Number (PAN) *</Text>
-          </View>
-
+        {/* PAN Card Field */}
+        <View style={styles.panSection}>
+          <Text style={styles.sectionHeaderTitle}>1. PAN Card Verification *</Text>
           <Controller
             control={control}
             name="panNumber"
             render={({ field: { onChange, value } }) => (
               <Input
-                label="PAN Card Number"
+                label="Permanent Account Number (PAN)"
                 required
                 placeholder="e.g. ABCDE1234F"
                 value={value}
-                onChangeText={(txt) =>
-                  onChange(txt.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))
-                }
+                onChangeText={(txt) => onChange(txt.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                 error={errors.panNumber?.message}
                 autoCapitalize="characters"
                 maxLength={10}
-                helperText="Mandatory government tax identifier for direct earnings payout & TDS compliance"
+                leftIcon={<CreditCard size={18} color={Colors.textSecondary} />}
+                helperText="10-character alphanumeric PAN issued by Income Tax Dept."
               />
             )}
           />
         </View>
 
-        {/* ================= 2. SELECT SECONDARY GOVT ID (AADHAAR, VOTER ID, PASSPORT) ================= */}
+        {/* Secondary ID Document Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Select Identity Document Type *</Text>
-          <View style={styles.chipsRow}>
-            {ID_TYPES.map((t) => {
-              const isSelected = selectedIdType === t.value;
-              return (
-                <TouchableOpacity
-                  key={t.value}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
-                  onPress={() => handleIdTypeChange(t.value)}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select ${t.label}`}
+          <Text style={styles.sectionHeaderTitle}>2. Government Photo ID *</Text>
+          <Text style={styles.sectionSubtitle}>
+            Select ID document type and upload front and back scans.
+          </Text>
+
+          <View style={styles.idTypeChips}>
+            {ID_TYPES.map((type) => (
+              <TouchableOpacity
+                key={type.value}
+                style={[
+                  styles.idChip,
+                  selectedIdType === type.value && styles.idChipSelected,
+                ]}
+                onPress={() => handleIdTypeChange(type.value)}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ID Type: ${type.label}`}
+              >
+                <Text
+                  style={[
+                    styles.idChipText,
+                    selectedIdType === type.value && styles.idChipTextSelected,
+                  ]}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {t.label}
-                  </Text>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* ID Number Input */}
+          <Controller
+            control={control}
+            name="idNumber"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label={`${activeTypeConfig.label} Number`}
+                required
+                placeholder={activeTypeConfig.placeholder}
+                value={value}
+                onChangeText={(txt) => {
+                  onChange(txt);
+                  setDocUploads((prev) => ({
+                    ...prev,
+                    [selectedIdType]: {
+                      ...prev[selectedIdType],
+                      idNumber: txt,
+                    },
+                  }));
+                }}
+                error={errors.idNumber?.message}
+                helperText={activeTypeConfig.helper}
+                autoCapitalize="characters"
+              />
+            )}
+          />
+
+          {/* Document Front & Back Upload Boxes */}
+          <View style={styles.uploadRow}>
+            {/* Front Side */}
+            <View style={styles.uploadCard}>
+              <Text style={styles.uploadTitle}>Front Side *</Text>
+              {currentDoc.frontImage ? (
+                <View style={styles.previewContainer}>
+                  <Image source={{ uri: currentDoc.frontImage }} style={styles.previewImage} />
+                  <View style={styles.verifiedTag}>
+                    <CheckCircle2 size={12} color="#10B981" />
+                    <Text style={styles.verifiedTagText}>Uploaded</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.replaceButton}
+                    onPress={() => setActivePickerTarget('id_front')}
+                  >
+                    <Text style={styles.replaceButtonText}>Replace</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.dropZone}
+                  onPress={() => setActivePickerTarget('id_front')}
+                >
+                  <Upload size={22} color="#FF6600" />
+                  <Text style={styles.dropZoneText}>Upload Front</Text>
                 </TouchableOpacity>
-              );
-            })}
+              )}
+              {errors.frontImage && (
+                <Text style={styles.errorText}>{errors.frontImage.message}</Text>
+              )}
+            </View>
+
+            {/* Back Side */}
+            <View style={styles.uploadCard}>
+              <Text style={styles.uploadTitle}>Back Side *</Text>
+              {currentDoc.backImage ? (
+                <View style={styles.previewContainer}>
+                  <Image source={{ uri: currentDoc.backImage }} style={styles.previewImage} />
+                  <View style={styles.verifiedTag}>
+                    <CheckCircle2 size={12} color="#10B981" />
+                    <Text style={styles.verifiedTagText}>Uploaded</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.replaceButton}
+                    onPress={() => setActivePickerTarget('id_back')}
+                  >
+                    <Text style={styles.replaceButtonText}>Replace</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.dropZone}
+                  onPress={() => setActivePickerTarget('id_back')}
+                >
+                  <Upload size={22} color="#FF6600" />
+                  <Text style={styles.dropZoneText}>Upload Back</Text>
+                </TouchableOpacity>
+              )}
+              {errors.backImage && (
+                <Text style={styles.errorText}>{errors.backImage.message}</Text>
+              )}
+            </View>
           </View>
         </View>
 
-        {/* ================= 3. DYNAMIC DOCUMENT NUMBER INPUT ================= */}
-        <Controller
-          control={control}
-          name="idNumber"
-          render={({ field: { onChange, value } }) => (
-            <Input
-              label={`${activeTypeConfig.label} Number *`}
-              required
-              placeholder={activeTypeConfig.placeholder}
-              value={value}
-              onChangeText={(txt) => {
-                let updatedTxt = txt;
-                if (selectedIdType === 'AADHAAR') {
-                  const clean = txt.replace(/\D/g, '').slice(0, 12);
-                  updatedTxt = clean.replace(/(\d{4})(?=\d)/g, '$1 ');
-                } else {
-                  updatedTxt = txt.toUpperCase();
-                }
-                onChange(updatedTxt);
-                setDocUploads((prev) => ({
-                  ...prev,
-                  [selectedIdType]: {
-                    ...prev[selectedIdType],
-                    idNumber: updatedTxt,
-                  },
-                }));
-              }}
-              error={errors.idNumber?.message}
-              autoCapitalize={selectedIdType === 'AADHAAR' ? 'none' : 'characters'}
-              keyboardType={selectedIdType === 'AADHAAR' ? 'number-pad' : 'default'}
-              maxLength={selectedIdType === 'AADHAAR' ? 14 : 16}
-              helperText={activeTypeConfig.helper}
-            />
+        {/* ========================================================= */}
+        {/* MERGED: Driving Licence Verification (Point 5)            */}
+        {/* ========================================================= */}
+        <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <FileCheck size={20} color="#FF6600" />
+            <Text style={styles.sectionHeaderTitle}>3. Driving Licence (DL) *</Text>
+          </View>
+
+          {isBicycle ? (
+            <View style={styles.bicycleNotice}>
+              <Text style={styles.bicycleNoticeText}>
+                🚲 Bicycle riders are exempt from Driving Licence requirements.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* DL Number */}
+              <Controller
+                control={control}
+                name="licenseNumber"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Driving Licence Number"
+                    required
+                    placeholder="e.g. DL-1420110012345"
+                    value={value}
+                    onChangeText={(txt) => onChange(txt.toUpperCase())}
+                    error={errors.licenseNumber?.message}
+                    autoCapitalize="characters"
+                  />
+                )}
+              />
+
+              {/* DL Expiry */}
+              <Controller
+                control={control}
+                name="expiryDate"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Valid Till / Expiry Date (YYYY-MM-DD)"
+                    required
+                    placeholder="e.g. 2032-12-31"
+                    value={value}
+                    onChangeText={onChange}
+                    error={errors.expiryDate?.message}
+                    helperText="Licence must be valid and not expired"
+                  />
+                )}
+              />
+
+              {/* DL Front & Back Uploads */}
+              <View style={styles.uploadRow}>
+                {/* DL Front */}
+                <View style={styles.uploadCard}>
+                  <Text style={styles.uploadTitle}>DL Front Side *</Text>
+                  {dlFrontImage ? (
+                    <View style={styles.previewContainer}>
+                      <Image source={{ uri: dlFrontImage }} style={styles.previewImage} />
+                      <View style={styles.verifiedTag}>
+                        <CheckCircle2 size={12} color="#10B981" />
+                        <Text style={styles.verifiedTagText}>Uploaded</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.replaceButton}
+                        onPress={() => setActivePickerTarget('dl_front')}
+                      >
+                        <Text style={styles.replaceButtonText}>Replace</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.dropZone}
+                      onPress={() => setActivePickerTarget('dl_front')}
+                    >
+                      <Upload size={22} color="#FF6600" />
+                      <Text style={styles.dropZoneText}>Upload Front</Text>
+                    </TouchableOpacity>
+                  )}
+                  {errors.licenseFrontImage && (
+                    <Text style={styles.errorText}>{errors.licenseFrontImage.message}</Text>
+                  )}
+                </View>
+
+                {/* DL Back */}
+                <View style={styles.uploadCard}>
+                  <Text style={styles.uploadTitle}>DL Back Side *</Text>
+                  {dlBackImage ? (
+                    <View style={styles.previewContainer}>
+                      <Image source={{ uri: dlBackImage }} style={styles.previewImage} />
+                      <View style={styles.verifiedTag}>
+                        <CheckCircle2 size={12} color="#10B981" />
+                        <Text style={styles.verifiedTagText}>Uploaded</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.replaceButton}
+                        onPress={() => setActivePickerTarget('dl_back')}
+                      >
+                        <Text style={styles.replaceButtonText}>Replace</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.dropZone}
+                      onPress={() => setActivePickerTarget('dl_back')}
+                    >
+                      <Upload size={22} color="#FF6600" />
+                      <Text style={styles.dropZoneText}>Upload Back</Text>
+                    </TouchableOpacity>
+                  )}
+                  {errors.licenseBackImage && (
+                    <Text style={styles.errorText}>{errors.licenseBackImage.message}</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.noticeBanner}>
+                <AlertCircle size={16} color="#FF6600" />
+                <Text style={styles.noticeText}>
+                  Ensure all 4 corners of your DL are visible. Learner's Licence (LLR) is not accepted.
+                </Text>
+              </View>
+            </>
           )}
-        />
-
-        {/* ================= 4. DEDICATED FRONT & BACK DOCUMENT UPLOAD CARDS ================= */}
-        <View style={styles.uploadSectionHeader}>
-          <Text style={styles.uploadSectionTitle}>
-            Upload {activeTypeConfig.label} Photos *
-          </Text>
-          <Text style={styles.uploadSectionSubtitle}>
-            Please upload clear front and back photos of your {activeTypeConfig.label}.
-          </Text>
         </View>
 
-        <View style={styles.uploadRow}>
-          {/* Front Photo */}
-          <View style={styles.uploadCard}>
-            <Text style={styles.uploadTitle}>Front Side *</Text>
-            {currentDoc.frontImage ? (
-              <View style={styles.previewContainer}>
-                <Image source={{ uri: currentDoc.frontImage }} style={styles.previewImage} />
-                <View style={styles.verifiedTag}>
-                  <CheckCircle2 size={12} color="#10B981" />
-                  <Text style={styles.verifiedTagText}>Uploaded</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.replaceButton}
-                  onPress={() => setActivePickerSide('front')}
-                >
-                  <Text style={styles.replaceButtonText}>Replace</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.dropZone}
-                onPress={() => setActivePickerSide('front')}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={`Upload front photo of ${activeTypeConfig.label}`}
-              >
-                <Upload size={24} color="#FF6600" />
-                <Text style={styles.dropZoneText}>Upload Front</Text>
-              </TouchableOpacity>
-            )}
-            {errors.frontImage && (
-              <Text style={styles.errorText}>{errors.frontImage.message}</Text>
-            )}
-          </View>
-
-          {/* Back Photo (Compulsory) */}
-          <View style={styles.uploadCard}>
-            <Text style={styles.uploadTitle}>Back Side *</Text>
-            {currentDoc.backImage ? (
-              <View style={styles.previewContainer}>
-                <Image source={{ uri: currentDoc.backImage }} style={styles.previewImage} />
-                <View style={styles.verifiedTag}>
-                  <CheckCircle2 size={12} color="#10B981" />
-                  <Text style={styles.verifiedTagText}>Uploaded</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.replaceButton}
-                  onPress={() => setActivePickerSide('back')}
-                >
-                  <Text style={styles.replaceButtonText}>Replace</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.dropZone}
-                onPress={() => setActivePickerSide('back')}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={`Upload back photo of ${activeTypeConfig.label}`}
-              >
-                <Upload size={24} color="#FF6600" />
-                <Text style={styles.dropZoneText}>Upload Back</Text>
-              </TouchableOpacity>
-            )}
-            {errors.backImage && (
-              <Text style={styles.errorText}>{errors.backImage.message}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Security & Encryption Banner */}
         <View style={styles.trustBadge}>
           <ShieldCheck size={16} color="#10B981" />
           <Text style={styles.trustText}>
-            All identity document images are transferred via encrypted object storage with AES-256
-            protection for UIDAI/KYC compliance.
+            Identity and driving documents are cross-verified with official government registries.
           </Text>
         </View>
 
-        {/* Native Image Picker Modal */}
+        {/* Image & Document Picker Modal (Supports Camera, Gallery, and Browse Files/PDF) */}
         <ImagePickerModal
-          visible={activePickerSide !== null}
-          onClose={() => setActivePickerSide(null)}
-          onImageSelected={handleImageSelected}
+          visible={activePickerTarget !== null}
+          onClose={() => setActivePickerTarget(null)}
+          onImageSelected={handleFileSelected}
           title={
-            activePickerSide === 'front'
+            activePickerTarget === 'id_front'
               ? `Upload ${activeTypeConfig.label} (Front)`
-              : `Upload ${activeTypeConfig.label} (Back)`
+              : activePickerTarget === 'id_back'
+              ? `Upload ${activeTypeConfig.label} (Back)`
+              : activePickerTarget === 'dl_front'
+              ? 'Upload Driving Licence (Front)'
+              : 'Upload Driving Licence (Back)'
           }
           aspect={[4, 3]}
+          showDocumentOption={true}
         />
       </StepContainer>
     </OnboardingLayout>
@@ -370,82 +508,61 @@ export const IdentityStepScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  panCardBox: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: '#FF6600',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  panHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  panHeaderTitle: {
-    ...Typography.titleSmall,
-    color: '#FF6600',
-    fontSize: 14,
-    fontWeight: '700',
+  panSection: {
+    marginBottom: Spacing.md,
   },
   section: {
     marginBottom: Spacing.md,
   },
-  sectionLabel: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-    fontWeight: '600',
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  chip: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipSelected: {
-    backgroundColor: 'rgba(255, 102, 0, 0.15)',
-    borderColor: '#FF6600',
-  },
-  chipText: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  chipTextSelected: {
-    color: '#FF6600',
-    fontWeight: '700',
-  },
-  uploadSectionHeader: {
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  uploadSectionTitle: {
+  sectionHeaderTitle: {
     ...Typography.titleSmall,
     color: Colors.textPrimary,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  uploadSectionSubtitle: {
+  sectionSubtitle: {
     ...Typography.bodySmall,
     color: Colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
+    marginBottom: Spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  idTypeChips: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  idChip: {
+    flex: 1,
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  idChipSelected: {
+    borderColor: '#FF6600',
+    backgroundColor: '#FFF7ED',
+  },
+  idChipText: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  idChipTextSelected: {
+    color: '#FF6600',
+    fontWeight: '700',
   },
   uploadRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginVertical: Spacing.md,
+    marginVertical: Spacing.sm,
   },
   uploadCard: {
     flex: 1,
@@ -462,7 +579,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderStyle: 'dashed',
     borderRadius: BorderRadius.lg,
-    height: 120,
+    height: 110,
     justifyContent: 'center',
     alignItems: 'center',
     gap: Spacing.xs,
@@ -474,7 +591,7 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     position: 'relative',
-    height: 120,
+    height: 110,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1,
@@ -519,6 +636,40 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.lg,
+  },
+  bicycleNotice: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginVertical: Spacing.sm,
+  },
+  bicycleNoticeText: {
+    ...Typography.bodySmall,
+    color: '#065F46',
+    fontWeight: '600',
+  },
+  noticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginVertical: Spacing.sm,
+  },
+  noticeText: {
+    ...Typography.bodySmall,
+    color: '#9A3412',
+    flex: 1,
+  },
   trustBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -526,9 +677,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ECFDF5',
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    marginTop: Spacing.sm,
     borderWidth: 1,
     borderColor: '#A7F3D0',
+    marginTop: Spacing.md,
   },
   trustText: {
     ...Typography.bodySmall,

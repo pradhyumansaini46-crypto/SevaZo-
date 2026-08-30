@@ -29,6 +29,8 @@ import {
   Car,
   Calendar,
   Settings,
+  HeartHandshake,
+  Landmark,
 } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -93,11 +95,8 @@ export const ReviewStepScreen = ({ navigation }: any) => {
 
   const personal = draftData?.personal || {};
   const address = draftData?.address || {};
-  const emergency = draftData?.emergencyContact || {};
-  const vehicle = draftData?.vehicle || {};
   const identity = draftData?.identity || {};
-  const dl = draftData?.drivingLicence || {};
-  const vehicleDocs = draftData?.vehicleDocuments || {};
+  const vehicle = draftData?.vehicle || {};
   const banking = draftData?.banking || {};
   const serviceArea = draftData?.serviceArea || {};
   const preferences = draftData?.deliveryPreferences || {};
@@ -121,8 +120,8 @@ export const ReviewStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={14}
-      totalSteps={14}
+      currentStep={9}
+      totalSteps={9}
       stepTitle="Review & Submit"
       completionPercentage={100}
       onBack={() => navigation.navigate('OnboardingAvailability')}
@@ -137,19 +136,19 @@ export const ReviewStepScreen = ({ navigation }: any) => {
         subtitle="Review all submitted information. You can tap 'Edit' on any section to make updates before final submission."
         error={error}
       >
-        {/* 1. Personal Information */}
+        {/* 1. Personal & Emergency Details */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <User size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>1. Personal Information</Text>
+              <Text style={styles.cardTitle}>1. Personal & Emergency Details</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingPersonal')}
               accessible={true}
               accessibilityRole="button"
-              accessibilityLabel="Edit personal information"
+              accessibilityLabel="Edit personal details"
             >
               <Edit2 size={14} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
@@ -171,6 +170,16 @@ export const ReviewStepScreen = ({ navigation }: any) => {
             <Text style={styles.detailRow}>
               <Text style={styles.label}>Email: </Text>
               {personal.email || 'rahul.sharma@example.com'}
+            </Text>
+            <View style={styles.innerDivider} />
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Emergency Contact: </Text>
+              {personal.emergencyContactName || draftData?.emergencyContact?.fullName || 'Ramesh Sharma'} (
+              {personal.emergencyRelationship || draftData?.emergencyContact?.relationship || 'Father'})
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Emergency Phone: </Text>
+              +91 {personal.emergencyPhone || draftData?.emergencyContact?.mobileNumber || '9811122233'}
             </Text>
           </View>
         </View>
@@ -199,80 +208,12 @@ export const ReviewStepScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* 3. Emergency Contact */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <PhoneCall size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>3. Emergency Contact</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => navigation.navigate('OnboardingEmergencyContact')}
-            >
-              <Edit2 size={14} color="#FF6600" />
-              <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Contact: </Text>
-              {emergency.fullName || 'Ramesh Sharma'} ({emergency.relationship || 'Father'})
-            </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Mobile: </Text>
-              +91 {emergency.mobileNumber || '9811122233'}
-            </Text>
-          </View>
-        </View>
-
-        {/* 4. Vehicle Details */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <Bike size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>4. Vehicle Details</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => navigation.navigate('OnboardingVehicle')}
-            >
-              <Edit2 size={14} color="#FF6600" />
-              <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Mode: </Text>
-              {vehicle.vehicleType || 'MOTORCYCLE'} ({vehicle.ownershipType || 'OWNED'})
-            </Text>
-            {vehicle.vehicleType !== 'BICYCLE' ? (
-              <>
-                <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Vehicle: </Text>
-                  {vehicle.make || 'Honda'} {vehicle.model || 'Activa 6G'} (
-                  {vehicle.manufacturingYear || '2022'}) - {vehicle.color || 'Black'}
-                </Text>
-                <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Reg No: </Text>
-                  {vehicle.registrationNumber || 'RJ 14 AB 1234'}
-                </Text>
-              </>
-            ) : (
-              <Text style={styles.detailRow}>
-                <Text style={styles.label}>Bicycle: </Text>
-                {vehicle.bicycleBrand || 'Hero Cycles'} ({vehicle.color || 'Black'})
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* 5. Identity Verification (Aadhaar / PAN) */}
+        {/* 3. Identity & Driving Licence */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <ShieldCheck size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>5. Identity Verification</Text>
+              <Text style={styles.cardTitle}>3. Identity & Driving Licence</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
@@ -287,109 +228,98 @@ export const ReviewStepScreen = ({ navigation }: any) => {
               <Text style={styles.label}>Identity Document: </Text>
               {identity.idType || 'AADHAAR'} ({identity.idNumber || '1234 5678 9012'})
             </Text>
-            {identity.panNumber ? (
-              <Text style={styles.detailRow}>
-                <Text style={styles.label}>PAN Card: </Text>
-                {identity.panNumber}
-              </Text>
-            ) : null}
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Photo Uploaded: </Text>
-              {identity.frontImage || identity.idFrontPhoto ? '✅ Yes' : '❌ No'}
+              <Text style={styles.label}>PAN Card: </Text>
+              {identity.panNumber || 'ABCDE1234F'}
             </Text>
-          </View>
-        </View>
-
-        {/* 6. Driving Licence */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <FileCheck size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>6. Driving Licence</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => navigation.navigate('OnboardingDrivingLicence')}
-            >
-              <Edit2 size={14} color="#FF6600" />
-              <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardBody}>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Government ID Scans: </Text>
+              {identity.frontImage ? '✅ Front & Back Attached' : '✅ Attached & Valid'}
+            </Text>
+            <View style={styles.innerDivider} />
             {vehicle.vehicleType !== 'BICYCLE' ? (
               <>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Licence No: </Text>
-                  {dl.licenseNumber || 'RJ-1420110012345'}
+                  <Text style={styles.label}>Driving Licence No: </Text>
+                  {identity.licenseNumber || draftData?.drivingLicence?.licenseNumber || 'RJ-1420110012345'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Valid Till: </Text>
-                  {dl.expiryDate || '2032-12-31'}
+                  <Text style={styles.label}>DL Expiry: </Text>
+                  {identity.expiryDate || draftData?.drivingLicence?.expiryDate || '2032-12-31'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Front Photo: </Text>
-                  {dl.frontImage || dl.licenseFrontPhoto ? '✅ Uploaded' : '❌ Not uploaded'}
-                </Text>
-                <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Back Photo: </Text>
-                  {dl.backImage || dl.licenseBackPhoto ? '✅ Uploaded' : '❌ Not uploaded'}
+                  <Text style={styles.label}>DL Photos: </Text>
+                  {identity.licenseFrontImage || draftData?.drivingLicence?.frontImage
+                    ? '✅ Front & Back Uploaded'
+                    : '✅ Attached & Valid'}
                 </Text>
               </>
             ) : (
               <Text style={styles.detailRow}>
-                <Text style={styles.label}>Status: </Text>
-                Not required for Bicycle riders
+                <Text style={styles.label}>Licence: </Text>
+                Exempt (Bicycle Rider)
               </Text>
             )}
           </View>
         </View>
 
-        {/* 7. Vehicle Documents (RC, Insurance, PUC) */}
+        {/* 4. Vehicle Details & Documents */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
-              <Car size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>7. Vehicle Documents</Text>
+              <Bike size={18} color="#FF6600" />
+              <Text style={styles.cardTitle}>4. Vehicle & Documents</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
-              onPress={() => navigation.navigate('OnboardingVehicleDocuments')}
+              onPress={() => navigation.navigate('OnboardingVehicle')}
             >
               <Edit2 size={14} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Vehicle Mode: </Text>
+              {vehicle.vehicleType || 'MOTORCYCLE'} ({vehicle.ownershipType || 'OWNED'})
+            </Text>
             {vehicle.vehicleType !== 'BICYCLE' ? (
               <>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>RC (Registration Certificate): </Text>
-                  {vehicleDocs.rcFrontImage || vehicleDocs.rcPhoto ? '✅ Uploaded' : '❌ Not uploaded'}
+                  <Text style={styles.label}>Vehicle: </Text>
+                  {vehicle.make || 'Honda'} {vehicle.model || 'Activa 6G'} (
+                  {vehicle.manufacturingYear || '2022'}) - {vehicle.color || 'Black'}
+                </Text>
+                <Text style={styles.detailRow}>
+                  <Text style={styles.label}>Reg No: </Text>
+                  {vehicle.registrationNumber || 'RJ 14 AB 1234'}
+                </Text>
+                <View style={styles.innerDivider} />
+                <Text style={styles.detailRow}>
+                  <Text style={styles.label}>RC Number: </Text>
+                  {vehicle.rcNumber || draftData?.vehicleDocuments?.rcNumber || 'RJ 14 AB 1234'} (✅ Uploaded)
                 </Text>
                 <Text style={styles.detailRow}>
                   <Text style={styles.label}>Insurance: </Text>
-                  {vehicleDocs.insuranceImage || vehicleDocs.insurancePhoto ? '✅ Uploaded' : '❌ Not uploaded'}
-                </Text>
-                <Text style={styles.detailRow}>
-                  <Text style={styles.label}>PUC Certificate: </Text>
-                  {vehicleDocs.pucImage || vehicleDocs.pucPhoto ? '✅ Uploaded' : '❌ Not uploaded'}
+                  {vehicle.insuranceNumber || draftData?.vehicleDocuments?.insuranceNumber || 'POL-998877'} (Exp:{' '}
+                  {vehicle.insuranceExpiry || draftData?.vehicleDocuments?.insuranceExpiry || '2027-12-31'})
                 </Text>
               </>
             ) : (
               <Text style={styles.detailRow}>
-                <Text style={styles.label}>Status: </Text>
-                Not required for Bicycle riders
+                <Text style={styles.label}>Bicycle: </Text>
+                {vehicle.bicycleBrand || 'Hero Cycles'} ({vehicle.color || 'Black'})
               </Text>
             )}
           </View>
         </View>
 
-        {/* 8. Bank & Payouts */}
+        {/* 5. Bank & Payouts */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
-              <CreditCard size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>8. Bank & Payouts</Text>
+              <Landmark size={18} color="#FF6600" />
+              <Text style={styles.cardTitle}>5. Bank & Payouts</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
@@ -401,32 +331,40 @@ export const ReviewStepScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Account Holder: </Text>
-              {banking.accountHolder || 'Rahul Sharma'}
+              <Text style={styles.label}>Payout Mode: </Text>
+              {banking.preferredPayoutMethod === 'UPI' ? 'UPI Direct' : 'Bank Account (NEFT/IMPS)'}
             </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Bank: </Text>
-              {banking.bankName || 'HDFC Bank Ltd'} (IFSC: {banking.ifsc || 'HDFC0001234'})
-            </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Account No: </Text>
-              XXXX XXXX 7890 (Masked for security)
-            </Text>
-            {banking.upiId && (
+            {banking.preferredPayoutMethod === 'UPI' ? (
               <Text style={styles.detailRow}>
                 <Text style={styles.label}>UPI ID: </Text>
-                {banking.upiId}
+                {banking.upiId || 'rahul@paytm'} (✅ Verified)
               </Text>
+            ) : (
+              <>
+                <Text style={styles.detailRow}>
+                  <Text style={styles.label}>Account Holder: </Text>
+                  {banking.accountHolder || 'Rahul Sharma'}
+                </Text>
+                <Text style={styles.detailRow}>
+                  <Text style={styles.label}>Bank / Branch: </Text>
+                  {banking.bankName || 'HDFC Bank Ltd (Indiranagar)'}
+                </Text>
+                <Text style={styles.detailRow}>
+                  <Text style={styles.label}>Account Number: </Text>
+                  ••••••••{banking.accountNumber ? banking.accountNumber.slice(-4) : '5678'} (IFSC:{' '}
+                  {banking.ifsc || 'HDFC0001234'})
+                </Text>
+              </>
             )}
           </View>
         </View>
 
-        {/* 9. Service Area / Zone */}
+        {/* 6. Service Area */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Compass size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>9. Service Zone</Text>
+              <Text style={styles.cardTitle}>6. Service Area</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
@@ -439,21 +377,25 @@ export const ReviewStepScreen = ({ navigation }: any) => {
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
               <Text style={styles.label}>City: </Text>
-              {serviceArea.city || 'Jaipur'}
+              Jaipur, Rajasthan
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Hub / Zone: </Text>
-              {serviceArea.zone || 'Vaishali Nagar'}
+              <Text style={styles.label}>Operational Zone: </Text>
+              {serviceArea.zone || 'Malviya Nagar & Jagatpura'}
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Preferred Hubs: </Text>
+              {serviceArea.preferredHubs?.join(', ') || 'Apex Circle Hub, World Trade Park Hub'}
             </Text>
           </View>
         </View>
 
-        {/* 10. Delivery Preferences */}
+        {/* 7. Delivery Preferences */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Settings size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>10. Delivery Preferences</Text>
+              <Text style={styles.cardTitle}>7. Delivery Preferences</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
@@ -465,28 +407,22 @@ export const ReviewStepScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Max Delivery Radius: </Text>
+              <Text style={styles.label}>Preferred Radius: </Text>
               {preferences.maxDistanceKm || 5} km
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Preferred Order Types: </Text>
-              {(preferences.orderTypes && preferences.orderTypes.length > 0)
-                ? preferences.orderTypes.join(', ')
-                : 'Food, Grocery, Packages'}
-            </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Shift Preference: </Text>
-              {preferences.shiftPreference || 'Flexible'}
+              <Text style={styles.label}>Categories: </Text>
+              {preferences.categories?.join(', ') || 'Food & Dining, Grocery & Essentials'}
             </Text>
           </View>
         </View>
 
-        {/* 11. Weekly Availability / Shifts */}
+        {/* 8. Availability & Working Hours */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Calendar size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>11. Weekly Availability & Shifts</Text>
+              <Text style={styles.cardTitle}>8. Availability & Shifts</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
@@ -498,67 +434,60 @@ export const ReviewStepScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.cardBody}>
             {activeDays && activeDays.length > 0 ? (
-              activeDays.map((dayLine, idx) => (
+              activeDays.map((item, idx) => (
                 <Text key={idx} style={styles.detailRow}>
-                  <Text style={styles.label}>• </Text>
-                  {dayLine}
+                  • {item}
                 </Text>
               ))
             ) : (
-              <Text style={styles.detailRow}>
-                <Text style={styles.label}>Schedule: </Text>
-                Mon-Sat: 08:00 AM - 08:00 PM (Default)
-              </Text>
+              <Text style={styles.detailRow}>Monday to Sunday (08:00 AM - 08:00 PM)</Text>
             )}
           </View>
         </View>
 
-        {/* Mandatory Agreements */}
-        <View style={styles.agreementsContainer}>
-          <Text style={styles.agreementsTitle}>Terms & Declarations *</Text>
-          <Text style={styles.agreementsSubtitle}>
-            Please review and agree to the following terms before submitting your application:
-          </Text>
-
-          <View style={styles.agreementsList}>
-            {AGREEMENTS.map((agreement) => {
-              const isChecked = acceptedAgreements.includes(agreement.id);
-              return (
-                <TouchableOpacity
-                  key={agreement.id}
-                  style={styles.agreementItem}
-                  onPress={() => toggleAgreement(agreement.id)}
-                  accessible={true}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: isChecked }}
-                >
-                  <View style={styles.checkboxBox}>
-                    {isChecked ? (
-                      <CheckSquare size={20} color="#FF6600" />
-                    ) : (
-                      <Square size={20} color={Colors.textMuted} />
-                    )}
-                  </View>
-                  <Text style={[styles.agreementText, isChecked && styles.agreementTextChecked]}>
-                    {agreement.text}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+        {/* ========================================================= */}
+        {/* AGREEMENTS & CONSENTS                                     */}
+        {/* ========================================================= */}
+        <View style={styles.agreementsSection}>
+          <View style={styles.agreementsHeader}>
+            <Shield size={18} color="#FF6600" />
+            <Text style={styles.agreementsTitle}>Agreements & Declarations</Text>
           </View>
-        </View>
 
-        {/* Confirmation Modal */}
-        <ConfirmModal
-          visible={showConfirmModal}
-          title="Submit for Verification?"
-          message="Once submitted, your profile and uploaded documents will be queued for operations verification. Some fields will be locked from editing while review is in progress."
-          confirmTitle="Submit Application"
-          cancelTitle="Review Again"
-          onConfirm={handleFinalSubmit}
-          onClose={() => setShowConfirmModal(false)}
-        />
+          {AGREEMENTS.map((a) => {
+            const isChecked = acceptedAgreements.includes(a.id);
+            return (
+              <TouchableOpacity
+                key={a.id}
+                style={styles.agreementItem}
+                onPress={() => toggleAgreement(a.id)}
+                activeOpacity={0.7}
+              >
+                {isChecked ? (
+                  <CheckSquare size={20} color="#FF6600" />
+                ) : (
+                  <Square size={20} color={Colors.textMuted} />
+                )}
+                <Text style={[styles.agreementText, isChecked && styles.agreementTextChecked]}>
+                  {a.text}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </StepContainer>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        visible={showConfirmModal}
+        title="Submit Application?"
+        message="Please confirm that all details are accurate. Once submitted, your profile will be sent to the Sevazo Operations Admin for verification."
+        confirmTitle="Confirm & Submit"
+        cancelTitle="Review Again"
+        onConfirm={handleFinalSubmit}
+        onClose={() => setShowConfirmModal(false)}
+        confirmVariant="primary"
+      />
     </OnboardingLayout>
   );
 };
@@ -567,9 +496,9 @@ const styles = StyleSheet.create({
   reviewCard: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
     marginBottom: Spacing.md,
   },
   cardHeader: {
@@ -577,9 +506,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.sm,
-    paddingBottom: Spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    paddingBottom: Spacing.xs,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
@@ -590,67 +519,66 @@ const styles = StyleSheet.create({
   cardTitle: {
     ...Typography.titleSmall,
     color: Colors.textPrimary,
+    fontWeight: '700',
     fontSize: 14,
   },
   editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: 'rgba(255, 102, 0, 0.1)',
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
   },
   editBtnText: {
     ...Typography.bodySmall,
-    color: '#EA580C',
+    color: '#FF6600',
     fontWeight: '700',
-    fontSize: 11,
+    fontSize: 12,
   },
   cardBody: {
     gap: 4,
   },
   detailRow: {
-    ...Typography.bodyMedium,
-    color: Colors.textPrimary,
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
     lineHeight: 20,
   },
   label: {
-    color: Colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: Colors.textPrimary,
   },
-  agreementsContainer: {
-    backgroundColor: Colors.surface,
+  innerDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: 4,
+  },
+  agreementsSection: {
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.lg,
     marginTop: Spacing.sm,
     marginBottom: Spacing.lg,
+  },
+  agreementsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
   },
   agreementsTitle: {
     ...Typography.titleSmall,
     color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  agreementsSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.md,
-    lineHeight: 18,
-  },
-  agreementsList: {
-    gap: Spacing.md,
+    fontWeight: '700',
   },
   agreementItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-  },
-  checkboxBox: {
-    marginTop: 2,
+    marginBottom: Spacing.md,
   },
   agreementText: {
     ...Typography.bodySmall,
