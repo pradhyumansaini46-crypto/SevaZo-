@@ -1,0 +1,45 @@
+# ==============================================================================
+# SEVAZO UNIFIED MONOREPO ENVIRONMENT CONFIGURATION
+# ==============================================================================
+
+# Node Environment
+NODE_ENV=development
+
+# Backend API Configuration
+PORT=4000
+API_PREFIX=api/v1
+APP_NAME=Sevazo-Admin-API
+
+# Database (PostgreSQL - Cloud Prisma Database)
+DATABASE_URL="postgres://6ee51ee0a6954223d911e9b423d548b72fca1d25df622b2a57194fe45d646834:sk_v_c2J7ltzwysXwz-ow7An@db.prisma.io:5432/postgres?sslmode=require"
+POSTGRES_URL="postgres://6ee51ee0a6954223d911e9b423d548b72fca1d25df622b2a57194fe45d646834:sk_v_c2J7ltzwysXwz-ow7An@db.prisma.io:5432/postgres?sslmode=require"
+PRISMA_DATABASE_URL="postgres://6ee51ee0a6954223d911e9b423d548b72fca1d25df622b2a57194fe45d646834:sk_v_c2J7ltzwysXwz-ow7An@db.prisma.io:5432/postgres?sslmode=require"
+
+POSTGRES_USER=sevazo
+POSTGRES_PASSWORD=sevazopassword
+POSTGRES_DB=sevazo_db
+POSTGRES_PORT=5432
+
+# Redis Cache & BullMQ Queues
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT Secrets & Token Rotation
+JWT_SECRET=sevazo-super-secret-jwt-access-key-replace-in-production-2026
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=sevazo-super-secret-jwt-refresh-key-replace-in-production-2026
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Default Super Admin Seed Credentials
+DEFAULT_ADMIN_EMAIL=admin@sevazo.com
+DEFAULT_ADMIN_PASSWORD=Admin@123456
+DEFAULT_ADMIN_NAME="Super Administrator"
+
+# Next.js Admin Portal
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_APP_NAME=Sevazo
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# CORS Allowed Origins
+CORS_ORIGINS=http://localhost:3000,http://localhost:4000
