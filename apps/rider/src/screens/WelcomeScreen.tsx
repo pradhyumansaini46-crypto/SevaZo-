@@ -11,79 +11,82 @@ export const WelcomeScreen = ({ navigation }: any) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top Hero Brand Header with Official Graphic Logo */}
-      <View style={styles.header}>
-        <Image
-          source={require('../../assets/sevazo-logo.png')}
-          style={styles.logoImage}
-          resizeMode="contain"
-          accessible={true}
-          accessibilityLabel="Official Sevazo Logo"
-        />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to Sevazo Rider</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Hyperlocal fleet partner platform
-        </Text>
-      </View>
-
-      {/* Feature Value Props - Untouched */}
-      <View
-        style={[
-          styles.valueCard,
-          {
-            backgroundColor: isDark ? colors.surface : '#F8FAFC',
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        <View style={styles.valueRow}>
-          <View
-            style={[
-              styles.valueIconCircle,
-              { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
-            ]}
-          >
-            <Bike size={20} color={colors.primary} />
-          </View>
-          <View style={styles.valueTextContainer}>
-            <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Deliver orders.</Text>
-            <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-              Instant store pickup & short-distance drops.
-            </Text>
-          </View>
+      {/* Top Group: Brand Header + Feature Cards with Tight Gap */}
+      <View style={styles.topGroup}>
+        {/* Top Hero Brand Header with Official Graphic Logo */}
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/sevazo-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+            accessible={true}
+            accessibilityLabel="Official Sevazo Logo"
+          />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to Sevazo Rider</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Hyperlocal fleet partner platform
+          </Text>
         </View>
 
-        <View style={styles.valueRow}>
-          <View
-            style={[
-              styles.valueIconCircle,
-              { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
-            ]}
-          >
-            <Clock size={20} color={colors.accentGreen} />
+        {/* Feature Value Props - Untouched (Tight Margin to Header) */}
+        <View
+          style={[
+            styles.valueCard,
+            {
+              backgroundColor: isDark ? colors.surface : '#F8FAFC',
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
+              ]}
+            >
+              <Bike size={20} color={colors.primary} />
+            </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Deliver orders.</Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Instant store pickup & short-distance drops.
+              </Text>
+            </View>
           </View>
-          <View style={styles.valueTextContainer}>
-            <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Earn on your schedule.</Text>
-            <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-              Flexible shifts with weekly & instant UPI payouts.
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.valueRow}>
-          <View
-            style={[
-              styles.valueIconCircle,
-              { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
-            ]}
-          >
-            <TrendingUp size={20} color={colors.secondary} />
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
+              ]}
+            >
+              <Clock size={20} color={colors.accentGreen} />
+            </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Earn on your schedule.</Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Flexible shifts with weekly & instant UPI payouts.
+              </Text>
+            </View>
           </View>
-          <View style={styles.valueTextContainer}>
-            <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with Sevazo.</Text>
-            <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-              Peak surge multipliers & safety insurance protection.
-            </Text>
+
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
+              ]}
+            >
+              <TrendingUp size={20} color={colors.secondary} />
+            </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with Sevazo.</Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Peak surge multipliers & safety insurance protection.
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -115,24 +118,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: 54,
+    paddingTop: 48,
     paddingBottom: 40,
     justifyContent: 'space-between',
+  },
+  topGroup: {
+    gap: 16,
   },
   header: {
     alignItems: 'center',
   },
   logoImage: {
-    width: 120,
-    height: 120,
-    marginBottom: Spacing.xs,
+    width: 110,
+    height: 110,
+    marginBottom: 2,
   },
   title: {
     ...Typography.hero,
-    fontSize: 26,
+    fontSize: 25,
     fontWeight: '800',
     textAlign: 'center',
-    marginTop: Spacing.md,
+    marginTop: 8,
   },
   subtitle: {
     ...Typography.bodyMedium,

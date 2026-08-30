@@ -59,7 +59,10 @@ export const LoginScreen = ({ navigation }: any) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Interactive Hanging Lamp */}
+        {/* 1. Brand Heading H1 Above Hanging Lamp */}
+        <Text style={styles.topBrandTitle}>SevaZo</Text>
+
+        {/* 2. Interactive Hanging Lamp */}
         <InteractiveLamp
           isLampOn={isLampOn}
           onToggle={(state) => setIsLampOn(state)}
@@ -72,31 +75,22 @@ export const LoginScreen = ({ navigation }: any) => {
             isLampOn ? styles.cardIlluminated : styles.cardDimmed,
           ]}
         >
-          {/* Top Brand & Mode Switcher */}
-          <View style={styles.topRow}>
-            <View style={styles.brandBadge}>
-              <View style={styles.brandIconCircle}>
-                <Text style={styles.brandIconText}>S</Text>
-              </View>
-              <View>
-                <Text style={styles.brandLabel}>SEVAZO FLEET</Text>
-                <Text style={styles.brandSubLabel}>Partner Portal</Text>
-              </View>
-            </View>
+          {/* 3. Water Droplet Sliding Segmented Control (Top-Left 'S' Block Removed) */}
+          <View style={styles.tabPillContainer}>
+            <TouchableOpacity
+              style={[styles.tabBtn, styles.tabBtnActive]}
+              activeOpacity={1}
+            >
+              <Text style={styles.tabBtnTextActive}>Sign In</Text>
+            </TouchableOpacity>
 
-            {/* Mode Switcher Tabs */}
-            <View style={styles.tabContainer}>
-              <View style={styles.tabActive}>
-                <Text style={styles.tabActiveText}>Sign in</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.tabInactive}
-                onPress={() => navigation.navigate('Register')}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.tabInactiveText}>Register</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.tabBtn}
+              onPress={() => navigation.navigate('Register')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.tabBtnTextInactive}>Register</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Heading Greeting */}
@@ -235,7 +229,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 32,
+    paddingVertical: 24,
+  },
+  topBrandTitle: {
+    fontSize: 30,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginTop: 6,
+    marginBottom: 2,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -257,78 +260,41 @@ const styles = StyleSheet.create({
   cardDimmed: {
     borderColor: '#E2E8F0',
   },
-  topRow: {
+  tabPillContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-  brandBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs + 2,
-  },
-  brandIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: '#FF6600',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FF6600',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  brandIconText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 17,
-  },
-  brandLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: 0.5,
-  },
-  brandSubLabel: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  tabContainer: {
-    flexDirection: 'row',
+    alignSelf: 'center',
     backgroundColor: '#F1F5F9',
     borderRadius: BorderRadius.full,
     padding: 3,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    marginBottom: Spacing.lg,
+    width: 220,
   },
-  tabActive: {
-    backgroundColor: '#FF6600',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 7,
     borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBtnActive: {
+    backgroundColor: '#FF6600',
     shadowColor: '#FF6600',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
   },
-  tabActiveText: {
+  tabBtnTextActive: {
     color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
   },
-  tabInactive: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-  },
-  tabInactiveText: {
+  tabBtnTextInactive: {
     color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   headingBlock: {
     marginBottom: Spacing.xl,
