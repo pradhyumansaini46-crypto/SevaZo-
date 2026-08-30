@@ -7,8 +7,9 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
-import { ArrowRight, ShieldCheck, Phone } from 'lucide-react-native';
+import { ArrowRight, CheckCircle2, Phone, Sparkles } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -21,6 +22,8 @@ export const LoginScreen = ({ navigation }: any) => {
   const { sendOtp, isLoading, error, clearError } = useAuthStore();
   const colors = useAppColors();
   const isDark = useThemeStore((state) => state.isDark);
+
+  const isValidPhone = phone.length === 10;
 
   const handleContinue = async () => {
     clearError();
@@ -53,109 +56,129 @@ export const LoginScreen = ({ navigation }: any) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <View
-          style={[
-            styles.iconCircle,
-            {
-              backgroundColor: isDark ? colors.surface : '#FFF7ED',
-              borderColor: colors.primary,
-            },
-          ]}
-          accessible={true}
-          accessibilityLabel="Phone login icon"
-        >
-          <Phone size={28} color={colors.primary} />
-        </View>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Login to Sevazo</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Enter your registered mobile number to receive a verification code.
-        </Text>
+      {/* Sleek Top Brand Header Bar */}
+      <View style={styles.brandRow}>
+        <Image
+          source={require('../../assets/sevazo-logo.png')}
+          style={styles.brandLogoSmall}
+          resizeMode="contain"
+        />
+        <Text style={[styles.brandText, { color: colors.textSecondary }]}>SEVAZO RIDER</Text>
       </View>
 
+      {/* Main Form Card */}
       <View
         style={[
-          styles.card,
+          styles.mainCard,
           {
-            backgroundColor: isDark ? colors.surface : '#F8FAFC',
-            borderColor: colors.border,
+            backgroundColor: isDark ? colors.surface : '#FFFFFF',
+            borderColor: isDark ? colors.border : '#E2E8F0',
           },
         ]}
       >
-        <Text style={[styles.label, { color: colors.textSecondary }]}>Mobile Number *</Text>
-        <View style={[styles.phoneInputRow, Boolean(validationError) && styles.inputError]}>
+        {/* Title & Micro-Copy */}
+        <View style={styles.titleSection}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Sign in</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Welcome back. Enter your registered mobile number to receive your OTP.
+          </Text>
+        </View>
+
+        {/* Mobile Input Field */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Mobile Number</Text>
           <View
             style={[
-              styles.countryCodeBadge,
+              styles.inputContainer,
               {
-                backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
-                borderColor: colors.border,
+                backgroundColor: isDark ? colors.surfaceElevated : '#F8FAFC',
+                borderColor: validationError
+                  ? '#EF4444'
+                  : isValidPhone
+                  ? '#10B981'
+                  : isDark
+                  ? 'rgba(255, 255, 255, 0.12)'
+                  : '#E2E8F0',
               },
             ]}
           >
-            <Text style={[styles.countryCodeText, { color: colors.textPrimary }]}>🇮🇳 +91</Text>
+            <View style={styles.countryCodeContainer}>
+              <Phone size={18} color={colors.primary} />
+              <Text style={[styles.countryCodeText, { color: colors.textPrimary }]}>+91</Text>
+            </View>
+            <TextInput
+              style={[styles.textInput, { color: colors.textPrimary }]}
+              value={phone}
+              onChangeText={handlePhoneChange}
+              placeholder="98765 43210"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="phone-pad"
+              maxLength={10}
+              autoFocus
+              accessible={true}
+              accessibilityLabel="Mobile Number input"
+            />
+            {isValidPhone && (
+              <View style={styles.validCheckBadge}>
+                <CheckCircle2 size={18} color="#10B981" />
+              </View>
+            )}
           </View>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
-                color: colors.textPrimary,
-                borderColor: colors.border,
-              },
-            ]}
-            value={phone}
-            onChangeText={handlePhoneChange}
-            placeholder="Enter 10-digit number"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="phone-pad"
-            maxLength={10}
-            accessible={true}
-            accessibilityLabel="Mobile Number"
-          />
+
+          {validationError && (
+            <Text style={styles.errorText} accessibilityRole="alert">
+              {validationError}
+            </Text>
+          )}
         </View>
-        {validationError && (
+
+        {error && (
           <Text style={styles.errorText} accessibilityRole="alert">
-            {validationError}
+            {error}
           </Text>
         )}
+
+        {/* Action Button Container */}
+        <View style={styles.actionContainer}>
+          <Button
+            title="Log in with OTP"
+            variant="primary"
+            size="large"
+            onPress={handleContinue}
+            isLoading={isLoading}
+            disabled={isButtonDisabled}
+            rightIcon={<ArrowRight size={20} color="#FFFFFF" />}
+            accessibilityLabel="Log in with OTP"
+          />
+
+          {/* Micro Helper State Indicator */}
+          <View style={styles.helperStatusRow}>
+            <View style={[styles.statusDot, { backgroundColor: isValidPhone ? '#10B981' : colors.primary }]} />
+            <Text style={[styles.helperStatusText, { color: colors.textSecondary }]}>
+              {isValidPhone ? 'Ready to receive OTP verification code' : '10-digit number required for login'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Bottom Switch Link */}
+        <View style={styles.switchRow}>
+          <Text style={[styles.switchText, { color: colors.textSecondary }]}>No account yet? </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Register')}
+            accessible={true}
+            accessibilityRole="link"
+            accessibilityLabel="Register as Rider"
+          >
+            <Text style={[styles.switchLink, { color: colors.primary }]}>Create one</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {error && (
-        <Text style={styles.errorText} accessibilityRole="alert">
-          {error}
-        </Text>
-      )}
-
-      <Button
-        title="Continue"
-        variant="primary"
-        size="large"
-        onPress={handleContinue}
-        isLoading={isLoading}
-        disabled={isButtonDisabled}
-        rightIcon={<ArrowRight size={20} color="#FFFFFF" />}
-        accessibilityLabel="Continue with mobile number"
-      />
-
-      <View style={styles.footerRow}>
-        <Text style={[styles.footerText, { color: colors.textSecondary }]}>New to Sevazo? </Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Register')}
-          accessible={true}
-          accessibilityRole="link"
-          accessibilityLabel="Register as Delivery Rider"
-        >
-          <Text style={[styles.footerLink, { color: colors.primary }]}>
-            Register as Delivery Rider
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.trustBadge}>
-        <ShieldCheck size={16} color={colors.accentGreen} />
-        <Text style={[styles.trustText, { color: colors.accentGreen }]}>
-          Official verified delivery partner login portal
+      {/* Trust Footer */}
+      <View style={styles.trustFooter}>
+        <Sparkles size={14} color={colors.accentGreen} />
+        <Text style={[styles.trustText, { color: colors.textSecondary }]}>
+          Instant store pickup & short-distance drops • 100% Secure
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -165,103 +188,139 @@ export const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
-    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 50,
+    paddingBottom: 30,
+    justifyContent: 'space-between',
   },
-  header: {
-    marginBottom: Spacing.xxl,
+  brandRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
+    gap: Spacing.sm,
     marginBottom: Spacing.md,
-    ...Shadows.glowOrange,
+  },
+  brandLogoSmall: {
+    width: 36,
+    height: 36,
+  },
+  brandText: {
+    ...Typography.bodySmall,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    fontSize: 12,
+  },
+  mainCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: Spacing.xl,
+    ...Shadows.card,
+  },
+  titleSection: {
+    marginBottom: Spacing.xl,
   },
   title: {
-    ...Typography.titleLarge,
-    fontSize: 26,
+    ...Typography.hero,
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.bodyMedium,
-    textAlign: 'center',
     marginTop: Spacing.xs,
+    lineHeight: 22,
   },
-  card: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginBottom: Spacing.xl,
-    ...Shadows.card,
+  inputGroup: {
+    marginBottom: Spacing.lg,
   },
-  label: {
+  inputLabel: {
     ...Typography.bodySmall,
+    fontWeight: '700',
     marginBottom: Spacing.sm,
-    fontWeight: '600',
+    fontSize: 13,
+    letterSpacing: 0.2,
   },
-  phoneInputRow: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
-    borderRadius: BorderRadius.md,
-  },
-  inputError: {
-    borderColor: '#EF4444',
-  },
-  countryCodeBadge: {
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    marginRight: Spacing.sm,
-    borderWidth: 1,
+    height: 54,
+  },
+  countryCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingRight: Spacing.sm,
+    borderRightWidth: 1,
+    borderRightColor: '#CBD5E1',
   },
   countryCodeText: {
-    ...Typography.bodyMedium,
+    ...Typography.titleSmall,
     fontWeight: '700',
+    fontSize: 16,
   },
-  input: {
+  textInput: {
     flex: 1,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
     fontSize: 18,
     fontWeight: '700',
-    borderWidth: 1,
+    height: '100%',
+  },
+  validCheckBadge: {
+    paddingLeft: Spacing.xs,
   },
   errorText: {
     color: '#EF4444',
-    textAlign: 'center',
     marginTop: Spacing.xs,
-    marginBottom: Spacing.sm,
     ...Typography.bodySmall,
+    fontWeight: '600',
   },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.xl,
+  actionContainer: {
+    marginTop: Spacing.md,
   },
-  footerText: {
-    ...Typography.bodySmall,
-  },
-  footerLink: {
-    ...Typography.bodySmall,
-    fontWeight: '700',
-  },
-  trustBadge: {
+  helperStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    marginTop: Spacing.xxl,
+    marginTop: Spacing.md,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  helperStatusText: {
+    ...Typography.bodySmall,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.md,
+  },
+  switchText: {
+    ...Typography.bodyMedium,
+    fontSize: 14,
+  },
+  switchLink: {
+    ...Typography.bodyMedium,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  trustFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
   },
   trustText: {
     ...Typography.bodySmall,
+    fontSize: 11,
     fontWeight: '600',
   },
 });
