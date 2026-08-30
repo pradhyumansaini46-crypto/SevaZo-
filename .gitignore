@@ -24,6 +24,11 @@ out/
 *.env
 */.env
 */.env.*
+env
+env.*
+!env.example
+.ene.development
+ene.development
 
 # Logs
 logs
@@ -40,3 +45,10 @@ infra/postgres-data/
 
 .DS_Store
 **/.DS_Store
+
+# Visible filesystem shortcuts
+git
+github
+gitignore
+npmrc
+!env.example
