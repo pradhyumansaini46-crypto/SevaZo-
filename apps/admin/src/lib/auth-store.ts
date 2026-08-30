@@ -152,8 +152,8 @@ export const defaultPlatformConfig: PlatformConfig = {
     role: 'SUPER_ADMIN',
   },
   platform: {
-    name: 'Sevazo',
-    legalName: 'Sevazo Technologies Private Limited',
+    name: 'SevaZo',
+    legalName: 'SevaZo Technologies Private Limited',
     businessEmail: 'contact@sevazo.com',
     businessPhone: '+91 141 2345678',
     website: 'https://sevazo.com',

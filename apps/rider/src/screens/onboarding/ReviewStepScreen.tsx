@@ -31,10 +31,10 @@ import { useOnboardingStore } from '../../store/onboardingStore';
 
 const AGREEMENTS = [
   { id: 'accuracy', text: 'I confirm that all information and uploaded documents are authentic and accurate.' },
-  { id: 'terms', text: 'I agree to the Sevazo Fleet Partner Terms of Service.' },
-  { id: 'privacy', text: 'I agree to the Sevazo Partner Privacy Policy & Location Tracking terms.' },
+  { id: 'terms', text: 'I agree to the SevaZo Fleet Partner Terms of Service.' },
+  { id: 'privacy', text: 'I agree to the SevaZo Partner Privacy Policy & Location Tracking terms.' },
   { id: 'rider_agreement', text: 'I accept the Independent Delivery Partner Master Fleet Agreement.' },
-  { id: 'verification_auth', text: 'I authorize Sevazo Operations to verify my credentials on government portals.' },
+  { id: 'verification_auth', text: 'I authorize SevaZo Operations to verify my credentials on government portals.' },
   { id: 'activation_notice', text: 'I understand that fleet activation is strictly subject to document approval.' },
 ];
 
@@ -495,7 +495,7 @@ export const ReviewStepScreen = ({ navigation }: any) => {
       <ConfirmModal
         visible={showConfirmModal}
         title="Submit Application?"
-        message="Please confirm that all details are accurate. Once submitted, your profile will be sent to the Sevazo Operations Admin for verification."
+        message="Please confirm that all details are accurate. Once submitted, your profile will be sent to the SevaZo Operations Admin for verification."
         confirmTitle="Confirm & Submit"
         cancelTitle="Review Again"
         onConfirm={handleFinalSubmit}

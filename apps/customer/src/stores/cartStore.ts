@@ -34,7 +34,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       quantity: 2,
       maxStock: 45,
       storeId: 'store-1',
-      storeName: 'Sevazo Supermart Express',
+      storeName: 'SevaZo Supermart Express',
     },
     {
       id: 'prod-2',
@@ -49,7 +49,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       quantity: 1,
       maxStock: 120,
       storeId: 'store-1',
-      storeName: 'Sevazo Supermart Express',
+      storeName: 'SevaZo Supermart Express',
     },
   ],
   appliedCoupon: {

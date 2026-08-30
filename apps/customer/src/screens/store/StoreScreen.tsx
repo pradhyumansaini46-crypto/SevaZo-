@@ -115,7 +115,7 @@ export const StoreScreen: React.FC = () => {
             <RatingStars rating={store.rating} size={16} showText reviewsCount={store.reviewsCount} />
             <View style={styles.certifiedPill}>
               <ShieldCheck size={13} color={Colors.primary} />
-              <Text style={styles.certifiedText}>Verified Sevazo Partner</Text>
+              <Text style={styles.certifiedText}>Verified SevaZo Partner</Text>
             </View>
           </View>
 

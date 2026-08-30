@@ -20,9 +20,9 @@ export const WelcomeScreen = ({ navigation }: any) => {
             style={styles.logoImage}
             resizeMode="contain"
             accessible={true}
-            accessibilityLabel="Official Sevazo Logo"
+            accessibilityLabel="Official SevaZo Logo"
           />
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to Sevazo Rider</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to SevaZo Rider</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Hyperlocal fleet partner platform
           </Text>
@@ -82,7 +82,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
               <TrendingUp size={20} color={colors.secondary} />
             </View>
             <View style={styles.valueTextContainer}>
-              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with Sevazo.</Text>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with SevaZo.</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
                 Peak surge multipliers & safety insurance protection.
               </Text>

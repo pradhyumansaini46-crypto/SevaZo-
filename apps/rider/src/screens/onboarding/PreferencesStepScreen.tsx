@@ -400,7 +400,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>4. Eligible Delivery Categories *</Text>
           <Text style={styles.sectionSubtitle}>
-            All store categories supported by Sevazo merchant network.
+            All store categories supported by SevaZo merchant network.
           </Text>
 
           <View style={styles.catGrid}>

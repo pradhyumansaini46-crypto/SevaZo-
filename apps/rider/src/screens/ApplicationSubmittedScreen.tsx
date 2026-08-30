@@ -23,13 +23,13 @@ export const ApplicationSubmittedScreen: React.FC = () => {
             style={styles.logoImage}
             resizeMode="contain"
             accessible={true}
-            accessibilityLabel="Official Sevazo Logo"
+            accessibilityLabel="Official SevaZo Logo"
           />
         </View>
 
         <Text style={styles.title}>Application Submitted</Text>
         <Text style={styles.subtitle}>
-          Your Sevazo Rider application has been submitted successfully to the operations verification desk.
+          Your SevaZo Rider application has been submitted successfully to the operations verification desk.
         </Text>
 
         <View style={styles.idCard}>

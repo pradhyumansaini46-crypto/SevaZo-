@@ -1,7 +1,7 @@
 import { useThemeStore } from '../store/themeStore';
 
 export const LightColors = {
-  // Brand: Signature Sevazo Velocity Orange & Eco Green Touch
+  // Brand: Signature SevaZo Velocity Orange & Eco Green Touch
   primary: '#FF6600',          // Electric High-Visibility Orange
   primaryDark: '#EA580C',
   primaryLight: '#FFF7ED',
@@ -52,7 +52,7 @@ export const LightColors = {
 };
 
 export const DarkColors = {
-  // Brand: Signature Sevazo Velocity Orange & Eco Green Touch
+  // Brand: Signature SevaZo Velocity Orange & Eco Green Touch
   primary: '#FF6600',          // Electric High-Visibility Orange
   primaryDark: '#EA580C',
   primaryLight: '#FFF7ED',

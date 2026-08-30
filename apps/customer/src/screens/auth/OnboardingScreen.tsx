@@ -56,7 +56,7 @@ export const OnboardingScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Top Bar with Skip */}
       <View style={styles.topBar}>
-        <Text style={styles.brandText}>SEVAZO</Text>
+        <Text style={styles.brandText}>SevaZo</Text>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => navigation.navigate('Login')}

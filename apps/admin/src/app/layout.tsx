@@ -18,8 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sevazo Admin",
-  description: "Sevazo - Unified Commerce & Logistics Admin Panel",
+  title: "SevaZo Admin",
+  description: "SevaZo - Unified Commerce & Logistics Admin Panel",
 };
 
 export default function RootLayout({

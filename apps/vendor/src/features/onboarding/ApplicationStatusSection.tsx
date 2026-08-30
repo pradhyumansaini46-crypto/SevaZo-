@@ -97,7 +97,7 @@ export const ApplicationStatusSection: React.FC<ApplicationStatusSectionProps> =
             🎉 Congratulations!
           </Text>
           <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary }]}>
-            Your Sevazo Merchant partner application has been approved. Your store is now active and ready to accept orders!
+            Your SevaZo Merchant partner application has been approved. Your store is now active and ready to accept orders!
           </Text>
 
           <View style={[styles.metaCard, { backgroundColor: colors.background }]}>
@@ -217,10 +217,10 @@ export const ApplicationStatusSection: React.FC<ApplicationStatusSectionProps> =
             Account Suspended
           </Text>
           <Text style={[styles.rejectedSubtitle, { color: colors.textSecondary }]}>
-            Your vendor merchant account is currently suspended. Please contact Sevazo Partner Operations to appeal or resolve compliance flags.
+            Your vendor merchant account is currently suspended. Please contact SevaZo Partner Operations to appeal or resolve compliance flags.
           </Text>
           <Button
-            title="Contact Sevazo Legal & Support"
+            title="Contact SevaZo Legal & Support"
             variant="primary"
             size="lg"
             fullWidth
@@ -244,7 +244,7 @@ export const ApplicationStatusSection: React.FC<ApplicationStatusSectionProps> =
           Application Under Review
         </Text>
         <Text style={[styles.reviewSubtitle, { color: colors.textSecondary }]}>
-          Your Sevazo merchant application has been submitted and is currently being audited by our verification team.
+          Your SevaZo merchant application has been submitted and is currently being audited by our verification team.
         </Text>
 
         {/* Progress Bar 100% */}

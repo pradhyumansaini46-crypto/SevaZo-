@@ -213,7 +213,7 @@ export const ProductsListScreen: React.FC<{ navigation: any }> = ({ navigation }
           <EmptyState
             icon="🛍️"
             title="No Products Found"
-            description="Add your first item to make it visible to customers on Sevazo."
+            description="Add your first item to make it visible to customers on SevaZo."
             actionTitle="Add New Product"
             onAction={() => navigation.navigate('AddProduct')}
           />

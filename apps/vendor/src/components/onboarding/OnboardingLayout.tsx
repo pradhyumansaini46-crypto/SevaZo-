@@ -53,7 +53,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
     Alert.alert(
       'Save & Exit Application?',
-      'Your application progress has been securely saved to Sevazo Cloud. You can resume anytime by logging into your account.',
+      'Your application progress has been securely saved to SevaZo Cloud. You can resume anytime by logging into your account.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

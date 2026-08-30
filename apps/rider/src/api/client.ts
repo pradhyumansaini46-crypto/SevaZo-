@@ -4,7 +4,7 @@ import { authStorage } from '../services/authStorage';
 import { ENDPOINTS } from './endpoints';
 
 /**
- * Production-ready Axios API Client for Sevazo Rider App
+ * Production-ready Axios API Client for SevaZo Rider App
  * Features:
  * - Bearer Access Token injection
  * - Automated Refresh Token handling on 401 Unauthorized

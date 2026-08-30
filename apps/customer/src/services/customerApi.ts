@@ -103,7 +103,7 @@ export const customerApi = {
       return {
         success: true,
         status: 'ACTIVE',
-        message: 'Account successfully activated! Welcome to Sevazo.',
+        message: 'Account successfully activated! Welcome to SevaZo.',
         nextRoute: 'HOME',
       };
     }
@@ -425,7 +425,7 @@ export const customerApi = {
         deliveryAddress: orderPayload.address || mockAddresses[0],
         store: {
           id: 'store-1',
-          businessName: 'Sevazo Supermart Express',
+          businessName: 'SevaZo Supermart Express',
           address: 'Plot 44, 100ft Road, Indiranagar',
         },
         estimatedDeliveryTime: 'in 15-20 mins',

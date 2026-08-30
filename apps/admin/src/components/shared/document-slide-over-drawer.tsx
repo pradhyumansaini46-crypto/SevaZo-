@@ -70,7 +70,7 @@ export function DocumentSlideOverDrawer({ doc, isOpen, onClose }: DocumentSlideO
 
   const handleDownload = () => {
     // Generate text/blob download for simulation
-    const content = `SEVAZO VERIFIED DOCUMENT AUDIT\n---------------------------------\nDocument: ${doc.title}\nID Number: ${doc.number}\nStore: ${doc.storeName}\nOwner: ${doc.ownerName || 'Verified Partner'}\nStatus: Officially Verified\nTimestamp: ${new Date().toISOString()}\n`;
+    const content = `SevaZo VERIFIED DOCUMENT AUDIT\n---------------------------------\nDocument: ${doc.title}\nID Number: ${doc.number}\nStore: ${doc.storeName}\nOwner: ${doc.ownerName || 'Verified Partner'}\nStatus: Officially Verified\nTimestamp: ${new Date().toISOString()}\n`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

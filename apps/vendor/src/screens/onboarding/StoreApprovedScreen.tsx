@@ -48,7 +48,7 @@ export const StoreApprovedScreen: React.FC<{ navigation: any; route: any }> = ({
         </View>
 
         <Badge label="VERIFIED & ACTIVE" variant="success" size="md" style={{ marginBottom: 12 }} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Your Sevazo Store is Live!</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Your SevaZo Store is Live!</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Congratulations! Your business application has been approved. Your storefront is now visible to nearby customers.
         </Text>

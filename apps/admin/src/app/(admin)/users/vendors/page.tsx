@@ -445,7 +445,7 @@ export default function VendorsPage() {
               <Store className="h-5 w-5 text-primary" /> Onboard Merchant Store
             </DialogTitle>
             <DialogDescription>
-              Register a new vendor store onto the Sevazo marketplace with instant catalog activation.
+              Register a new vendor store onto the SevaZo marketplace with instant catalog activation.
             </DialogDescription>
           </DialogHeader>
 

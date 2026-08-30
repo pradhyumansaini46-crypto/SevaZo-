@@ -1,5 +1,5 @@
 export const APP_CONFIG = {
-  appName: 'Sevazo Customer',
+  appName: 'SevaZo Customer',
   version: '1.0.0',
   apiBaseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api/v1',
   deliveryTimeMinutes: '10-15',

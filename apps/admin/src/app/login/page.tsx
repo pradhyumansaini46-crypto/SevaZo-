@@ -110,7 +110,7 @@ export default function LoginPage() {
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl overflow-hidden shadow-sm border border-white bg-white p-2">
             <Image
               src="/logo.png"
-              alt="Sevazo Logo"
+              alt="SevaZo Logo"
               width={75}
               height={75}
               priority
@@ -119,7 +119,7 @@ export default function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
-              SEVAZO ADMIN
+              SevaZo ADMIN
             </CardTitle>
             <p className="text-xs font-semibold uppercase tracking-wider text-teal-800 mt-0.5">
               Platform Administration Portal

@@ -90,7 +90,7 @@ export const RevenueScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
           />
 
           <MetricCard
-            title="Sevazo Platform Fee"
+            title="SevaZo Platform Fee"
             value={`₹${summary.totalPlatformFee.toLocaleString()}`}
             subtitle="10% commission + GST"
             icon={<Percent size={20} color={Colors.secondary} />}

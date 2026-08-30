@@ -59,7 +59,7 @@ export const SupportScreen: React.FC = () => {
 
   const faqs = [
     {
-      q: 'How fast is Sevazo delivery?',
+      q: 'How fast is SevaZo delivery?',
       a: 'We deliver in 10-15 minutes using local micro-fulfillment dark stores and certified electric riders.',
     },
     {

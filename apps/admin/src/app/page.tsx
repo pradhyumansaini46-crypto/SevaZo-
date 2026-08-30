@@ -70,7 +70,7 @@ export default function SecurityGatekeeperPage() {
         <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-white/90 backdrop-blur-xl border border-white/90 shadow-[0_12px_40px_rgba(227,253,245,0.6)] p-3">
           <Image
             src="/logo.png"
-            alt="Sevazo Logo"
+            alt="SevaZo Logo"
             width={80}
             height={80}
             priority
@@ -84,7 +84,7 @@ export default function SecurityGatekeeperPage() {
         {/* Title & Portal Info */}
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-sans flex items-center justify-center gap-2">
-            SEVAZO
+            SevaZo
           </h1>
           <p className="text-xs font-semibold uppercase tracking-wider text-teal-800">
             Administration Portal

@@ -152,7 +152,7 @@ export const CheckoutScreen: React.FC = () => {
             },
             {
               id: 'WALLET' as PaymentMethodType,
-              title: 'Sevazo Wallet (Balance: ₹450)',
+              title: 'SevaZo Wallet (Balance: ₹450)',
               sub: 'Instant 1-click checkout with rewards',
               icon: <Wallet size={18} color={Colors.secondary} />,
               popular: false,

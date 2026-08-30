@@ -14,7 +14,7 @@ interface BrandingPreviewProps {
 export function BrandingPreview({
   primaryColor = '#0D9488',
   secondaryColor = '#C026D3',
-  platformName = 'Sevazo',
+  platformName = 'SevaZo',
 }: BrandingPreviewProps) {
   const [activeTab, setActiveTab] = React.useState<'CUSTOMER' | 'VENDOR' | 'RIDER' | 'ADMIN'>('CUSTOMER');
 

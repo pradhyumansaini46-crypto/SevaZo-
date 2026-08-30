@@ -92,7 +92,7 @@ export const ReturnsScreen: React.FC = () => {
           <CheckCircle2 size={64} color={Colors.primary} />
           <Text style={styles.successTitle}>Return Request Approved!</Text>
           <Text style={styles.successSubtitle}>
-            ₹130 has been credited to your Sevazo Wallet. No pickup needed for fresh food items.
+            ₹130 has been credited to your SevaZo Wallet. No pickup needed for fresh food items.
           </Text>
 
           <Button
@@ -112,7 +112,7 @@ export const ReturnsScreen: React.FC = () => {
         showBack
         onPressBack={() => navigation.goBack()}
         title="Return / Replace Items"
-        subtitle="Sevazo No-Questions-Asked Freshness Guarantee"
+        subtitle="SevaZo No-Questions-Asked Freshness Guarantee"
       />
 
       <ScrollView

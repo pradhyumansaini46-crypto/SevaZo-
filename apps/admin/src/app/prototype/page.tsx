@@ -153,9 +153,9 @@ export default function SevazoPrototypePage() {
     const dbClean = normalizePhone(mockDatabase.mobile);
 
     // FAIL STATE: If number doesn't exist, OR if isVerified is false:
-    // Block login and display exact error: "Number is not existed in Sevazo"
+    // Block login and display exact error: "Number is not existed in SevaZo"
     if (enteredClean !== dbClean || !mockDatabase.isVerified) {
-      setRiderLoginError('Number is not existed in Sevazo');
+      setRiderLoginError('Number is not existed in SevaZo');
       return;
     }
 
@@ -199,7 +199,7 @@ export default function SevazoPrototypePage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold tracking-tight text-white">SEVAZO</h1>
+                <h1 className="text-base font-bold tracking-tight text-white">SevaZo</h1>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-medium border border-orange-500/30">
                   State-Driven Prototype
                 </span>
@@ -314,7 +314,7 @@ export default function SevazoPrototypePage() {
               <span>
                 Enter mobile <code className="text-orange-400 font-mono">9876543210</code> in Rider
                 App &amp; click &apos;Get OTP&apos; &rarr; Observe error:
-                <strong className="text-rose-400 font-medium"> &quot;Number is not existed in Sevazo&quot;</strong>
+                <strong className="text-rose-400 font-medium"> &quot;Number is not existed in SevaZo&quot;</strong>
               </span>
             </span>
             <span className="flex items-center gap-1.5">
@@ -513,10 +513,10 @@ export default function SevazoPrototypePage() {
                             <span className="text-2xl font-black">🚴</span>
                           </div>
                           <h3 className="text-xl font-extrabold text-white tracking-tight">
-                            SEVAZO <span className="text-orange-500">RIDER</span>
+                            SevaZo <span className="text-orange-500">RIDER</span>
                           </h3>
                           <p className="text-xs text-slate-400 mt-1">
-                            Deliver smarter. Earn with Sevazo.
+                            Deliver smarter. Earn with SevaZo.
                           </p>
                         </div>
 
@@ -583,7 +583,7 @@ export default function SevazoPrototypePage() {
                         <div className="text-center">
                           <span className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                            Official Sevazo Partner Platform
+                            Official SevaZo Partner Platform
                           </span>
                         </div>
                       </div>

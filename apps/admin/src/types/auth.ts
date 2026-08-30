@@ -1,5 +1,5 @@
 /**
- * Sevazo Admin Role-Based Access Control (RBAC) & State Machine Definitions
+ * SevaZo Admin Role-Based Access Control (RBAC) & State Machine Definitions
  */
 
 export type AdminRole =

@@ -146,7 +146,7 @@ export const EmergencyContactScreen = ({ navigation }: any) => {
         <View style={styles.sosCard}>
           <HeartHandshake size={20} color="#FF6600" />
           <Text style={styles.sosText}>
-            Sevazo 24/7 SOS dispatch center can reach this contact during road accidents or critical
+            SevaZo 24/7 SOS dispatch center can reach this contact during road accidents or critical
             incidents.
           </Text>
         </View>

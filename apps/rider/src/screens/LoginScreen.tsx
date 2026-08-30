@@ -95,7 +95,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
           {/* Heading Greeting */}
           <View style={styles.headingBlock}>
-            <Text style={styles.headingTitle}>Sign in to Sevazo</Text>
+            <Text style={styles.headingTitle}>Sign in to SevaZo</Text>
             <Text style={styles.headingSubtitle}>
               Welcome back. Enter your mobile number to receive a secure OTP.
             </Text>
@@ -201,7 +201,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
           {/* Switch to Register Link */}
           <View style={styles.switchModeContainer}>
-            <Text style={styles.switchModeText}>New to Sevazo? </Text>
+            <Text style={styles.switchModeText}>New to SevaZo? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.switchModeLink}>Register as Rider</Text>
             </TouchableOpacity>

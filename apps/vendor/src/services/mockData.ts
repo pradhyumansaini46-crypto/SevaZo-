@@ -465,7 +465,7 @@ export const mockInventoryLogs: InventoryLog[] = [
     previousStock: 4,
     newStock: 2,
     reason: 'SALE',
-    notes: 'Sold on Sevazo live instant orders.',
+    notes: 'Sold on SevaZo live instant orders.',
     createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
   },
   {
@@ -551,7 +551,7 @@ export const mockNotifications: NotificationItem[] = [
     id: 'notif-4',
     type: 'SYSTEM',
     title: 'KYC Verification Approved ✅',
-    message: 'Your GST and FSSAI business compliance has been verified by the Sevazo Admin team.',
+    message: 'Your GST and FSSAI business compliance has been verified by the SevaZo Admin team.',
     timestamp: '4 days ago',
     read: true,
   },

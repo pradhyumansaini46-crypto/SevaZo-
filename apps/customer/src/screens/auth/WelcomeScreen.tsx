@@ -39,7 +39,7 @@ export const WelcomeScreen: React.FC = () => {
       {/* Brand & Hero Graphics */}
       <View style={styles.heroSection}>
         <View style={styles.logoBadge}>
-          <Text style={styles.logoText}>SEVAZO</Text>
+          <Text style={styles.logoText}>SevaZo</Text>
         </View>
 
         <View style={styles.heroImageWrap}>
@@ -58,7 +58,7 @@ export const WelcomeScreen: React.FC = () => {
 
         {/* Catchphrase Header */}
         <View style={styles.textWrap}>
-          <Text style={styles.welcomeTitle}>Welcome to Sevazo</Text>
+          <Text style={styles.welcomeTitle}>Welcome to SevaZo</Text>
           <Text style={styles.welcomeSubtitle}>
             Everything you need, delivered fresh to your door in minutes.
           </Text>

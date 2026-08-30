@@ -179,7 +179,7 @@ export const StoreProfileSection: React.FC<StoreProfileSectionProps> = ({
     <StepContainer
       icon={<Store size={24} color={colors.primary} />}
       title="Store Branding & Profile"
-      subtitle="Design your customer-facing digital storefront on the Sevazo app."
+      subtitle="Design your customer-facing digital storefront on the SevaZo app."
     >
       {/* Live Customer-Facing Storefront Preview Card */}
       <View style={styles.previewSection}>
@@ -201,7 +201,7 @@ export const StoreProfileSection: React.FC<StoreProfileSectionProps> = ({
               </View>
             )}
             <View style={styles.openBadge}>
-              <Text style={styles.openText}>● LIVE ON SEVAZO</Text>
+              <Text style={styles.openText}>● LIVE ON SevaZo</Text>
             </View>
           </View>
 
@@ -284,7 +284,7 @@ export const StoreProfileSection: React.FC<StoreProfileSectionProps> = ({
               onBlur={onBlur}
               error={errors.name?.message}
               leftIcon={<Store size={18} color={colors.textSecondary} />}
-              helperText="Exact branding displayed to customers on the Sevazo app."
+              helperText="Exact branding displayed to customers on the SevaZo app."
             />
           )}
         />

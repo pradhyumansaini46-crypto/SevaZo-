@@ -443,7 +443,7 @@ export default function DashboardPage() {
                 {mockOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="py-12 text-center text-sm text-slate-500">
-                      No orders placed yet. As customers place orders on Sevazo, they will appear here in real-time.
+                      No orders placed yet. As customers place orders on SevaZo, they will appear here in real-time.
                     </TableCell>
                   </TableRow>
                 ) : (

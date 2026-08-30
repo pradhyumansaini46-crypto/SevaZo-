@@ -67,7 +67,7 @@ export const StoreStatusScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Text style={styles.switchSub}>
                 {isOpen
                   ? 'Accepting instant orders with automated rider dispatch.'
-                  : 'Store will appear closed to customers in the Sevazo consumer app.'}
+                  : 'Store will appear closed to customers in the SevaZo consumer app.'}
               </Text>
             </View>
             <Switch

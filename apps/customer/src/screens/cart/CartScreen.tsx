@@ -88,7 +88,7 @@ export const CartScreen: React.FC = () => {
               <View>
                 <Text style={styles.deliveryBannerTitle}>Delivery in 10-15 Minutes</Text>
                 <Text style={styles.deliveryBannerSub}>
-                  Shipment from Sevazo Express Dark Store
+                  Shipment from SevaZo Express Dark Store
                 </Text>
               </View>
             </View>

@@ -1,4 +1,4 @@
-export const APP_NAME = 'Sevazo';
+export const APP_NAME = 'SevaZo';
 export const APP_DESCRIPTION = 'Unified Commerce & Logistics Platform';
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {

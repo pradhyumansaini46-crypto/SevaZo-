@@ -1,5 +1,5 @@
 /**
- * Sevazo Admin Action Audit Logging Definitions
+ * SevaZo Admin Action Audit Logging Definitions
  */
 
 export type AdminActionType =

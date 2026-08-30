@@ -221,7 +221,7 @@ export const BusinessInfoSection: React.FC<BusinessInfoSectionProps> = ({
     try {
       const currentValues = watch();
       await VendorApi.patchBusiness(currentValues);
-      toast.info('Draft saved to Sevazo Cloud.');
+      toast.info('Draft saved to SevaZo Cloud.');
       if (onSaveDraft) onSaveDraft();
     } catch (err: any) {
       toast.error('Failed to save draft.');
@@ -378,7 +378,7 @@ export const BusinessInfoSection: React.FC<BusinessInfoSectionProps> = ({
               onBlur={onBlur}
               error={errors.displayName?.message}
               leftIcon={<Store size={18} color={colors.textSecondary} />}
-              helperText="Customer-facing store name displayed on the Sevazo app."
+              helperText="Customer-facing store name displayed on the SevaZo app."
             />
           )}
         />

@@ -118,7 +118,7 @@ export default function OwnerSetupWizardPage() {
   }
 
   function handleDownloadCodes() {
-    const text = `SEVAZO ADMINISTRATION RECOVERY CODES\nGenerated: ${new Date().toISOString()}\nOwner: ${config.owner.email}\n\n` +
+    const text = `SevaZo ADMINISTRATION RECOVERY CODES\nGenerated: ${new Date().toISOString()}\nOwner: ${config.owner.email}\n\n` +
       config.security.recoveryCodes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
       `\n\nKEEP THESE RECOVERY CODES SECURE. EACH CODE CAN BE USED ONCE.`;
     const blob = new Blob([text], { type: 'text/plain' });
@@ -193,11 +193,11 @@ export default function OwnerSetupWizardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 backdrop-blur-xl border border-white/90 p-4 sm:p-5 rounded-2xl shadow-[0_8px_30px_rgba(227,253,245,0.45)]">
           <div className="flex items-center gap-3.5">
             <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 p-1.5 shadow-2xs flex items-center justify-center">
-              <Image src="/logo.png" alt="Sevazo Logo" width={40} height={40} className="object-contain" priority />
+              <Image src="/logo.png" alt="SevaZo Logo" width={40} height={40} className="object-contain" priority />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-900 font-sans">Sevazo Administration Setup</h1>
+                <h1 className="text-lg font-bold text-slate-900 font-sans">SevaZo Administration Setup</h1>
                 <Badge className="bg-gradient-to-r from-[#0D9488] to-[#C026D3] text-white text-[10px] font-semibold border-0">
                   Owner Control Plane
                 </Badge>
@@ -360,7 +360,7 @@ export default function OwnerSetupWizardPage() {
                     <Input
                       value={config.platform.name}
                       onChange={(e) => updateConfig('platform', { name: e.target.value })}
-                      placeholder="Sevazo"
+                      placeholder="SevaZo"
                       className="bg-white border-slate-200"
                     />
                   </div>
@@ -370,7 +370,7 @@ export default function OwnerSetupWizardPage() {
                     <Input
                       value={config.platform.legalName}
                       onChange={(e) => updateConfig('platform', { legalName: e.target.value })}
-                      placeholder="Sevazo Technologies Private Limited"
+                      placeholder="SevaZo Technologies Private Limited"
                       className="bg-white border-slate-200"
                     />
                   </div>
@@ -968,13 +968,13 @@ export default function OwnerSetupWizardPage() {
               </div>
             )}
 
-            {/* STEP 11: REVIEW SEVAZO CONFIGURATION (PROMPT 16 & 22) */}
+            {/* STEP 11: REVIEW SevaZo CONFIGURATION (PROMPT 16 & 22) */}
             {currentStep === 11 && (
               <div className="space-y-6">
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-[#E3FDF5] to-[#FFE6FA] border border-white p-5 space-y-2 text-center">
                   <Sparkles className="h-8 w-8 text-teal-700 mx-auto" />
                   <h3 className="text-lg font-bold text-slate-900 font-sans">
-                    Review Sevazo Platform Configuration
+                    Review SevaZo Platform Configuration
                   </h3>
                   <p className="text-xs text-slate-600 max-w-xl mx-auto">
                     Verify all operational parameters before initial system activation. Click [Edit] next to any module to make instant adjustments.
@@ -1168,7 +1168,7 @@ export default function OwnerSetupWizardPage() {
                   className="w-full h-12 bg-gradient-to-r from-[#0D9488] via-[#059669] to-[#C026D3] hover:opacity-95 text-white font-bold text-sm shadow-lg transition-all cursor-pointer"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Activate Sevazo Platform
+                  Activate SevaZo Platform
                 </Button>
               </div>
             )}
@@ -1210,10 +1210,10 @@ export default function OwnerSetupWizardPage() {
                 <Sparkles className="h-7 w-7" />
               </div>
               <CardTitle className="text-lg font-bold text-slate-900 font-sans">
-                Activate Sevazo Platform?
+                Activate SevaZo Platform?
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                Once activated, these settings will become the operational defaults for Sevazo. Some changes may require additional permissions later.
+                Once activated, these settings will become the operational defaults for SevaZo. Some changes may require additional permissions later.
               </CardDescription>
             </CardHeader>
 

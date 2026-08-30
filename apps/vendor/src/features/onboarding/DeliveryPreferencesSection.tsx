@@ -302,7 +302,7 @@ export const DeliveryPreferencesSection: React.FC<DeliveryPreferencesSectionProp
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
-            helperText="Directly displayed on the Sevazo Rider app during pickup navigation."
+            helperText="Directly displayed on the SevaZo Rider app during pickup navigation."
           />
         )}
       />

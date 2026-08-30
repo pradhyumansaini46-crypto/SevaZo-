@@ -157,7 +157,7 @@ export const StatusTrackerScreen: React.FC<{ navigation: any }> = ({ navigation 
             { step: '1', title: 'Application Submitted', desc: 'Merchant profile and KYC documents submitted', done: true },
             { step: '2', title: 'Legal & KYC Verification', desc: 'GST, PAN and food safety license validation', done: true, inProgress: true },
             { step: '3', title: 'Store Profile & Delivery Routing', desc: 'Geofencing, radius check & rider routing', done: false },
-            { step: '4', title: 'Live Dashboard & Payout Activation', desc: 'Store goes live on Sevazo instant commerce', done: false },
+            { step: '4', title: 'Live Dashboard & Payout Activation', desc: 'Store goes live on SevaZo instant commerce', done: false },
           ].map((item, idx) => (
             <View key={idx} style={styles.timelineRow}>
               <View style={styles.timelineIconCol}>

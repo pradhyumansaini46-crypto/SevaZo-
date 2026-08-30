@@ -21,9 +21,9 @@ export const WelcomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
             </View>
           </View>
 
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Sevazo Vendor</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>SevaZo Vendor</Text>
           <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-            Grow your business with Sevazo
+            Grow your business with SevaZo
           </Text>
         </View>
 
@@ -88,7 +88,7 @@ export const WelcomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
           />
 
           <Text style={[styles.footerNotice, { color: colors.textSecondary }]}>
-            By continuing, you agree to Sevazo's Terms of Merchant Service and Privacy Policy.
+            By continuing, you agree to SevaZo's Terms of Merchant Service and Privacy Policy.
           </Text>
         </View>
       </View>

@@ -35,7 +35,7 @@ export const ProfileScreen: React.FC = () => {
   const { items: wishlistItems } = useWishlistStore();
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out of Sevazo?', [
+    Alert.alert('Sign Out', 'Are you sure you want to sign out of SevaZo?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out',
@@ -76,7 +76,7 @@ export const ProfileScreen: React.FC = () => {
           onPress: () => navigation.navigate('Addresses'),
         },
         {
-          title: 'Sevazo Wallet',
+          title: 'SevaZo Wallet',
           sub: `Balance: ₹${customer?.walletBalance || 450}`,
           icon: <Wallet size={20} color={Colors.secondary} />,
           onPress: () => navigation.navigate('Wallet'),

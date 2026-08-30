@@ -82,7 +82,7 @@ export const RegisterScreen: React.FC = () => {
         <View style={styles.headerBlock}>
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>
-            Enter your mobile number to get started with Sevazo Express.
+            Enter your mobile number to get started with SevaZo Express.
           </Text>
         </View>
 

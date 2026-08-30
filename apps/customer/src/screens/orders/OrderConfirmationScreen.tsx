@@ -32,7 +32,7 @@ export const OrderConfirmationScreen: React.FC = () => {
         <View style={styles.etaCard}>
           <View style={styles.etaHeaderRow}>
             <Zap size={20} color="#D97706" fill="#D97706" />
-            <Text style={styles.etaTitle}>Sevazo Flash Delivery</Text>
+            <Text style={styles.etaTitle}>SevaZo Flash Delivery</Text>
           </View>
           <Text style={styles.etaTime}>Arriving in {estimatedTime}</Text>
           <Text style={styles.etaSub}>

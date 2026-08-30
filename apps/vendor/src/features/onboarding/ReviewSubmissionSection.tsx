@@ -283,7 +283,7 @@ export const ReviewSubmissionSection: React.FC<ReviewSubmissionSectionProps> = (
             </View>
             <Text style={[styles.agreementText, { color: colors.textPrimary }]}>
               I agree to the{' '}
-              <Text style={{ color: colors.primary, fontWeight: '700' }}>Sevazo Merchant Terms & Conditions</Text>.
+              <Text style={{ color: colors.primary, fontWeight: '700' }}>SevaZo Merchant Terms & Conditions</Text>.
             </Text>
           </TouchableOpacity>
 

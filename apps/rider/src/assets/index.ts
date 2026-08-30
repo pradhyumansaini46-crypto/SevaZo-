@@ -1,5 +1,5 @@
 /**
- * Asset References for Sevazo Rider App
+ * Asset References for SevaZo Rider App
  */
 
 export const ASSETS = {

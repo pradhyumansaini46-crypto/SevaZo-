@@ -56,7 +56,7 @@ export const PaymentScreen: React.FC = () => {
         showBack
         onPressBack={() => navigation.goBack()}
         title="Secure Payment Gateway"
-        subtitle="Sevazo Pay 256-Bit Encrypted"
+        subtitle="SevaZo Pay 256-Bit Encrypted"
       />
 
       <View style={[styles.content, { paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg }]}>

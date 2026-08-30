@@ -72,7 +72,7 @@ export const ConsentStepScreen = ({ navigation }: any) => {
           <View style={styles.assuranceTextCol}>
             <Text style={styles.assuranceTitle}>Official Fleet Partner Undertaking</Text>
             <Text style={styles.assuranceDesc}>
-              Sevazo prioritizes road safety, partner welfare, zero harassment, and strict compliance with Indian Motor Vehicles regulations.
+              SevaZo prioritizes road safety, partner welfare, zero harassment, and strict compliance with Indian Motor Vehicles regulations.
             </Text>
           </View>
         </View>
@@ -176,7 +176,7 @@ export const ConsentStepScreen = ({ navigation }: any) => {
             <Text style={styles.policyTitle}>4. Background Verification & Location Consent</Text>
           </View>
           <Text style={styles.policyText}>
-            • I authorize Sevazo and its authorized verification partners to conduct identity, criminal record, and driving licence checks.{"\n"}
+            • I authorize SevaZo and its authorized verification partners to conduct identity, criminal record, and driving licence checks.{"\n"}
             • I consent to GPS background location tracking during active online shifts for order dispatch and SOS emergency support.
           </Text>
           <View style={styles.checkboxRow}>

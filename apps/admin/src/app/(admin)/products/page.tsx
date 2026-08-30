@@ -214,7 +214,7 @@ export default function ProductsPage() {
               <PackagePlus className="h-5 w-5 text-primary" /> Create Catalog Product
             </DialogTitle>
             <DialogDescription>
-              Add a new SKU to the Sevazo catalog with real-time stock allocation.
+              Add a new SKU to the SevaZo catalog with real-time stock allocation.
             </DialogDescription>
           </DialogHeader>
 

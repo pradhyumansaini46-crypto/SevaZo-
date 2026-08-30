@@ -70,7 +70,7 @@ export const WalletScreen: React.FC = () => {
       <Header
         showBack
         onPressBack={() => navigation.goBack()}
-        title="Sevazo Wallet"
+        title="SevaZo Wallet"
         subtitle="1-Click checkout & cashbacks"
       />
 
@@ -116,7 +116,7 @@ export const WalletScreen: React.FC = () => {
         <View style={styles.benefitsCard}>
           <Gift size={20} color={Colors.secondary} style={{ marginRight: Spacing.sm }} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.benefitsTitle}>Why use Sevazo Wallet?</Text>
+            <Text style={styles.benefitsTitle}>Why use SevaZo Wallet?</Text>
             <Text style={styles.benefitsSub}>
               Zero payment failure, fastest 1-second checkout, and instant refund credits on cancelled orders.
             </Text>

@@ -72,7 +72,7 @@ export const LoginScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerBlock}>
-          <Text style={styles.title}>Login to Sevazo</Text>
+          <Text style={styles.title}>Login to SevaZo</Text>
           <Text style={styles.subtitle}>
             Enter your mobile number to receive a 6-digit OTP
           </Text>
@@ -150,7 +150,7 @@ export const LoginScreen: React.FC = () => {
         {/* Bottom Switch to Register */}
         <View style={styles.actionBlock}>
           <View style={styles.registerPromptRow}>
-            <Text style={styles.registerPromptText}>New to Sevazo? </Text>
+            <Text style={styles.registerPromptText}>New to SevaZo? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.registerLink}>Create Account</Text>
             </TouchableOpacity>

@@ -147,6 +147,6 @@ export async function activatePlatformSystem(): Promise<{ success: boolean; mess
 
   return {
     success: true,
-    message: 'Sevazo Platform is now 100% ACTIVE and operational.',
+    message: 'SevaZo Platform is now 100% ACTIVE and operational.',
   };
 }

@@ -406,10 +406,10 @@ export const OnboardingWizardScreen: React.FC = () => {
           agreementVersion: 'v1.2',
           agreementsList: [
             'I confirm that the information provided is accurate.',
-            'I agree to Sevazo Rider Terms.',
-            'I agree to Sevazo Privacy Policy.',
+            'I agree to SevaZo Rider Terms.',
+            'I agree to SevaZo Privacy Policy.',
             'I agree to the Rider Agreement.',
-            'I authorize Sevazo to verify my submitted information.',
+            'I authorize SevaZo to verify my submitted information.',
             'I understand that rider activation is subject to verification.',
           ],
           termsAccepted: true,
@@ -439,10 +439,10 @@ export const OnboardingWizardScreen: React.FC = () => {
       agreementVersion: 'v1.2',
       agreementsList: [
         'I confirm that the information provided is accurate.',
-        'I agree to Sevazo Rider Terms.',
-        'I agree to Sevazo Privacy Policy.',
+        'I agree to SevaZo Rider Terms.',
+        'I agree to SevaZo Privacy Policy.',
         'I agree to the Rider Agreement.',
-        'I authorize Sevazo to verify my submitted information.',
+        'I authorize SevaZo to verify my submitted information.',
         'I understand that rider activation is subject to verification.',
       ],
       termsAccepted: true,
@@ -577,7 +577,7 @@ export const OnboardingWizardScreen: React.FC = () => {
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#94A3B8"
         />
-        <Text style={styles.helperText}>Must be at least 18 years old to deliver on Sevazo.</Text>
+        <Text style={styles.helperText}>Must be at least 18 years old to deliver on SevaZo.</Text>
       </View>
 
       <View style={styles.formGroup}>
@@ -808,7 +808,7 @@ export const OnboardingWizardScreen: React.FC = () => {
   const renderStep4 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>14. Select Vehicle Type</Text>
-      <Text style={styles.stepSubtitle}>How will you deliver orders on the Sevazo platform?</Text>
+      <Text style={styles.stepSubtitle}>How will you deliver orders on the SevaZo platform?</Text>
 
       <View style={styles.vehicleGrid}>
         {VEHICLE_CATEGORIES.map((v) => {
@@ -1288,7 +1288,7 @@ export const OnboardingWizardScreen: React.FC = () => {
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>25. Bank & Payout Details</Text>
       <Text style={styles.stepSubtitle}>
-        Where should Sevazo deposit your delivery earnings, surge bonuses, and customer tips?
+        Where should SevaZo deposit your delivery earnings, surge bonuses, and customer tips?
       </Text>
 
       {/* Payout Method Selector */}
@@ -1434,7 +1434,7 @@ export const OnboardingWizardScreen: React.FC = () => {
       <View style={styles.dispatchNoticeCard}>
         <Text style={styles.dispatchNoticeTitle}>⚖️ Dispatch Authority Notice</Text>
         <Text style={styles.dispatchNoticeText}>
-          Rider zone preferences guide priority routing; however, Sevazo automated dispatch engine remains authoritative based on real-time citywide demand.
+          Rider zone preferences guide priority routing; however, SevaZo automated dispatch engine remains authoritative based on real-time citywide demand.
         </Text>
       </View>
     </View>
@@ -1651,7 +1651,7 @@ export const OnboardingWizardScreen: React.FC = () => {
             {agreementTerms && <Text style={styles.checkMark}>✓</Text>}
           </View>
           <Text style={styles.agreementItemText}>
-            I agree to Sevazo Rider Terms.
+            I agree to SevaZo Rider Terms.
           </Text>
         </TouchableOpacity>
 
@@ -1663,7 +1663,7 @@ export const OnboardingWizardScreen: React.FC = () => {
             {agreementPrivacy && <Text style={styles.checkMark}>✓</Text>}
           </View>
           <Text style={styles.agreementItemText}>
-            I agree to Sevazo Privacy Policy.
+            I agree to SevaZo Privacy Policy.
           </Text>
         </TouchableOpacity>
 
@@ -1687,7 +1687,7 @@ export const OnboardingWizardScreen: React.FC = () => {
             {agreementVerifyAuth && <Text style={styles.checkMark}>✓</Text>}
           </View>
           <Text style={styles.agreementItemText}>
-            I authorize Sevazo to verify my submitted information.
+            I authorize SevaZo to verify my submitted information.
           </Text>
         </TouchableOpacity>
 

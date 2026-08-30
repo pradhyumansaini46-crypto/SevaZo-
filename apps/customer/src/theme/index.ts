@@ -1,5 +1,5 @@
 export const Colors = {
-  // Brand & Primary for Customer App (Fresh Sevazo Emerald & Quick Commerce Teal)
+  // Brand & Primary for Customer App (Fresh SevaZo Emerald & Quick Commerce Teal)
   primary: '#059669',          // Emerald 600
   primaryDark: '#047857',      // Emerald 700
   primaryLight: '#ECFDF5',     // Emerald 50

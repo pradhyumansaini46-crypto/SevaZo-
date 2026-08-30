@@ -117,7 +117,7 @@ export const RegisterScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>Register Your Business</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Create your merchant account to start selling products and services on Sevazo.
+              Create your merchant account to start selling products and services on SevaZo.
             </Text>
           </View>
 
@@ -178,7 +178,7 @@ export const RegisterScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           {/* Login Link */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-              Already registered on Sevazo?{' '}
+              Already registered on SevaZo?{' '}
             </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={[styles.loginLink, { color: colors.primary }]}>Login Here</Text>

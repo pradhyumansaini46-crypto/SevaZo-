@@ -36,7 +36,7 @@ export const SuspendedScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   const handleAppeal = () => {
     Alert.alert(
       'Dispute Appeal Submitted',
-      'Your appeal request has been submitted to the Sevazo Trust & Safety team. A grievance officer will contact you within 24 hours.'
+      'Your appeal request has been submitted to the SevaZo Trust & Safety team. A grievance officer will contact you within 24 hours.'
     );
   };
 
@@ -44,7 +44,7 @@ export const SuspendedScreen: React.FC<{ navigation: any }> = ({ navigation }) =
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="Account Notice"
-        subtitle="Sevazo Partner Compliance"
+        subtitle="SevaZo Partner Compliance"
       />
 
       <ScrollView
@@ -63,7 +63,7 @@ export const SuspendedScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           <Text style={[styles.infoHeading, { color: colors.textPrimary }]}>Reason for Action</Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             {vendor?.rejectionReason ||
-              'Policy violation detected: Repeated high cancellation rates or customer safety escalation. Please review the Sevazo Merchant Operational Standard Guidelines.'}
+              'Policy violation detected: Repeated high cancellation rates or customer safety escalation. Please review the SevaZo Merchant Operational Standard Guidelines.'}
           </Text>
 
           <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />

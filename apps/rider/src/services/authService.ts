@@ -34,7 +34,7 @@ export interface SessionCheckResponse {
 }
 
 /**
- * Authentication API Service for Sevazo Rider
+ * Authentication API Service for SevaZo Rider
  */
 export const authService = {
   async sendOtp(phone: string, email?: string): Promise<SendOtpResponse> {

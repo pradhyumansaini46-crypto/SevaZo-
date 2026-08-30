@@ -135,7 +135,7 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.aboutCard}>
           <Info size={18} color={Colors.primary} style={{ marginRight: Spacing.sm }} />
           <View>
-            <Text style={styles.aboutTitle}>Sevazo Customer Super App</Text>
+            <Text style={styles.aboutTitle}>SevaZo Customer Super App</Text>
             <Text style={styles.aboutVersion}>Version 1.0.0 (Build 2026.08)</Text>
           </View>
         </View>

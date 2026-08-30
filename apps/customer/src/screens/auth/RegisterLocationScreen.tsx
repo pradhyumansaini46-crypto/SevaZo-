@@ -154,7 +154,7 @@ export const RegisterLocationScreen: React.FC = () => {
         <View style={styles.explanationTextWrap}>
           <Text style={styles.explanationTitle}>10-Minute Dark Store Mapping</Text>
           <Text style={styles.explanationDesc}>
-            Location helps us match you with the closest Sevazo Pod for 10-15 min deliveries.
+            Location helps us match you with the closest SevaZo Pod for 10-15 min deliveries.
           </Text>
         </View>
       </View>

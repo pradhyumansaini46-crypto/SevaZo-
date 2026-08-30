@@ -100,7 +100,7 @@ export const PaymentsScreen: React.FC = () => {
         <View style={styles.securityBox}>
           <ShieldCheck size={18} color={Colors.success} style={{ marginRight: 8 }} />
           <Text style={styles.securityText}>
-            Sevazo complies with RBI Card-On-File Tokenization (CoFT) rules.
+            SevaZo complies with RBI Card-On-File Tokenization (CoFT) rules.
           </Text>
         </View>
       </ScrollView>

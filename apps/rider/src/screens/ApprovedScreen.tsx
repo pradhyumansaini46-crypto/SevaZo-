@@ -32,7 +32,7 @@ export const ApprovedScreen: React.FC = () => {
 
         <Text style={styles.title}>You're Approved!</Text>
         <Text style={styles.subtitle}>
-          Your Sevazo Rider account has been verified.
+          Your SevaZo Rider account has been verified.
         </Text>
 
         <Text style={styles.desc}>

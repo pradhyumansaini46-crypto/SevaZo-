@@ -130,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-white border border-orange-100 shadow-xs overflow-hidden">
                 <Image
                   src="/logo.png"
-                  alt="Sevazo Logo"
+                  alt="SevaZo Logo"
                   width={40}
                   height={40}
                   className="object-contain"
@@ -138,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-bold tracking-tight text-base text-slate-900">
-                  Sevazo
+                  SevaZo
                 </span>
                 <span className="truncate text-xs font-medium text-slate-500">
                   Admin Command Portal

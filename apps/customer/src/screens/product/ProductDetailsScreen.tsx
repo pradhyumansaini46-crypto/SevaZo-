@@ -266,7 +266,7 @@ export const ProductDetailsScreen: React.FC = () => {
             <View style={styles.sellerLeft}>
               <Text style={styles.sellerLabel}>Sold & Dispatched by</Text>
               <Text style={styles.sellerName}>
-                {product.storeName || 'Sevazo Express Hub'}
+                {product.storeName || 'SevaZo Express Hub'}
               </Text>
             </View>
             <ChevronRight size={18} color={Colors.textSecondary} />

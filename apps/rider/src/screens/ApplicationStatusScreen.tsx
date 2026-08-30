@@ -100,13 +100,13 @@ export const ApplicationStatusScreen: React.FC = () => {
 
   const handleEmailSupport = () => {
     Linking.openURL(
-      `mailto:rider-support@sevazo.in?subject=Application Query - ${applicationId}&body=Hello Sevazo Support Team,\n\nI have a question regarding my Rider application (ID: ${applicationId}).`
+      `mailto:rider-support@sevazo.in?subject=Application Query - ${applicationId}&body=Hello SevaZo Support Team,\n\nI have a question regarding my Rider application (ID: ${applicationId}).`
     ).catch(() => {});
   };
 
   const handleWhatsAppSupport = () => {
     Linking.openURL(
-      `https://wa.me/919876543210?text=Hi Sevazo Support, I need help with my Rider Application: ${applicationId}`
+      `https://wa.me/919876543210?text=Hi SevaZo Support, I need help with my Rider Application: ${applicationId}`
     ).catch(() => {});
   };
 
@@ -154,7 +154,7 @@ export const ApplicationStatusScreen: React.FC = () => {
           </Text>
           <Text style={styles.heroSubtitle}>
             {isOverallApproved
-              ? 'Welcome to the Sevazo delivery fleet. You can now go online and start accepting orders.'
+              ? 'Welcome to the SevaZo delivery fleet. You can now go online and start accepting orders.'
               : 'Our operations team is actively reviewing your submitted documents and setting up your fleet partner profile.'}
           </Text>
 
@@ -260,7 +260,7 @@ export const ApplicationStatusScreen: React.FC = () => {
           activeOpacity={0.85}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Contact Sevazo Partner Support"
+          accessibilityLabel="Contact SevaZo Partner Support"
         >
           <Headphones size={18} color="#FFFFFF" />
           <Text style={styles.contactSupportBtnText}>Contact Support</Text>
@@ -288,7 +288,7 @@ export const ApplicationStatusScreen: React.FC = () => {
                       <Headphones size={22} color="#FF6600" />
                     </View>
                     <View>
-                      <Text style={styles.supportModalTitle}>Sevazo Partner Support</Text>
+                      <Text style={styles.supportModalTitle}>SevaZo Partner Support</Text>
                       <Text style={styles.supportModalSubTitle}>We're here to help you get on the road</Text>
                     </View>
                   </View>

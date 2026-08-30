@@ -1,5 +1,5 @@
 /**
- * Sevazo Platform Policy & Compliance Types
+ * SevaZo Platform Policy & Compliance Types
  */
 
 export type PolicyStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';

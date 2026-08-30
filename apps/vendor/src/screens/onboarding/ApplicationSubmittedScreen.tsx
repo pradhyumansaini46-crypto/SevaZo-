@@ -54,7 +54,7 @@ export const ApplicationSubmittedScreen: React.FC<{ navigation: any; route: any 
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Application Submitted</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Your Sevazo vendor application has been submitted successfully and is currently queued for audit.
+          Your SevaZo vendor application has been submitted successfully and is currently queued for audit.
         </Text>
 
         {/* Application ID & Status Card */}

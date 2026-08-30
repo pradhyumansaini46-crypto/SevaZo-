@@ -1,5 +1,5 @@
 /**
- * API Endpoints Constants for Sevazo Rider App
+ * API Endpoints Constants for SevaZo Rider App
  */
 
 export const ENDPOINTS = {

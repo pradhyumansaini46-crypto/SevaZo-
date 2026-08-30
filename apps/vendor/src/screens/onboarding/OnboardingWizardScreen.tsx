@@ -1221,7 +1221,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           {currentStep === 7 && (
             <View>
               <Text style={[styles.stepHeading, { color: colors.textPrimary }]}>Store Profile & Media</Text>
-              <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>Your public brand presentation on Sevazo consumer app.</Text>
+              <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>Your public brand presentation on SevaZo consumer app.</Text>
 
               {/* Cover Banner (16:9) & Logo (1:1) */}
               <View style={styles.storeMediaContainer}>
@@ -1492,7 +1492,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 <View style={styles.consentSummaryRow}>
                   <Text style={[styles.consentSummaryLabel, { color: colors.textSecondary }]}>Storefront Name:</Text>
                   <Text style={[styles.consentSummaryValue, { color: colors.textPrimary }]}>
-                    {storeDisplayName || 'Sevazo Partner Store'}
+                    {storeDisplayName || 'SevaZo Partner Store'}
                   </Text>
                 </View>
                 <View style={styles.consentSummaryRow}>
@@ -1617,14 +1617,14 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 {
                   state: agreeVendorTerms,
                   setter: setAgreeVendorTerms,
-                  title: '2. Sevazo Marketplace Master Agreement',
-                  desc: 'I accept Sevazo Vendor Terms & Conditions, standard commission deductions, and merchant fulfillment service level agreements.',
+                  title: '2. SevaZo Marketplace Master Agreement',
+                  desc: 'I accept SevaZo Vendor Terms & Conditions, standard commission deductions, and merchant fulfillment service level agreements.',
                 },
                 {
                   state: agreePrivacyPolicy,
                   setter: setAgreePrivacyPolicy,
                   title: '3. Data Privacy & Confidentiality',
-                  desc: 'I agree to the Sevazo Partner Privacy Policy and will safeguard customer data strictly for delivery completion purposes.',
+                  desc: 'I agree to the SevaZo Partner Privacy Policy and will safeguard customer data strictly for delivery completion purposes.',
                 },
                 {
                   state: agreeSupplyAgreement,
@@ -1636,7 +1636,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   state: agreeVerifyAuth,
                   setter: setAgreeVerifyAuth,
                   title: '5. Regulatory Verification Authorization',
-                  desc: 'I authorize Sevazo to verify submitted documents with government portals (NSDL/GSTN/FSSAI) and disburse net daily settlements to my account.',
+                  desc: 'I authorize SevaZo to verify submitted documents with government portals (NSDL/GSTN/FSSAI) and disburse net daily settlements to my account.',
                 },
               ].map((ag, idx) => (
                 <TouchableOpacity
@@ -1777,7 +1777,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
             </View>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Review & Submit Application?</Text>
             <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
-              Once submitted, your application will be reviewed by the Sevazo onboarding desk within 24-48 hours. Information cannot be edited while verification is in progress.
+              Once submitted, your application will be reviewed by the SevaZo onboarding desk within 24-48 hours. Information cannot be edited while verification is in progress.
             </Text>
             <View style={styles.modalActionsRow}>
               <Button title="Cancel" variant="outline" onPress={() => setShowSubmitModal(false)} style={{ flex: 1, marginRight: 8 }} />

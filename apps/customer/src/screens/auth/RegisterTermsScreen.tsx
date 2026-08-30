@@ -68,7 +68,7 @@ export const RegisterTermsScreen: React.FC = () => {
       showToast('success', 'Account created and verified!');
       setShowCelebration(true);
     } catch {
-      showToast('success', 'Welcome to Sevazo!');
+      showToast('success', 'Welcome to SevaZo!');
       setShowCelebration(true);
     }
   };
@@ -94,7 +94,7 @@ export const RegisterTermsScreen: React.FC = () => {
       <View style={styles.securityCard}>
         <View style={styles.securityHeader}>
           <ShieldCheck size={20} color={Colors.primary} />
-          <Text style={styles.securityTitle}>Sevazo Customer Safety Guarantee</Text>
+          <Text style={styles.securityTitle}>SevaZo Customer Safety Guarantee</Text>
         </View>
         <Text style={styles.securityDesc}>
           Your phone number and delivery address are strictly encrypted with 256-bit AES.
@@ -118,7 +118,7 @@ export const RegisterTermsScreen: React.FC = () => {
           <View style={{ flex: 1, marginLeft: Spacing.sm }}>
             <Text style={styles.checkText}>
               I agree to the{' '}
-              <Text style={styles.linkText}>Terms & Conditions</Text> (v1.0) for Sevazo Customer App.
+              <Text style={styles.linkText}>Terms & Conditions</Text> (v1.0) for SevaZo Customer App.
             </Text>
           </View>
         </TouchableOpacity>
@@ -176,7 +176,7 @@ export const RegisterTermsScreen: React.FC = () => {
               <PartyPopper size={36} color={Colors.primary} />
             </View>
 
-            <Text style={styles.celebrationTitle}>Welcome to Sevazo! 🎉</Text>
+            <Text style={styles.celebrationTitle}>Welcome to SevaZo! 🎉</Text>
             <Text style={styles.celebrationSubtitle}>
               Your customer account is officially activated. We have credited your welcome discount.
             </Text>

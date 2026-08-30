@@ -451,7 +451,7 @@ export type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
  */
 export const consentSchema = z.object({
   codeOfConductAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to Sevazo Rider Code of Conduct' }),
+    errorMap: () => ({ message: 'You must agree to SevaZo Rider Code of Conduct' }),
   }),
   safetyGuidelinesAgreed: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to Traffic and Safety Guidelines' }),

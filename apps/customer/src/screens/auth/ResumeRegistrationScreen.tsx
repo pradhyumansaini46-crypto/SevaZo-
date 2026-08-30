@@ -100,7 +100,7 @@ export const ResumeRegistrationScreen: React.FC = () => {
         {/* Brand Header */}
         <View style={styles.brandRow}>
           <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>SEVAZO</Text>
+            <Text style={styles.logoText}>SevaZo</Text>
           </View>
           <View style={styles.draftBadge}>
             <Clock size={12} color={Colors.accentOrange} />
