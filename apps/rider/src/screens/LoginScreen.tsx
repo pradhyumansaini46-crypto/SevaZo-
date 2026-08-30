@@ -9,8 +9,8 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { ArrowRight, CheckCircle2, Phone, ShieldCheck } from 'lucide-react-native';
-import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
+import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react-native';
+import { Spacing, BorderRadius } from '../theme';
 import { useAuthStore } from '../store/authStore';
 import { phoneSchema } from '../validation/authValidation';
 import { InteractiveLamp } from '../components/InteractiveLamp';
@@ -20,7 +20,6 @@ export const LoginScreen = ({ navigation }: any) => {
   const [isLampOn, setIsLampOn] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const { sendOtp, isLoading, error, clearError } = useAuthStore();
-  const colors = useAppColors();
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 10;
 
@@ -66,7 +65,7 @@ export const LoginScreen = ({ navigation }: any) => {
           onToggle={(state) => setIsLampOn(state)}
         />
 
-        {/* Modern Logic Card */}
+        {/* Modern White Logic Card */}
         <View
           style={[
             styles.card,
@@ -116,7 +115,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 <Text style={styles.inputLabel}>Mobile Number *</Text>
                 {isPhoneValid && (
                   <View style={styles.verifiedTag}>
-                    <CheckCircle2 size={12} color="#10B981" />
+                    <CheckCircle2 size={13} color="#10B981" />
                     <Text style={styles.verifiedText}>Valid</Text>
                   </View>
                 )}
@@ -136,7 +135,7 @@ export const LoginScreen = ({ navigation }: any) => {
                   value={phone}
                   onChangeText={handlePhoneChange}
                   placeholder="Enter 10-digit number"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor="#94A3B8"
                   keyboardType="phone-pad"
                   maxLength={10}
                   accessible={true}
@@ -184,7 +183,7 @@ export const LoginScreen = ({ navigation }: any) => {
                 </Text>
                 <ArrowRight
                   size={18}
-                  color={isPhoneValid ? '#FFFFFF' : '#64748B'}
+                  color={isPhoneValid ? '#FFFFFF' : '#94A3B8'}
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>
@@ -217,7 +216,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
         {/* Security Trust Footer */}
         <View style={styles.trustFooter}>
-          <ShieldCheck size={15} color="#10B981" />
+          <ShieldCheck size={16} color="#10B981" />
           <Text style={styles.trustFooterText}>
             Official verified delivery partner login portal
           </Text>
@@ -230,32 +229,33 @@ export const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#06080F',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: 40,
+    paddingVertical: 32,
   },
   card: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
     borderWidth: 1,
+    borderColor: '#E2E8F0',
     padding: Spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowRadius: 30,
-    elevation: 10,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 8,
   },
   cardIlluminated: {
-    backgroundColor: '#0E1422',
-    borderColor: '#1E293B',
-    shadowOpacity: 0.6,
+    borderColor: '#FED7AA',
+    shadowColor: '#FF6600',
+    shadowOpacity: 0.12,
   },
   cardDimmed: {
-    backgroundColor: '#0A0D15',
-    borderColor: '#161F2E',
-    shadowOpacity: 0.3,
+    borderColor: '#E2E8F0',
   },
   topRow: {
     flexDirection: 'row',
@@ -269,42 +269,52 @@ const styles = StyleSheet.create({
     gap: Spacing.xs + 2,
   },
   brandIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     backgroundColor: '#FF6600',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   brandIconText: {
     color: '#FFFFFF',
     fontWeight: '900',
-    fontSize: 16,
+    fontSize: 17,
   },
   brandLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FF6600',
+    color: '#0F172A',
     letterSpacing: 0.5,
   },
   brandSubLabel: {
-    fontSize: 9,
-    color: '#94A3B8',
+    fontSize: 10,
+    color: '#64748B',
     fontWeight: '600',
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#05070C',
+    backgroundColor: '#F1F5F9',
     borderRadius: BorderRadius.full,
     padding: 3,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#E2E8F0',
   },
   tabActive: {
     backgroundColor: '#FF6600',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: BorderRadius.full,
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabActiveText: {
     color: '#FFFFFF',
@@ -313,10 +323,10 @@ const styles = StyleSheet.create({
   },
   tabInactive: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
   tabInactiveText: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -326,17 +336,17 @@ const styles = StyleSheet.create({
   headingTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: '#0F172A',
     letterSpacing: -0.5,
   },
   headingSubtitle: {
-    fontSize: 12,
-    color: '#94A3B8',
+    fontSize: 13,
+    color: '#64748B',
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   formGroup: {
-    gap: Spacing.md,
+    gap: Spacing.md + 2,
   },
   inputContainer: {
     gap: 6,
@@ -348,8 +358,8 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#CBD5E1',
+    fontWeight: '700',
+    color: '#334155',
   },
   verifiedTag: {
     flexDirection: 'row',
@@ -357,49 +367,50 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   verifiedText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: '#10B981',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#07090E',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#E2E8F0',
     borderRadius: 16,
     overflow: 'hidden',
   },
   inputErrorRow: {
     borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
   countryCodeBadge: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderRightWidth: 1,
-    borderRightColor: '#1E293B',
-    backgroundColor: '#0B0F19',
+    borderRightColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
   },
   countryCodeText: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 14,
     fontWeight: '700',
   },
   textInput: {
     flex: 1,
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 14,
     fontWeight: '600',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 13,
   },
   actionTrack: {
     position: 'relative',
     height: 56,
-    backgroundColor: '#05070C',
+    backgroundColor: '#F1F5F9',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.sm,
@@ -411,13 +422,13 @@ const styles = StyleSheet.create({
     height: 38,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#334155',
+    borderColor: '#CBD5E1',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   targetDottedText: {
-    color: '#475569',
+    color: '#94A3B8',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,
@@ -438,12 +449,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6600',
     shadowColor: '#FF6600',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
   },
   submitPillInactive: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#E2E8F0',
   },
   submitPillText: {
     fontSize: 14,
@@ -453,7 +464,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   submitPillTextInactive: {
-    color: '#64748B',
+    color: '#94A3B8',
   },
   progressHintContainer: {
     flexDirection: 'row',
@@ -468,8 +479,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   progressHintText: {
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 12,
+    color: '#64748B',
     fontWeight: '500',
   },
   switchModeContainer: {
@@ -479,7 +490,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   switchModeText: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 12,
   },
   switchModeLink: {
@@ -496,9 +507,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   trustFooterText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   errorText: {
     color: '#EF4444',

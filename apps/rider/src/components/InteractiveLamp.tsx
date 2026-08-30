@@ -4,7 +4,6 @@ import {
   StyleSheet,
   Animated,
   PanResponder,
-  Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -53,12 +52,12 @@ export const InteractiveLamp: React.FC<InteractiveLampProps> = ({
 
   return (
     <View style={styles.wrapper}>
-      {/* Dynamic Light Cone casting down onto the card */}
+      {/* Dynamic Warm Light Cone over White Background */}
       {isLampOn && (
         <LinearGradient
           colors={[
-            'rgba(255, 102, 0, 0.28)',
-            'rgba(255, 102, 0, 0.10)',
+            'rgba(255, 102, 0, 0.18)',
+            'rgba(255, 102, 0, 0.08)',
             'rgba(255, 102, 0, 0.02)',
             'transparent',
           ]}
@@ -85,7 +84,7 @@ export const InteractiveLamp: React.FC<InteractiveLampProps> = ({
           <View
             style={[
               styles.shadeAccent,
-              { backgroundColor: isLampOn ? '#FF6600' : '#475569' },
+              { backgroundColor: isLampOn ? '#FF6600' : '#94A3B8' },
             ]}
           />
         </View>
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     zIndex: 20,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   lightCone: {
     position: 'absolute',
@@ -139,8 +138,8 @@ const styles = StyleSheet.create({
   },
   ceilingWire: {
     width: 2,
-    height: 20,
-    backgroundColor: '#334155',
+    height: 22,
+    backgroundColor: '#94A3B8',
   },
   lampContainer: {
     alignItems: 'center',
@@ -149,35 +148,35 @@ const styles = StyleSheet.create({
   topCap: {
     width: 22,
     height: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#334155',
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
   },
   lampShade: {
-    width: 100,
-    height: 38,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    width: 104,
+    height: 40,
+    borderTopLeftRadius: 52,
+    borderTopRightRadius: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   lampShadeOn: {
-    backgroundColor: '#1E2433',
-    borderColor: 'rgba(255, 102, 0, 0.4)',
+    backgroundColor: '#0F172A',
+    borderColor: '#FF6600',
     shadowColor: '#FF6600',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 8,
   },
   lampShadeOff: {
-    backgroundColor: '#0F172A',
-    borderColor: '#334155',
+    backgroundColor: '#1E293B',
+    borderColor: '#475569',
   },
   shadeAccent: {
-    width: 60,
-    height: 2.5,
+    width: 64,
+    height: 3,
     borderRadius: 2,
   },
   bulb: {
@@ -197,7 +196,7 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   bulbOff: {
-    backgroundColor: '#475569',
+    backgroundColor: '#64748B',
   },
   pullCordContainer: {
     position: 'absolute',
@@ -208,12 +207,12 @@ const styles = StyleSheet.create({
   },
   beadedChain: {
     width: 2,
-    height: 32,
-    backgroundColor: '#94A3B8',
+    height: 34,
+    backgroundColor: '#64748B',
   },
   pullKnob: {
-    width: 12,
-    height: 20,
+    width: 13,
+    height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
     alignItems: 'center',
@@ -229,14 +228,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   pullKnobOff: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#334155',
     borderColor: '#64748B',
   },
   knobInner: {
     width: 3,
     height: 6,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
   },
 });
 
