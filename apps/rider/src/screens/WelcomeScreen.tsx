@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Bike, Clock, TrendingUp, ArrowRight } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { Button } from '../components/Button';
@@ -11,13 +11,15 @@ export const WelcomeScreen = ({ navigation }: any) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top Hero Brand Header with Typographic Logo */}
+      {/* Top Hero Brand Header with Official Graphic Logo */}
       <View style={styles.header}>
-        <View style={styles.brandLogoContainer}>
-          <Text style={[styles.brandLogo, { color: colors.textPrimary }]}>
-            Seva<Text style={{ color: colors.primary }}>Zo</Text>
-          </Text>
-        </View>
+        <Image
+          source={require('../../assets/sevazo-logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+          accessible={true}
+          accessibilityLabel="Official Sevazo Logo"
+        />
         <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to Sevazo Rider</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Hyperlocal fleet partner platform
@@ -86,7 +88,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Action Buttons: Stacked Register & Login (minHeight 48px, removed redundant bottom text) */}
+      {/* Action Buttons: Stacked Register & Login (minHeight 48px) */}
       <View style={styles.actions}>
         <Button
           title="Register as Rider"
@@ -113,28 +115,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: 64,
+    paddingTop: 54,
     paddingBottom: 40,
     justifyContent: 'space-between',
   },
   header: {
     alignItems: 'center',
   },
-  brandLogoContainer: {
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandLogo: {
-    fontSize: 40,
-    fontWeight: '900',
-    letterSpacing: -1.5,
+  logoImage: {
+    width: 120,
+    height: 120,
+    marginBottom: Spacing.xs,
   },
   title: {
     ...Typography.hero,
     fontSize: 26,
     fontWeight: '800',
     textAlign: 'center',
+    marginTop: Spacing.md,
   },
   subtitle: {
     ...Typography.bodyMedium,
