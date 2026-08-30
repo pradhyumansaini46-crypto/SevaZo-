@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
-import { Upload, CheckCircle2, ShieldCheck, CreditCard, FileCheck, AlertCircle } from 'lucide-react-native';
+import { Upload, CheckCircle2, CreditCard, FileCheck, AlertCircle } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { StepContainer } from '../../components/onboarding/StepContainer';
 import { Input } from '../../components/Input';
-import { ImagePickerModal, SelectedFilePayload } from '../../components/ImagePickerModal';
+import { ImagePickerModal } from '../../components/ImagePickerModal';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { identitySchema, IdentityFormValues } from '../../validation/onboardingValidation';
 
@@ -22,8 +22,8 @@ const ID_TYPES: IdTypeOption[] = [
   {
     label: 'Aadhaar Card',
     value: 'AADHAAR',
-    placeholder: 'e.g. 1234 5678 9012',
-    helper: '12-digit UIDAI number',
+    placeholder: 'e.g. 2345 6789 0123',
+    helper: '12-digit UIDAI number (starts with 2-9)',
   },
   {
     label: 'Voter ID',
@@ -169,32 +169,14 @@ export const IdentityStepScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleSaveExit = async () => {
-    handleSubmit(async (data) => {
-      await saveSection(
-        'identity',
-        {
-          ...data,
-          frontImage: currentDoc.frontImage || data.frontImage,
-          backImage: currentDoc.backImage || data.backImage,
-          licenseFrontImage: dlFrontImage,
-          licenseBackImage: dlBackImage,
-        },
-        false
-      );
-      navigation.navigate('OnboardingResume');
-    })();
-  };
-
   return (
     <OnboardingLayout
       currentStep={3}
-      totalSteps={9}
+      totalSteps={8}
       stepTitle="Identity & Licence"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingAddress')}
       onSaveContinue={handleSubmit(onSubmit)}
-      onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer
@@ -268,18 +250,26 @@ export const IdentityStepScreen = ({ navigation }: any) => {
                 placeholder={activeTypeConfig.placeholder}
                 value={value}
                 onChangeText={(txt) => {
-                  onChange(txt);
+                  let formatted = txt;
+                  if (selectedIdType === 'AADHAAR') {
+                    const digits = txt.replace(/\D/g, '').slice(0, 12);
+                    formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+                  } else {
+                    formatted = txt.toUpperCase().trim();
+                  }
+                  onChange(formatted);
                   setDocUploads((prev) => ({
                     ...prev,
                     [selectedIdType]: {
                       ...prev[selectedIdType],
-                      idNumber: txt,
+                      idNumber: formatted,
                     },
                   }));
                 }}
                 error={errors.idNumber?.message}
                 helperText={activeTypeConfig.helper}
                 autoCapitalize="characters"
+                maxLength={selectedIdType === 'AADHAAR' ? 14 : 20}
               />
             )}
           />
@@ -350,64 +340,69 @@ export const IdentityStepScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* ========================================================= */}
-        {/* MERGED: Driving Licence Verification (Point 5)            */}
-        {/* ========================================================= */}
+        {/* Driving Licence Verification */}
         <View style={styles.divider} />
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <FileCheck size={20} color="#FF6600" />
-            <Text style={styles.sectionHeaderTitle}>3. Driving Licence (DL) *</Text>
+            <Text style={styles.sectionHeaderTitle}>3. Driving Licence Verification</Text>
           </View>
 
           {isBicycle ? (
             <View style={styles.bicycleNotice}>
+              <AlertCircle size={18} color="#10B981" />
               <Text style={styles.bicycleNoticeText}>
-                🚲 Bicycle riders are exempt from Driving Licence requirements.
+                Driving licence is optional for standard bicycles.
               </Text>
             </View>
           ) : (
             <>
+              <Text style={styles.sectionSubtitle}>
+                Required for motorized vehicles (Bike, Scooter, Car).
+              </Text>
+
               {/* DL Number */}
               <Controller
                 control={control}
                 name="licenseNumber"
                 render={({ field: { onChange, value } }) => (
                   <Input
-                    label="Driving Licence Number"
+                    label="Driving Licence (DL) Number"
                     required
-                    placeholder="e.g. DL-1420110012345"
+                    placeholder="e.g. RJ14 20180012345"
                     value={value}
-                    onChangeText={(txt) => onChange(txt.toUpperCase())}
+                    onChangeText={(txt) => onChange(txt.toUpperCase().trim())}
                     error={errors.licenseNumber?.message}
                     autoCapitalize="characters"
+                    helperText="Enter 15/16-digit standard Indian DL number."
                   />
                 )}
               />
 
-              {/* DL Expiry */}
+              {/* DL Expiry Date */}
               <Controller
                 control={control}
                 name="expiryDate"
                 render={({ field: { onChange, value } }) => (
                   <Input
-                    label="Valid Till / Expiry Date (YYYY-MM-DD)"
+                    label="Licence Expiry Date"
                     required
-                    placeholder="e.g. 2032-12-31"
+                    placeholder="YYYY-MM-DD"
                     value={value}
                     onChangeText={onChange}
                     error={errors.expiryDate?.message}
-                    helperText="Licence must be valid and not expired"
+                    helperText="Must be a valid non-expired date."
+                    maxLength={10}
                   />
                 )}
               />
 
-              {/* DL Front & Back Uploads */}
+              {/* DL Scans */}
               <View style={styles.uploadRow}>
                 {/* DL Front */}
                 <View style={styles.uploadCard}>
-                  <Text style={styles.uploadTitle}>DL Front Side *</Text>
+                  <Text style={styles.uploadTitle}>DL Front Photo *</Text>
                   {dlFrontImage ? (
                     <View style={styles.previewContainer}>
                       <Image source={{ uri: dlFrontImage }} style={styles.previewImage} />
@@ -438,7 +433,7 @@ export const IdentityStepScreen = ({ navigation }: any) => {
 
                 {/* DL Back */}
                 <View style={styles.uploadCard}>
-                  <Text style={styles.uploadTitle}>DL Back Side *</Text>
+                  <Text style={styles.uploadTitle}>DL Back Photo *</Text>
                   {dlBackImage ? (
                     <View style={styles.previewContainer}>
                       <Image source={{ uri: dlBackImage }} style={styles.previewImage} />
@@ -467,39 +462,20 @@ export const IdentityStepScreen = ({ navigation }: any) => {
                   )}
                 </View>
               </View>
-
-              <View style={styles.noticeBanner}>
-                <AlertCircle size={16} color="#FF6600" />
-                <Text style={styles.noticeText}>
-                  Ensure all 4 corners of your DL are visible. Learner's Licence (LLR) is not accepted.
-                </Text>
-              </View>
             </>
           )}
         </View>
 
-        <View style={styles.trustBadge}>
-          <ShieldCheck size={16} color="#10B981" />
-          <Text style={styles.trustText}>
-            Identity and driving documents are cross-verified with official government registries.
-          </Text>
-        </View>
-
-        {/* Image & Document Picker Modal (Supports Camera, Gallery, and Browse Files/PDF) */}
+        {/* Modal for selecting upload source */}
         <ImagePickerModal
           visible={activePickerTarget !== null}
           onClose={() => setActivePickerTarget(null)}
           onImageSelected={handleFileSelected}
           title={
-            activePickerTarget === 'id_front'
-              ? `Upload ${activeTypeConfig.label} (Front)`
-              : activePickerTarget === 'id_back'
-              ? `Upload ${activeTypeConfig.label} (Back)`
-              : activePickerTarget === 'dl_front'
-              ? 'Upload Driving Licence (Front)'
-              : 'Upload Driving Licence (Back)'
+            activePickerTarget === 'dl_front' || activePickerTarget === 'dl_back'
+              ? 'Upload Driving Licence Photo'
+              : `Upload ${activeTypeConfig.label} Photo`
           }
-          aspect={[4, 3]}
           showDocumentOption={true}
         />
       </StepContainer>
@@ -509,187 +485,160 @@ export const IdentityStepScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   panSection: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
   },
   section: {
-    marginBottom: Spacing.md,
-  },
-  sectionHeaderTitle: {
-    ...Typography.titleSmall,
-    color: Colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
+    gap: Spacing.xs + 2,
+  },
+  sectionHeaderTitle: {
+    ...Typography.titleSmall,
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  sectionSubtitle: {
+    ...Typography.bodySmall,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: Spacing.lg,
   },
   idTypeChips: {
     flexDirection: 'row',
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   idChip: {
-    flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
   idChipSelected: {
-    borderColor: '#FF6600',
     backgroundColor: '#FFF7ED',
+    borderColor: '#FF6600',
   },
   idChipText: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontWeight: '600',
+    fontSize: 13,
   },
   idChipTextSelected: {
     color: '#FF6600',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   uploadRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginVertical: Spacing.sm,
   },
   uploadCard: {
     flex: 1,
+    gap: Spacing.xs,
   },
   uploadTitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    fontWeight: '600',
+    ...Typography.bodyMedium,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
   },
   dropZone: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderStyle: 'dashed',
-    borderRadius: BorderRadius.lg,
     height: 110,
-    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    borderRadius: BorderRadius.lg,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.xs,
   },
   dropZoneText: {
     ...Typography.bodySmall,
     color: '#FF6600',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 12,
   },
   previewContainer: {
-    position: 'relative',
     height: 110,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
+    position: 'relative',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
   },
   previewImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   verifiedTag: {
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: '#ECFDF5',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    gap: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   verifiedTagText: {
+    color: '#FFFFFF',
     fontSize: 10,
-    color: '#065F46',
     fontWeight: '700',
   },
   replaceButton: {
     position: 'absolute',
     bottom: 6,
     right: 6,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
+    backgroundColor: '#FF6600',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   replaceButtonText: {
+    color: '#FFFFFF',
     fontSize: 11,
-    color: Colors.textPrimary,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.lg,
+    fontWeight: '700',
   },
   bicycleNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
     backgroundColor: '#ECFDF5',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: '#A7F3D0',
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginVertical: Spacing.sm,
   },
   bicycleNoticeText: {
     ...Typography.bodySmall,
     color: '#065F46',
+    flex: 1,
     fontWeight: '600',
   },
-  noticeBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginVertical: Spacing.sm,
-  },
-  noticeText: {
-    ...Typography.bodySmall,
-    color: '#9A3412',
-    flex: 1,
-  },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: '#ECFDF5',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    marginTop: Spacing.md,
-  },
-  trustText: {
-    ...Typography.bodySmall,
-    color: '#065F46',
-    flex: 1,
-  },
   errorText: {
+    ...Typography.bodySmall,
     color: '#EF4444',
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
+    marginTop: 2,
   },
 });
 

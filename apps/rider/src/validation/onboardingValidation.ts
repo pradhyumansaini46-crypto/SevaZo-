@@ -1,6 +1,27 @@
 import { z } from 'zod';
 import { phoneSchema } from './authValidation';
 
+// Helper to check for dummy repetitive strings
+const isDummyRepetitive = (val: string): boolean => {
+  const clean = val.replace(/[\s-]/g, '');
+  if (!clean || clean.length < 4) return true;
+  // All same characters (e.g. 111111111111 or AAAAAAAAAA)
+  if (/^(.)\1+$/.test(clean)) return true;
+  // Common dummy sequences
+  const dummyList = [
+    '123456789012',
+    '987654321098',
+    '1234567890',
+    'ABCDE1234F',
+    'XXXXX1234X',
+    '0123456789',
+    '000000000000',
+    '999999999999',
+    'DL0000000000000',
+  ];
+  return dummyList.includes(clean.toUpperCase());
+};
+
 /**
  * Step 1: Personal Information & Emergency Contact Schema (Merged)
  */
@@ -58,7 +79,8 @@ export const addressSchema = z.object({
   postalCode: z
     .string()
     .length(6, 'Postal Code must be exactly 6 digits')
-    .regex(/^\d{6}$/, 'Postal Code must contain only numbers'),
+    .regex(/^\d{6}$/, 'Postal Code must contain only numbers')
+    .refine((val) => !isDummyRepetitive(val), 'Enter a valid postal code'),
   country: z.string(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -67,7 +89,7 @@ export const addressSchema = z.object({
 export type AddressFormValues = z.infer<typeof addressSchema>;
 
 /**
- * Emergency Contact Schema (Maintained for standalone type-safety)
+ * Emergency Contact Schema
  */
 export const emergencyContactSchema = z.object({
   fullName: z
@@ -83,15 +105,22 @@ export const emergencyContactSchema = z.object({
 export type EmergencyContactFormValues = z.infer<typeof emergencyContactSchema>;
 
 /**
- * Step 3: Identity & Driving Licence Verification Schema (Merged)
+ * Step 3: Identity & Driving Licence Verification Schema (Merged with Strict Validation)
  */
 export const identitySchema = z
   .object({
     panNumber: z
       .string()
-      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Enter a valid 10-character PAN (e.g. ABCDE1234F)'),
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Enter a valid 10-character Indian PAN (e.g. ABCDE1234F)')
+      .refine(
+        (val) => ['P', 'C', 'H', 'F', 'A', 'T', 'B', 'L', 'J', 'G'].includes(val.charAt(3)),
+        '4th character of PAN must be a valid entity code (e.g. P for Individual)'
+      )
+      .refine((val) => !isDummyRepetitive(val), 'Invalid or dummy PAN number entered'),
     idType: z.enum(['AADHAAR', 'VOTER_ID', 'PASSPORT']),
-    idNumber: z.string().min(4, 'Enter a valid ID number'),
+    idNumber: z.string().trim().min(4, 'Enter a valid ID number'),
     frontImage: z.string().min(1, 'Front photo of government ID is required'),
     backImage: z.string().min(1, 'Back photo of government ID is required'),
     // Driving Licence fields (Merged)
@@ -103,16 +132,23 @@ export const identitySchema = z
   })
   .superRefine((data, ctx) => {
     if (data.idType === 'AADHAAR') {
-      const clean = data.idNumber.replace(/\s/g, '');
-      if (!/^\d{12}$/.test(clean)) {
+      const clean = data.idNumber.replace(/[\s-]/g, '');
+      if (!/^[2-9]\d{11}$/.test(clean)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['idNumber'],
-          message: 'Aadhaar must be a 12-digit number (e.g. 1234 5678 9012)',
+          message: 'Aadhaar must be a valid 12-digit number starting with 2-9',
+        });
+      } else if (isDummyRepetitive(clean)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: 'Dummy or repetitive Aadhaar numbers are not allowed',
         });
       }
     } else if (data.idType === 'VOTER_ID') {
-      if (!/^[A-Z0-9]{8,14}$/i.test(data.idNumber.trim())) {
+      const clean = data.idNumber.trim().toUpperCase();
+      if (!/^[A-Z]{3}[0-9]{7}$/.test(clean) && !/^[A-Z0-9]{8,14}$/.test(clean)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['idNumber'],
@@ -120,11 +156,12 @@ export const identitySchema = z
         });
       }
     } else if (data.idType === 'PASSPORT') {
-      if (!/^[A-Z][0-9]{7,8}$/i.test(data.idNumber.trim())) {
+      const clean = data.idNumber.trim().toUpperCase();
+      if (!/^[A-Z][0-9]{7,8}$/.test(clean)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['idNumber'],
-          message: 'Enter a valid Passport number (e.g. A1234567)',
+          message: 'Enter a valid Indian Passport number (e.g. A1234567)',
         });
       }
     }
@@ -136,14 +173,37 @@ export const identitySchema = z
           path: ['licenseNumber'],
           message: 'Valid Driving Licence number is required',
         });
+      } else {
+        const dlClean = data.licenseNumber.replace(/[\s-]/g, '').toUpperCase();
+        // Indian DL format: 2-letter state code + 2-digit RTO + 4-digit Year + 7-digit unique number (Total 15 chars)
+        const isStandardDl = /^[A-Z]{2}[0-9]{2}[0-9]{4}[0-9]{7}$/.test(dlClean) || /^[A-Z]{2}[0-9]{13}$/.test(dlClean) || dlClean.length >= 10;
+        if (!isStandardDl || isDummyRepetitive(dlClean)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['licenseNumber'],
+            message: 'Invalid Driving Licence format (e.g. DL1420110012345)',
+          });
+        }
       }
+
       if (!data.expiryDate || data.expiryDate.trim().length < 4) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['expiryDate'],
           message: 'Licence expiry date is required (YYYY-MM-DD)',
         });
+      } else {
+        const exp = new Date(data.expiryDate);
+        const today = new Date();
+        if (isNaN(exp.getTime()) || exp < today) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['expiryDate'],
+            message: 'Driving Licence has expired. Please enter a valid non-expired date.',
+          });
+        }
       }
+
       if (!data.licenseFrontImage) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -164,7 +224,7 @@ export const identitySchema = z
 export type IdentityFormValues = z.infer<typeof identitySchema>;
 
 /**
- * Driving Licence Schema (Maintained for backward compatibility)
+ * Driving Licence Schema
  */
 export const drivingLicenceSchema = z.object({
   licenseNumber: z
@@ -273,20 +333,6 @@ export const vehicleSchema = z
 export type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 /**
- * Vehicle Documents Schema (Maintained for backward compatibility)
- */
-export const vehicleDocumentsSchema = z.object({
-  rcNumber: z.string().min(4, 'Registration Certificate number is required'),
-  rcImage: z.string().min(1, 'RC photo is required'),
-  insuranceNumber: z.string().min(4, 'Insurance policy number is required'),
-  insuranceExpiry: z.string().min(4, 'Insurance expiry date is required'),
-  insuranceImage: z.string().min(1, 'Insurance document photo is required'),
-  pucImage: z.string().optional(),
-});
-
-export type VehicleDocumentsFormValues = z.infer<typeof vehicleDocumentsSchema>;
-
-/**
  * Step 5: Banking & Payout Schema
  */
 export const bankingSchema = z
@@ -353,38 +399,42 @@ export const bankingSchema = z
 export type BankingFormValues = z.infer<typeof bankingSchema>;
 
 /**
- * Step 6: Service Area
+ * Vehicle Documents Schema (Maintained for backward compatibility)
  */
-export const serviceAreaSchema = z.object({
-  city: z.string().min(2, 'City is required'),
-  zone: z.string().min(2, 'Zone / Operational area is required'),
-  locality: z.string().min(2, 'Primary locality is required'),
-  preferredHubs: z.array(z.string()).min(1, 'Select at least one preferred delivery hub'),
+export const vehicleDocumentsSchema = z.object({
+  rcNumber: z.string().min(4, 'Registration Certificate number is required'),
+  rcImage: z.string().min(1, 'RC photo is required'),
+  insuranceNumber: z.string().min(4, 'Insurance policy number is required'),
+  insuranceExpiry: z.string().min(4, 'Insurance expiry date is required'),
+  insuranceImage: z.string().min(1, 'Insurance document photo is required'),
+  pucImage: z.string().optional(),
 });
 
-export type ServiceAreaFormValues = z.infer<typeof serviceAreaSchema>;
+export type VehicleDocumentsFormValues = z.infer<typeof vehicleDocumentsSchema>;
 
 /**
- * Step 7: Delivery Preferences
+ * Step 6: Service Area & Delivery Preferences (Merged)
  */
 export const deliveryPreferencesSchema = z.object({
-  maxDistanceKm: z.number().min(1).max(8),
-  categories: z.array(z.string()).min(1, 'Select at least one delivery category'),
+  city: z.string().min(2, 'City is required'),
+  zone: z.string().min(2, 'Operational zone is required'),
+  locality: z.string().min(2, 'Primary locality is required'),
+  preferredHubs: z.array(z.string()).min(1, 'Select at least one preferred delivery hub'),
+  maxDistanceKm: z.number().min(1).max(25),
   acceptHeavyItems: z.boolean(),
   acceptSpecialHandling: z.boolean(),
+  categories: z.array(z.string()).min(1, 'Select at least one delivery category'),
 });
 
 export type DeliveryPreferencesFormValues = z.infer<typeof deliveryPreferencesSchema>;
 
-/**
- * Step 8: Availability Schema
- */
-export const availabilitySlotSchema = z.object({
-  day: z.string(),
-  enabled: z.boolean(),
-  slots: z.array(z.string()),
-});
+// Backward compatibility alias
+export const serviceAreaSchema = deliveryPreferencesSchema;
+export type ServiceAreaFormValues = DeliveryPreferencesFormValues;
 
+/**
+ * Step 7: Working Hours & Availability Schema
+ */
 export const availabilitySchema = z.object({
   weeklySchedule: z.record(
     z.object({
@@ -395,3 +445,33 @@ export const availabilitySchema = z.object({
 });
 
 export type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
+
+/**
+ * Step 8: Rider Consent & Declaration Form Schema
+ */
+export const consentSchema = z.object({
+  codeOfConductAgreed: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to Sevazo Rider Code of Conduct' }),
+  }),
+  safetyGuidelinesAgreed: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to Traffic and Safety Guidelines' }),
+  }),
+  zeroTolerancePolicyAgreed: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept the Zero Tolerance Policy on Substance and Harassment' }),
+  }),
+  backgroundCheckAgreed: z.literal(true, {
+    errorMap: () => ({ message: 'Consent for identity and background verification is required' }),
+  }),
+  dataConsentAgreed: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to Data Privacy & Location Tracking Terms' }),
+  }),
+  declarationConfirmed: z.literal(true, {
+    errorMap: () => ({ message: 'You must confirm that all provided details are true and accurate' }),
+  }),
+  signatureName: z
+    .string()
+    .min(2, 'Digital signature (Full Legal Name) is required')
+    .regex(/^[a-zA-Z\s.]+$/, 'Signature must contain your legal name in letters'),
+});
+
+export type ConsentFormValues = z.infer<typeof consentSchema>;

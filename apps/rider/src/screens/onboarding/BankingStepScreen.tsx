@@ -99,26 +99,19 @@ export const BankingStepScreen = ({ navigation }: any) => {
     };
     const success = await saveSection('banking', payload, true);
     if (success) {
-      navigation.navigate('OnboardingServiceArea');
+      // Step 6 is Service Area & Delivery Preferences (Merged)
+      navigation.navigate('OnboardingPreferences');
     }
-  };
-
-  const handleSaveExit = async () => {
-    handleSubmit(async (data) => {
-      await saveSection('banking', { ...data, upiVerifiedName }, false);
-      navigation.navigate('OnboardingResume');
-    })();
   };
 
   return (
     <OnboardingLayout
       currentStep={5}
-      totalSteps={9}
+      totalSteps={8}
       stepTitle="Bank & Payout Details"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingVehicle')}
       onSaveContinue={handleSubmit(onSubmit)}
-      onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer

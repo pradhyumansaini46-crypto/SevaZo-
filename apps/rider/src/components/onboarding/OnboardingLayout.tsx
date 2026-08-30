@@ -24,18 +24,16 @@ export interface OnboardingLayoutProps {
 
 export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   currentStep,
-  totalSteps = 14,
+  totalSteps = 8,
   stepTitle,
   completionPercentage,
   onBack,
   onClose,
   onSaveContinue,
-  onSaveExit,
   continueTitle,
   isLastStep = false,
   isLoading = false,
   disabled = false,
-  showSaveExit = true,
   children,
 }) => {
   const navigation = useNavigation<any>();
@@ -80,12 +78,10 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
       <StepFooter
         onSaveContinue={onSaveContinue}
-        onSaveExit={onSaveExit || handleCancelToLogin}
         continueTitle={continueTitle}
         isLastStep={isLastStep}
         isLoading={isLoading}
         disabled={disabled}
-        showSaveExit={showSaveExit}
       />
     </KeyboardAvoidingView>
   );

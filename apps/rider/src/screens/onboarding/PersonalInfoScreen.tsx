@@ -102,12 +102,11 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
   return (
     <OnboardingLayout
       currentStep={1}
-      totalSteps={9}
+      totalSteps={8}
       stepTitle="Personal & Emergency Details"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('Welcome')}
       onSaveContinue={handleSubmit(onSubmit)}
-      onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer

@@ -4,33 +4,24 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Image,
   Alert,
 } from 'react-native';
 import {
   User,
   MapPin,
-  PhoneCall,
   Bike,
   ShieldCheck,
   CreditCard,
   Compass,
-  CheckCircle,
   FileCheck,
-  FileText,
-  Clock,
+  Calendar,
   Edit2,
   CheckSquare,
   Square,
-  AlertCircle,
   Shield,
-  ExternalLink,
-  Car,
-  Calendar,
-  Settings,
-  HeartHandshake,
   Landmark,
+  Scale,
+  Sparkles,
 } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
@@ -39,16 +30,16 @@ import { ConfirmModal } from '../../components/Modal';
 import { useOnboardingStore } from '../../store/onboardingStore';
 
 const AGREEMENTS = [
-  { id: 'accuracy', text: 'I confirm that the information provided is accurate and truthful.' },
-  { id: 'terms', text: 'I agree to the Sevazo Rider Partner Terms of Service.' },
-  { id: 'privacy', text: 'I agree to the Sevazo Partner Privacy Policy.' },
-  { id: 'rider_agreement', text: 'I agree to the Independent Delivery Partner Master Agreement.' },
-  { id: 'verification_auth', text: 'I authorize Sevazo to verify my submitted documents and identity.' },
-  { id: 'activation_notice', text: 'I understand that rider activation is strictly subject to verification approval.' },
+  { id: 'accuracy', text: 'I confirm that all information and uploaded documents are authentic and accurate.' },
+  { id: 'terms', text: 'I agree to the Sevazo Fleet Partner Terms of Service.' },
+  { id: 'privacy', text: 'I agree to the Sevazo Partner Privacy Policy & Location Tracking terms.' },
+  { id: 'rider_agreement', text: 'I accept the Independent Delivery Partner Master Fleet Agreement.' },
+  { id: 'verification_auth', text: 'I authorize Sevazo Operations to verify my credentials on government portals.' },
+  { id: 'activation_notice', text: 'I understand that fleet activation is strictly subject to document approval.' },
 ];
 
 export const ReviewStepScreen = ({ navigation }: any) => {
-  const { draftData, completionPercentage, isSaving, error, clearError, submitApplication } =
+  const { draftData, isSaving, error, clearError, submitApplication } =
     useOnboardingStore();
 
   const [acceptedAgreements, setAcceptedAgreements] = useState<string[]>([
@@ -75,7 +66,7 @@ export const ReviewStepScreen = ({ navigation }: any) => {
     if (!allAgreementsAccepted) {
       Alert.alert(
         'Agreements Required',
-        'Please accept all mandatory terms and agreements before submitting your application.'
+        'Please accept all mandatory terms and declarations before submitting your application.'
       );
       return;
     }
@@ -101,8 +92,9 @@ export const ReviewStepScreen = ({ navigation }: any) => {
   const serviceArea = draftData?.serviceArea || {};
   const preferences = draftData?.deliveryPreferences || {};
   const availability = draftData?.availability || {};
+  const consent = draftData?.consent || {};
 
-  // Helper to format weekly schedule for display
+  // Format weekly schedule
   const formatSchedule = () => {
     const schedule = availability?.weeklySchedule;
     if (!schedule) return null;
@@ -120,11 +112,11 @@ export const ReviewStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={9}
-      totalSteps={9}
+      currentStep={8}
+      totalSteps={8}
       stepTitle="Review & Submit"
       completionPercentage={100}
-      onBack={() => navigation.navigate('OnboardingAvailability')}
+      onBack={() => navigation.navigate('OnboardingConsent')}
       onSaveContinue={handleOpenSubmitConfirm}
       continueTitle="Submit Application"
       isLastStep={true}
@@ -132,8 +124,8 @@ export const ReviewStepScreen = ({ navigation }: any) => {
       disabled={!allAgreementsAccepted}
     >
       <StepContainer
-        title="Application Review"
-        subtitle="Review all submitted information. You can tap 'Edit' on any section to make updates before final submission."
+        title="Application Review & Preview"
+        subtitle="Review all submitted information across all steps. Tap 'Edit' on any section to modify before final submission."
         error={error}
       >
         {/* 1. Personal & Emergency Details */}
@@ -150,36 +142,37 @@ export const ReviewStepScreen = ({ navigation }: any) => {
               accessibilityRole="button"
               accessibilityLabel="Edit personal details"
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Name: </Text>
+              <Text style={styles.label}>Full Name: </Text>
               {personal.firstName || 'Rahul'} {personal.lastName || 'Sharma'}
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>DOB: </Text>
-              {personal.dob || '1995-08-15'} ({personal.gender || 'Male'})
+              <Text style={styles.label}>Date of Birth: </Text>
+              {personal.dob || '1996-05-12'} ({personal.gender || 'MALE'})
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Mobile: </Text>
-              {personal.phone || '+91 9876543210'} (Verified)
+              <Text style={styles.label}>Registered Phone: </Text>
+              +91 {personal.phone || '9876543210'} (Verified)
             </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Email: </Text>
-              {personal.email || 'rahul.sharma@example.com'}
-            </Text>
+            {personal.email ? (
+              <Text style={styles.detailRow}>
+                <Text style={styles.label}>Email Address: </Text>
+                {personal.email}
+              </Text>
+            ) : null}
             <View style={styles.innerDivider} />
             <Text style={styles.detailRow}>
               <Text style={styles.label}>Emergency Contact: </Text>
-              {personal.emergencyContactName || draftData?.emergencyContact?.fullName || 'Ramesh Sharma'} (
-              {personal.emergencyRelationship || draftData?.emergencyContact?.relationship || 'Father'})
+              {personal.emergencyContactName || 'Ramesh Sharma'} ({personal.emergencyRelationship || 'Father'})
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Emergency Phone: </Text>
-              +91 {personal.emergencyPhone || draftData?.emergencyContact?.mobileNumber || '9811122233'}
+              <Text style={styles.label}>Emergency Number: </Text>
+              +91 {personal.emergencyPhone || '9811122233'}
             </Text>
           </View>
         </View>
@@ -195,15 +188,16 @@ export const ReviewStepScreen = ({ navigation }: any) => {
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingAddress')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
               {address.addressLine1 || 'Flat 402, Sunshine Heights'},{' '}
-              {address.locality || 'Indiranagar'}, {address.city || 'Jaipur'},{' '}
-              {address.state || 'Rajasthan'} - {address.postalCode || '302021'}
+              {address.addressLine2 ? `${address.addressLine2}, ` : ''}
+              {address.locality || 'Malviya Nagar'}, {address.city || 'Jaipur'},{' '}
+              {address.state || 'Rajasthan'} - {address.postalCode || '302017'}
             </Text>
           </View>
         </View>
@@ -219,216 +213,199 @@ export const ReviewStepScreen = ({ navigation }: any) => {
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingIdentity')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Identity Document: </Text>
-              {identity.idType || 'AADHAAR'} ({identity.idNumber || '1234 5678 9012'})
-            </Text>
-            <Text style={styles.detailRow}>
               <Text style={styles.label}>PAN Card: </Text>
-              {identity.panNumber || 'ABCDE1234F'}
+              {identity.panNumber || 'ABCDE1234F'} (Verified)
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Government ID Scans: </Text>
-              {identity.frontImage ? '✅ Front & Back Attached' : '✅ Attached & Valid'}
+              <Text style={styles.label}>Govt ID ({identity.idType || 'AADHAAR'}): </Text>
+              {identity.idNumber || '2345 6789 0123'} (Front & Back Scans Attached)
             </Text>
             <View style={styles.innerDivider} />
             {vehicle.vehicleType !== 'BICYCLE' ? (
               <>
                 <Text style={styles.detailRow}>
                   <Text style={styles.label}>Driving Licence No: </Text>
-                  {identity.licenseNumber || draftData?.drivingLicence?.licenseNumber || 'RJ-1420110012345'}
+                  {identity.licenseNumber || 'RJ14 20180012345'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>DL Expiry: </Text>
-                  {identity.expiryDate || draftData?.drivingLicence?.expiryDate || '2032-12-31'}
+                  <Text style={styles.label}>DL Expiry Date: </Text>
+                  {identity.expiryDate || '2032-12-31'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>DL Photos: </Text>
-                  {identity.licenseFrontImage || draftData?.drivingLicence?.frontImage
-                    ? '✅ Front & Back Uploaded'
-                    : '✅ Attached & Valid'}
+                  <Text style={styles.label}>DL Scans: </Text>
+                  ✅ Front & Back Scans Attached
                 </Text>
               </>
             ) : (
               <Text style={styles.detailRow}>
-                <Text style={styles.label}>Licence: </Text>
-                Exempt (Bicycle Rider)
+                <Text style={styles.label}>Driving Licence: </Text>
+                Exempt (Standard Bicycle Rider)
               </Text>
             )}
           </View>
         </View>
 
-        {/* 4. Vehicle Details & Documents */}
+        {/* 4. Vehicle & Compliance Documents */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Bike size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>4. Vehicle & Documents</Text>
+              <Text style={styles.cardTitle}>4. Vehicle & Compliance Documents</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingVehicle')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Vehicle Mode: </Text>
+              <Text style={styles.label}>Vehicle Type: </Text>
               {vehicle.vehicleType || 'MOTORCYCLE'} ({vehicle.ownershipType || 'OWNED'})
             </Text>
             {vehicle.vehicleType !== 'BICYCLE' ? (
               <>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Vehicle: </Text>
-                  {vehicle.make || 'Honda'} {vehicle.model || 'Activa 6G'} (
-                  {vehicle.manufacturingYear || '2022'}) - {vehicle.color || 'Black'}
+                  <Text style={styles.label}>Vehicle Model: </Text>
+                  {vehicle.make || 'Honda'} {vehicle.model || 'Activa 6G'} ({vehicle.manufacturingYear || '2022'}) - {vehicle.color || 'Matte Black'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Reg No: </Text>
+                  <Text style={styles.label}>Registration Number: </Text>
                   {vehicle.registrationNumber || 'RJ 14 AB 1234'}
                 </Text>
                 <View style={styles.innerDivider} />
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>RC Number: </Text>
-                  {vehicle.rcNumber || draftData?.vehicleDocuments?.rcNumber || 'RJ 14 AB 1234'} (✅ Uploaded)
+                  <Text style={styles.label}>RC Book: </Text>
+                  {vehicle.registrationNumber || 'RJ 14 AB 1234'} (✅ Uploaded)
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Insurance: </Text>
-                  {vehicle.insuranceNumber || draftData?.vehicleDocuments?.insuranceNumber || 'POL-998877'} (Exp:{' '}
-                  {vehicle.insuranceExpiry || draftData?.vehicleDocuments?.insuranceExpiry || '2027-12-31'})
+                  <Text style={styles.label}>Insurance Policy: </Text>
+                  {vehicle.insuranceNumber || 'POL-998877'} (Exp: {vehicle.insuranceExpiry || '2026-12-31'})
                 </Text>
+                {vehicle.pucImage && (
+                  <Text style={styles.detailRow}>
+                    <Text style={styles.label}>Pollution (PUC): </Text>
+                    ✅ PUC Certificate Attached
+                  </Text>
+                )}
               </>
             ) : (
               <Text style={styles.detailRow}>
-                <Text style={styles.label}>Bicycle: </Text>
+                <Text style={styles.label}>Bicycle Specs: </Text>
                 {vehicle.bicycleBrand || 'Hero Cycles'} ({vehicle.color || 'Black'})
               </Text>
             )}
           </View>
         </View>
 
-        {/* 5. Bank & Payouts */}
+        {/* 5. Bank Account & Payouts */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Landmark size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>5. Bank & Payouts</Text>
+              <Text style={styles.cardTitle}>5. Bank & Payout Details</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingBanking')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Payout Mode: </Text>
-              {banking.preferredPayoutMethod === 'UPI' ? 'UPI Direct' : 'Bank Account (NEFT/IMPS)'}
+              <Text style={styles.label}>Payout Preference: </Text>
+              {banking.preferredPayoutMethod === 'UPI' ? '⚡ Instant UPI Direct Transfer' : '🏦 Bank Account (NEFT/IMPS)'}
             </Text>
             {banking.preferredPayoutMethod === 'UPI' ? (
               <Text style={styles.detailRow}>
-                <Text style={styles.label}>UPI ID: </Text>
-                {banking.upiId || 'rahul@paytm'} (✅ Verified)
+                <Text style={styles.label}>Verified UPI ID: </Text>
+                {banking.upiId || 'rahul@okhdfcbank'}
               </Text>
             ) : (
               <>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Account Holder: </Text>
+                  <Text style={styles.label}>Account Beneficiary: </Text>
                   {banking.accountHolder || 'Rahul Sharma'}
                 </Text>
                 <Text style={styles.detailRow}>
-                  <Text style={styles.label}>Bank / Branch: </Text>
+                  <Text style={styles.label}>Bank & Branch: </Text>
                   {banking.bankName || 'HDFC Bank Ltd (Indiranagar)'}
                 </Text>
                 <Text style={styles.detailRow}>
                   <Text style={styles.label}>Account Number: </Text>
-                  ••••••••{banking.accountNumber ? banking.accountNumber.slice(-4) : '5678'} (IFSC:{' '}
-                  {banking.ifsc || 'HDFC0001234'})
+                  ••••••••{banking.accountNumber ? banking.accountNumber.slice(-4) : '5678'} (IFSC: {banking.ifsc || 'HDFC0001234'})
                 </Text>
               </>
             )}
           </View>
         </View>
 
-        {/* 6. Service Area */}
+        {/* 6. Service Area & Delivery Preferences (Merged) */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Compass size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>6. Service Area</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => navigation.navigate('OnboardingServiceArea')}
-            >
-              <Edit2 size={14} color="#FF6600" />
-              <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>City: </Text>
-              Jaipur, Rajasthan
-            </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Operational Zone: </Text>
-              {serviceArea.zone || 'Malviya Nagar & Jagatpura'}
-            </Text>
-            <Text style={styles.detailRow}>
-              <Text style={styles.label}>Preferred Hubs: </Text>
-              {serviceArea.preferredHubs?.join(', ') || 'Apex Circle Hub, World Trade Park Hub'}
-            </Text>
-          </View>
-        </View>
-
-        {/* 7. Delivery Preferences */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <Settings size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>7. Delivery Preferences</Text>
+              <Text style={styles.cardTitle}>6. Service Area & Delivery Preferences</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingPreferences')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.cardBody}>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Preferred Radius: </Text>
-              {preferences.maxDistanceKm || 5} km
+              <Text style={styles.label}>Operating Base: </Text>
+              {serviceArea.locality || preferences.locality || 'Malviya Nagar'}, {serviceArea.city || preferences.city || 'Jaipur'} ({serviceArea.zone || preferences.zone || 'Central Zone'})
             </Text>
             <Text style={styles.detailRow}>
-              <Text style={styles.label}>Categories: </Text>
-              {preferences.categories?.join(', ') || 'Food & Dining, Grocery & Essentials'}
+              <Text style={styles.label}>Preferred Hubs: </Text>
+              {preferences.preferredHubs?.join(', ') || serviceArea.preferredHubs?.join(', ') || 'Central Commercial Hub, South Malls Hub'}
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Max Delivery Radius: </Text>
+              {preferences.maxDistanceKm || 8} km
+            </Text>
+            <View style={styles.innerDivider} />
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Heavy Packages (&gt;10kg): </Text>
+              {preferences.acceptHeavyItems ? '✅ Opted In' : '❌ Opted Out'}
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Fragile & Special Orders: </Text>
+              {preferences.acceptSpecialHandling ? '✅ Opted In' : '❌ Opted Out'}
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Selected Categories: </Text>
+              {preferences.categories?.join(', ') || 'Food & Dining, Grocery & FMCG, Pharmacy, Express Courier'}
             </Text>
           </View>
         </View>
 
-        {/* 8. Availability & Working Hours */}
+        {/* 7. Availability & Working Hours */}
         <View style={styles.reviewCard}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <Calendar size={18} color="#FF6600" />
-              <Text style={styles.cardTitle}>8. Availability & Shifts</Text>
+              <Text style={styles.cardTitle}>7. Working Hours & Availability</Text>
             </View>
             <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('OnboardingAvailability')}
             >
-              <Edit2 size={14} color="#FF6600" />
+              <Edit2 size={13} color="#FF6600" />
               <Text style={styles.editBtnText}>Edit</Text>
             </TouchableOpacity>
           </View>
@@ -440,18 +417,55 @@ export const ReviewStepScreen = ({ navigation }: any) => {
                 </Text>
               ))
             ) : (
-              <Text style={styles.detailRow}>Monday to Sunday (08:00 AM - 08:00 PM)</Text>
+              <Text style={styles.detailRow}>Monday to Saturday (08:00 AM - 08:00 PM)</Text>
             )}
           </View>
         </View>
 
-        {/* ========================================================= */}
-        {/* AGREEMENTS & CONSENTS                                     */}
-        {/* ========================================================= */}
+        {/* 8. Rider Consent & Declaration Form */}
+        <View style={styles.reviewCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLeft}>
+              <Scale size={18} color="#10B981" />
+              <Text style={styles.cardTitle}>8. Consent & Legal Declaration</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => navigation.navigate('OnboardingConsent')}
+            >
+              <Edit2 size={13} color="#FF6600" />
+              <Text style={styles.editBtnText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Rider Code of Conduct: </Text>
+              ✅ Accepted
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Road Safety & Gear Commitment: </Text>
+              ✅ Accepted
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Zero Tolerance Policy: </Text>
+              ✅ Accepted
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Background Check & Location Consent: </Text>
+              ✅ Authorized
+            </Text>
+            <Text style={styles.detailRow}>
+              <Text style={styles.label}>Digital Electronic Signature: </Text>
+              {consent.signatureName || `${personal.firstName || 'Rahul'} ${personal.lastName || 'Sharma'}`} (Confirmed)
+            </Text>
+          </View>
+        </View>
+
+        {/* Agreements & Declarations Checkboxes */}
         <View style={styles.agreementsSection}>
           <View style={styles.agreementsHeader}>
             <Shield size={18} color="#FF6600" />
-            <Text style={styles.agreementsTitle}>Agreements & Declarations</Text>
+            <Text style={styles.agreementsTitle}>Final Legal Undertakings</Text>
           </View>
 
           {AGREEMENTS.map((a) => {
@@ -466,7 +480,7 @@ export const ReviewStepScreen = ({ navigation }: any) => {
                 {isChecked ? (
                   <CheckSquare size={20} color="#FF6600" />
                 ) : (
-                  <Square size={20} color={Colors.textMuted} />
+                  <Square size={20} color="#94A3B8" />
                 )}
                 <Text style={[styles.agreementText, isChecked && styles.agreementTextChecked]}>
                   {a.text}
@@ -494,42 +508,49 @@ export const ReviewStepScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   reviewCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.md,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.xl,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+    paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    paddingBottom: Spacing.xs,
+    borderBottomColor: '#F1F5F9',
+    marginBottom: Spacing.md,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.xs + 2,
     flex: 1,
   },
   cardTitle: {
     ...Typography.titleSmall,
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
   },
   editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 102, 0, 0.1)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
   },
   editBtnText: {
     ...Typography.bodySmall,
@@ -538,56 +559,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   cardBody: {
-    gap: 4,
+    gap: 6,
   },
   detailRow: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    lineHeight: 20,
+    ...Typography.bodyMedium,
+    color: '#334155',
+    lineHeight: 22,
+    fontSize: 13.5,
   },
   label: {
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#0F172A',
   },
   innerDivider: {
     height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: 4,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 6,
   },
   agreementsSection: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   agreementsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
+    gap: Spacing.xs + 2,
   },
   agreementsTitle: {
     ...Typography.titleSmall,
-    color: Colors.textPrimary,
-    fontWeight: '700',
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
   },
   agreementItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    gap: Spacing.md,
+    paddingVertical: 2,
   },
   agreementText: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: '#64748B',
     flex: 1,
     lineHeight: 18,
+    fontSize: 12.5,
   },
   agreementTextChecked: {
-    color: Colors.textPrimary,
+    color: '#1E293B',
+    fontWeight: '600',
   },
 });
 

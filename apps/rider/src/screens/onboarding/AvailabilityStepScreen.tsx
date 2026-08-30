@@ -211,7 +211,8 @@ export const AvailabilityStepScreen = ({ navigation }: any) => {
     const payload = { weeklySchedule };
     const success = await saveSection('availability', payload, true);
     if (success) {
-      navigation.navigate('OnboardingReview');
+      // Step 8 is Rider Consent & Declaration Form
+      navigation.navigate('OnboardingConsent');
     }
   };
 
@@ -231,9 +232,9 @@ export const AvailabilityStepScreen = ({ navigation }: any) => {
 
   return (
     <OnboardingLayout
-      currentStep={8}
-      totalSteps={9}
-      stepTitle="Working Hours & Availability"
+      currentStep={7}
+      totalSteps={8}
+      stepTitle="Working Hours"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingPreferences')}
       onSaveContinue={onSubmit}

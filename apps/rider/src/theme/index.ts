@@ -128,15 +128,23 @@ export const BorderRadius = {
   full: 9999,
 };
 
+import { Platform } from 'react-native';
+
+const FONT_OUTFIT = Platform.select({
+  ios: 'Outfit',
+  android: 'Outfit',
+  default: 'Outfit, sans-serif',
+});
+
 export const Typography = {
-  hero: { fontSize: 32, fontWeight: '800' as const, letterSpacing: -0.8 },
-  titleLarge: { fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.5 },
-  titleMedium: { fontSize: 20, fontWeight: '700' as const, letterSpacing: -0.4 },
-  titleSmall: { fontSize: 17, fontWeight: '600' as const },
-  bodyLarge: { fontSize: 16, fontWeight: '500' as const, lineHeight: 22 },
-  bodyMedium: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
-  bodySmall: { fontSize: 12, fontWeight: '400' as const, lineHeight: 16 },
-  caption: { fontSize: 11, fontWeight: '600' as const, textTransform: 'uppercase' as const, letterSpacing: 0.8 },
+  hero: { fontFamily: FONT_OUTFIT, fontSize: 32, fontWeight: '800' as const, letterSpacing: -0.8 },
+  titleLarge: { fontFamily: FONT_OUTFIT, fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.5 },
+  titleMedium: { fontFamily: FONT_OUTFIT, fontSize: 20, fontWeight: '700' as const, letterSpacing: -0.4 },
+  titleSmall: { fontFamily: FONT_OUTFIT, fontSize: 17, fontWeight: '600' as const },
+  bodyLarge: { fontFamily: FONT_OUTFIT, fontSize: 16, fontWeight: '500' as const, lineHeight: 22 },
+  bodyMedium: { fontFamily: FONT_OUTFIT, fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
+  bodySmall: { fontFamily: FONT_OUTFIT, fontSize: 12, fontWeight: '400' as const, lineHeight: 16 },
+  caption: { fontFamily: FONT_OUTFIT, fontSize: 11, fontWeight: '600' as const, textTransform: 'uppercase' as const, letterSpacing: 0.8 },
   mono: { fontFamily: 'monospace', fontSize: 14, fontWeight: '700' as const },
 };
 

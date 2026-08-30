@@ -50,12 +50,11 @@ export const AddressScreen = ({ navigation }: any) => {
   return (
     <OnboardingLayout
       currentStep={2}
-      totalSteps={9}
+      totalSteps={8}
       stepTitle="Residential Address"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingPersonal')}
       onSaveContinue={handleSubmit(onSubmit)}
-      onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer

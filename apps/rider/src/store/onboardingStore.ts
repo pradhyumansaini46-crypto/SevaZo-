@@ -9,9 +9,9 @@ export const STEP_NAMES = [
   'Identity & Driving Licence',
   'Vehicle & Documents',
   'Bank & Payouts',
-  'Service Area',
-  'Delivery Preferences',
-  'Availability & Shifts',
+  'Service Area & Preferences',
+  'Working Hours & Availability',
+  'Consent & Undertaking',
   'Review & Submit',
 ] as const;
 
@@ -21,9 +21,9 @@ export const SECTION_KEYS = [
   'IDENTITY',
   'VEHICLE',
   'BANKING',
-  'SERVICE_AREA',
   'DELIVERY_PREFERENCES',
   'AVAILABILITY',
+  'CONSENT',
   'REVIEW',
 ] as const;
 
@@ -58,7 +58,7 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
   currentStep: 1, // Start directly at Step 1 (Personal Information)
   completedSteps: [],
   rejectedSteps: [],
-  completionPercentage: 11,
+  completionPercentage: 12,
   draftData: {},
   sectionStatus: {
     PERSONAL: 'NOT_STARTED',
@@ -66,9 +66,9 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
     IDENTITY: 'NOT_STARTED',
     VEHICLE: 'NOT_STARTED',
     BANKING: 'NOT_STARTED',
-    SERVICE_AREA: 'NOT_STARTED',
     DELIVERY_PREFERENCES: 'NOT_STARTED',
     AVAILABILITY: 'NOT_STARTED',
+    CONSENT: 'NOT_STARTED',
     REVIEW: 'NOT_STARTED',
   },
   rejectionReason: null,
@@ -83,7 +83,7 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
       currentStep: 1,
       completedSteps: [],
       rejectedSteps: [],
-      completionPercentage: 11,
+      completionPercentage: 12,
       draftData: {
         personal: {
           phone: phone || '',
@@ -96,9 +96,9 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
         IDENTITY: 'NOT_STARTED',
         VEHICLE: 'NOT_STARTED',
         BANKING: 'NOT_STARTED',
-        SERVICE_AREA: 'NOT_STARTED',
         DELIVERY_PREFERENCES: 'NOT_STARTED',
         AVAILABILITY: 'NOT_STARTED',
+        CONSENT: 'NOT_STARTED',
         REVIEW: 'NOT_STARTED',
       },
       rejectionReason: null,
@@ -119,7 +119,7 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
         currentStep: Math.max(1, state.currentStep || 1),
         completedSteps: state.completedSteps || [],
         rejectedSteps: (state as any).rejectedSteps || [],
-        completionPercentage: Math.max(11, state.completionPercentage || 11),
+        completionPercentage: Math.max(12, state.completionPercentage || 12),
         draftData: state.draftData || {},
         sectionStatus: newSectionStatus,
         rejectionReason: state.rejectionReason || null,
@@ -138,7 +138,7 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
   },
 
   setCurrentStep: (step: number) => {
-    const total = 9;
+    const total = 8;
     const clamped = Math.max(1, Math.min(step, total));
     set({
       currentStep: clamped,
@@ -165,8 +165,8 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
       };
 
       const current = get().currentStep;
-      const next = advanceNext ? Math.min(current + 1, 9) : current;
-      const total = 9;
+      const next = advanceNext ? Math.min(current + 1, 8) : current;
+      const total = 8;
 
       const completed = Array.from(new Set([...get().completedSteps, current]));
 
@@ -195,7 +195,6 @@ export const useOnboardingStore = create<OnboardingStoreState>((set, get) => ({
   },
 
   saveStep: async (stepNumber: number, data: any, saveAndExit: boolean = false) => {
-    const stepName = STEP_NAMES[stepNumber - 1] || `Step ${stepNumber}`;
     const sectionKey = SECTION_KEYS[stepNumber - 1]?.toLowerCase() || `step_${stepNumber}`;
     return get().saveSection(sectionKey, data, !saveAndExit);
   },

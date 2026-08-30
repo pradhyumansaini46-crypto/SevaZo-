@@ -123,13 +123,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    fontWeight: '600',
+    ...Typography.bodyMedium,
+    fontSize: 14.5,
+    color: '#1E293B',
+    marginBottom: 6,
+    fontWeight: '700',
   },
   requiredAsterisk: {
     color: '#EF4444',
+    fontWeight: '700',
   },
   inputWrapper: {
     flexDirection: 'row',

@@ -1,44 +1,34 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { Upload, CheckCircle2, ShieldCheck, AlertCircle, Car as CarIcon, FileText } from 'lucide-react-native';
+import { zodResolver } from '../../utils/zodResolver';
+import { FileText, Upload, CheckCircle2, ShieldCheck } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
 import { StepContainer } from '../../components/onboarding/StepContainer';
 import { Input } from '../../components/Input';
 import { ImagePickerModal } from '../../components/ImagePickerModal';
 import { useOnboardingStore } from '../../store/onboardingStore';
-import { zodResolver } from '../../utils/zodResolver';
 import { vehicleSchema, VehicleFormValues } from '../../validation/onboardingValidation';
 
 const VEHICLE_TYPES = [
-  { label: '🏍 Motorcycle', value: 'MOTORCYCLE' },
-  { label: '🛵 Scooter', value: 'SCOOTER' },
-  { label: '🚲 Bicycle', value: 'BICYCLE' },
-  { label: '🚗 Car', value: 'CAR' },
-  { label: '🛺 Other', value: 'OTHER' },
-] as const;
+  { label: 'Motorcycle / Bike', value: 'MOTORCYCLE' as const },
+  { label: 'Scooter / Scooty', value: 'SCOOTER' as const },
+  { label: 'Bicycle (Cycle)', value: 'BICYCLE' as const },
+  { label: 'Car / Van', value: 'CAR' as const },
+];
 
 const OWNERSHIP_TYPES = [
-  { label: 'Owned', value: 'OWNED' },
-  { label: 'Family', value: 'FAMILY' },
-  { label: 'Rented', value: 'RENTED' },
-  { label: 'Company', value: 'COMPANY' },
-] as const;
+  { label: 'Self Owned', value: 'OWNED' as const },
+  { label: 'Family Owned', value: 'FAMILY' as const },
+  { label: 'Rented / Leased', value: 'RENTED' as const },
+  { label: 'Company Provided', value: 'COMPANY' as const },
+];
 
 export const VehicleStepScreen = ({ navigation }: any) => {
   const { draftData, completionPercentage, saveSection, isSaving, error, clearError } =
     useOnboardingStore();
 
-  const [rcImage, setRcImage] = useState<string>(
-    draftData?.vehicle?.rcImage || draftData?.vehicleDocuments?.rcImage || ''
-  );
-  const [insuranceImage, setInsuranceImage] = useState<string>(
-    draftData?.vehicle?.insuranceImage || draftData?.vehicleDocuments?.insuranceImage || ''
-  );
-  const [pucImage, setPucImage] = useState<string>(
-    draftData?.vehicle?.pucImage || draftData?.vehicleDocuments?.pucImage || ''
-  );
   const [activePickerDoc, setActivePickerDoc] = useState<'rc' | 'insurance' | 'puc' | null>(null);
 
   const {
@@ -56,18 +46,23 @@ export const VehicleStepScreen = ({ navigation }: any) => {
       model: draftData?.vehicle?.model || '',
       manufacturingYear: draftData?.vehicle?.manufacturingYear || '',
       color: draftData?.vehicle?.color || '',
-      registrationNumber: draftData?.vehicle?.registrationNumber || '',
-      bicycleType: draftData?.vehicle?.bicycleType || 'STANDARD',
+      registrationNumber:
+        draftData?.vehicle?.registrationNumber || draftData?.vehicleDocuments?.rcNumber || '',
       bicycleBrand: draftData?.vehicle?.bicycleBrand || '',
       bicycleModel: draftData?.vehicle?.bicycleModel || '',
-      rcNumber: draftData?.vehicle?.rcNumber || draftData?.vehicleDocuments?.rcNumber || '',
-      rcImage: rcImage,
+      rcNumber:
+        draftData?.vehicle?.rcNumber ||
+        draftData?.vehicleDocuments?.rcNumber ||
+        draftData?.vehicle?.registrationNumber ||
+        '',
+      rcImage: draftData?.vehicle?.rcImage || draftData?.vehicleDocuments?.rcImage || '',
       insuranceNumber:
         draftData?.vehicle?.insuranceNumber || draftData?.vehicleDocuments?.insuranceNumber || '',
       insuranceExpiry:
         draftData?.vehicle?.insuranceExpiry || draftData?.vehicleDocuments?.insuranceExpiry || '',
-      insuranceImage: insuranceImage,
-      pucImage: pucImage,
+      insuranceImage:
+        draftData?.vehicle?.insuranceImage || draftData?.vehicleDocuments?.insuranceImage || '',
+      pucImage: draftData?.vehicle?.pucImage || draftData?.vehicleDocuments?.pucImage || '',
     },
   });
 
@@ -75,16 +70,17 @@ export const VehicleStepScreen = ({ navigation }: any) => {
   const selectedOwnership = watch('ownershipType');
   const isBicycle = selectedVehicleType === 'BICYCLE';
 
-  const handleFileSelected = (uri: string) => {
+  const rcImage = watch('rcImage');
+  const insuranceImage = watch('insuranceImage');
+  const pucImage = watch('pucImage');
+
+  const handleImagePicked = (uri: string) => {
     if (activePickerDoc === 'rc') {
-      setRcImage(uri);
       setValue('rcImage', uri, { shouldValidate: true });
     } else if (activePickerDoc === 'insurance') {
-      setInsuranceImage(uri);
       setValue('insuranceImage', uri, { shouldValidate: true });
     } else if (activePickerDoc === 'puc') {
-      setPucImage(uri);
-      setValue('pucImage', uri, { shouldValidate: true });
+      setValue('pucImage', uri);
     }
     setActivePickerDoc(null);
   };
@@ -93,55 +89,34 @@ export const VehicleStepScreen = ({ navigation }: any) => {
     clearError();
     const payload = {
       ...data,
-      rcNumber: data.registrationNumber || data.rcNumber || '',
-      rcImage: isBicycle ? '' : rcImage || data.rcImage,
-      insuranceImage: isBicycle ? '' : insuranceImage || data.insuranceImage,
-      pucImage: isBicycle ? '' : pucImage || data.pucImage,
+      rcNumber: data.registrationNumber || data.rcNumber,
     };
     const success = await saveSection('vehicle', payload, true);
     if (success) {
-      // Step 5 is Banking
+      // Step 5 is Bank Account
       navigation.navigate('OnboardingBanking');
     }
-  };
-
-  const handleSaveExit = async () => {
-    handleSubmit(async (data) => {
-      await saveSection(
-        'vehicle',
-        {
-          ...data,
-          rcNumber: data.registrationNumber || data.rcNumber || '',
-          rcImage,
-          insuranceImage,
-          pucImage,
-        },
-        false
-      );
-      navigation.navigate('OnboardingResume');
-    })();
   };
 
   return (
     <OnboardingLayout
       currentStep={4}
-      totalSteps={9}
+      totalSteps={8}
       stepTitle="Vehicle & Documents"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingIdentity')}
       onSaveContinue={handleSubmit(onSubmit)}
-      onSaveExit={handleSaveExit}
       isLoading={isSaving}
     >
       <StepContainer
-        title="Vehicle & Compliance Documents"
-        subtitle="Select your delivery vehicle mode and provide vehicle registration details & documents."
+        title="Vehicle & Compliance Details"
+        subtitle="Provide your delivery vehicle information and compliance documents."
         error={error}
       >
-        {/* Vehicle Type Selector */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>How will you deliver? *</Text>
-          <View style={styles.chipsGrid}>
+        {/* Vehicle Type Selection */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionHeaderTitle}>Vehicle Type *</Text>
+          <View style={styles.chipsRow}>
             {VEHICLE_TYPES.map((v) => (
               <TouchableOpacity
                 key={v.value}
@@ -167,9 +142,9 @@ export const VehicleStepScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Ownership Type */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Vehicle Ownership *</Text>
+        {/* Ownership Type Selection */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionHeaderTitle}>Vehicle Ownership *</Text>
           <View style={styles.chipsRow}>
             {OWNERSHIP_TYPES.map((o) => (
               <TouchableOpacity
@@ -198,7 +173,8 @@ export const VehicleStepScreen = ({ navigation }: any) => {
 
         {/* Bicycle Specific Form */}
         {isBicycle ? (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionHeaderTitle}>Bicycle Details</Text>
             <Controller
               control={control}
               name="bicycleBrand"
@@ -243,110 +219,117 @@ export const VehicleStepScreen = ({ navigation }: any) => {
             />
           </View>
         ) : (
-          /* Motor Vehicle Form */
-          <View style={styles.section}>
-            <View style={styles.row}>
-              <View style={styles.col}>
-                <Controller
-                  control={control}
-                  name="make"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Make / Brand"
-                      required
-                      placeholder="e.g. Honda, Hero"
-                      value={value}
-                      onChangeText={onChange}
-                      error={errors.make?.message}
-                    />
-                  )}
-                />
+          /* Motor Vehicle Details Card */
+          <>
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionHeaderTitle}>Vehicle Specifications</Text>
+
+              <View style={styles.row}>
+                <View style={styles.col}>
+                  <Controller
+                    control={control}
+                    name="make"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        label="Make / Brand"
+                        required
+                        placeholder="e.g. Honda, Hero"
+                        value={value}
+                        onChangeText={onChange}
+                        error={errors.make?.message}
+                      />
+                    )}
+                  />
+                </View>
+                <View style={styles.col}>
+                  <Controller
+                    control={control}
+                    name="model"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        label="Model"
+                        required
+                        placeholder="e.g. Activa 6G, Splendor"
+                        value={value}
+                        onChangeText={onChange}
+                        error={errors.model?.message}
+                      />
+                    )}
+                  />
+                </View>
               </View>
-              <View style={styles.col}>
-                <Controller
-                  control={control}
-                  name="model"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Model"
-                      required
-                      placeholder="e.g. Activa 6G, Splendor"
-                      value={value}
-                      onChangeText={onChange}
-                      error={errors.model?.message}
-                    />
-                  )}
-                />
+
+              <View style={styles.row}>
+                <View style={styles.col}>
+                  <Controller
+                    control={control}
+                    name="manufacturingYear"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        label="Manufacturing Year"
+                        required
+                        placeholder="e.g. 2022"
+                        value={value}
+                        onChangeText={(txt) => onChange(txt.replace(/\D/g, ''))}
+                        error={errors.manufacturingYear?.message}
+                        keyboardType="number-pad"
+                        maxLength={4}
+                      />
+                    )}
+                  />
+                </View>
+                <View style={styles.col}>
+                  <Controller
+                    control={control}
+                    name="color"
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        label="Vehicle Color"
+                        required
+                        placeholder="e.g. Red, Black"
+                        value={value}
+                        onChangeText={onChange}
+                        error={errors.color?.message}
+                      />
+                    )}
+                  />
+                </View>
               </View>
+
+              <Controller
+                control={control}
+                name="registrationNumber"
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    label="Vehicle Registration Number"
+                    required
+                    placeholder="e.g. RJ 14 AB 1234"
+                    value={value}
+                    onChangeText={(txt) => {
+                      const upper = txt.toUpperCase();
+                      onChange(upper);
+                      setValue('rcNumber', upper);
+                    }}
+                    error={errors.registrationNumber?.message}
+                    autoCapitalize="characters"
+                    helperText="Exact license plate registered with Regional Transport Office (RTO)."
+                  />
+                )}
+              />
             </View>
 
-            <View style={styles.row}>
-              <View style={styles.col}>
-                <Controller
-                  control={control}
-                  name="manufacturingYear"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Manufacturing Year"
-                      required
-                      placeholder="e.g. 2022"
-                      value={value}
-                      onChangeText={(txt) => onChange(txt.replace(/\D/g, ''))}
-                      error={errors.manufacturingYear?.message}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                    />
-                  )}
-                />
-              </View>
-              <View style={styles.col}>
-                <Controller
-                  control={control}
-                  name="color"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Vehicle Color"
-                      required
-                      placeholder="e.g. Red, Black"
-                      value={value}
-                      onChangeText={onChange}
-                      error={errors.color?.message}
-                    />
-                  )}
-                />
-              </View>
-            </View>
-
-            <Controller
-              control={control}
-              name="registrationNumber"
-              render={({ field: { onChange, value } }) => (
-                <Input
-                  label="Vehicle Registration Number"
-                  required
-                  placeholder="e.g. RJ 14 AB 1234"
-                  value={value}
-                  onChangeText={(txt) => onChange(txt.toUpperCase())}
-                  error={errors.registrationNumber?.message}
-                  autoCapitalize="characters"
-                  helperText="Exact plate number registered on VAHAN database"
-                />
-              )}
-            />
-
-            {/* ======================================================= */}
-            {/* MERGED: Vehicle Documents Section (Point 6)             */}
-            {/* ======================================================= */}
-            <View style={styles.divider} />
-
+            {/* Compliance Documents Header */}
             <View style={styles.sectionHeader}>
-              <FileText size={20} color="#FF6600" />
-              <Text style={styles.sectionHeaderTitle}>Vehicle Compliance Documents</Text>
+              <FileText size={22} color="#FF6600" />
+              <Text style={styles.complianceHeaderTitle}>Vehicle Compliance Documents</Text>
             </View>
 
-            {/* 1. Registration Certificate (RC) */}
-            <View style={styles.docBlock}>
-              <Text style={styles.blockTitle}>1. Registration Certificate (RC) *</Text>
+            {/* 1. Registration Certificate (RC) Card */}
+            <View style={styles.complianceCard}>
+              <Text style={styles.complianceCardTitle}>1. Registration Certificate (RC) *</Text>
+              <Text style={styles.complianceCardSubtitle}>
+                Upload clear scan/photo of the original RC book or smart card.
+              </Text>
 
               <View style={styles.previewBox}>
                 {rcImage ? (
@@ -368,7 +351,7 @@ export const VehicleStepScreen = ({ navigation }: any) => {
                     style={styles.dropZone}
                     onPress={() => setActivePickerDoc('rc')}
                   >
-                    <Upload size={20} color="#FF6600" />
+                    <Upload size={22} color="#FF6600" />
                     <Text style={styles.dropZoneText}>Upload RC Document</Text>
                   </TouchableOpacity>
                 )}
@@ -378,9 +361,13 @@ export const VehicleStepScreen = ({ navigation }: any) => {
               </View>
             </View>
 
-            {/* 2. Vehicle Insurance */}
-            <View style={styles.docBlock}>
-              <Text style={styles.blockTitle}>2. Vehicle Insurance Policy *</Text>
+            {/* 2. Vehicle Insurance Card */}
+            <View style={styles.complianceCard}>
+              <Text style={styles.complianceCardTitle}>2. Vehicle Insurance Policy *</Text>
+              <Text style={styles.complianceCardSubtitle}>
+                Enter policy details and upload active third-party or comprehensive policy.
+              </Text>
+
               <View style={styles.row}>
                 <View style={styles.col}>
                   <Controller
@@ -410,6 +397,7 @@ export const VehicleStepScreen = ({ navigation }: any) => {
                         value={value}
                         onChangeText={onChange}
                         error={errors.insuranceExpiry?.message}
+                        maxLength={10}
                       />
                     )}
                   />
@@ -436,7 +424,7 @@ export const VehicleStepScreen = ({ navigation }: any) => {
                     style={styles.dropZone}
                     onPress={() => setActivePickerDoc('insurance')}
                   >
-                    <Upload size={20} color="#FF6600" />
+                    <Upload size={22} color="#FF6600" />
                     <Text style={styles.dropZoneText}>Upload Insurance Document</Text>
                   </TouchableOpacity>
                 )}
@@ -446,9 +434,13 @@ export const VehicleStepScreen = ({ navigation }: any) => {
               </View>
             </View>
 
-            {/* 3. Pollution Certificate (PUC) - Optional */}
-            <View style={styles.docBlock}>
-              <Text style={styles.blockTitle}>3. Pollution Under Control (PUC) (Optional)</Text>
+            {/* 3. Pollution Certificate (PUC) Card */}
+            <View style={styles.complianceCard}>
+              <Text style={styles.complianceCardTitle}>3. Pollution Under Control (PUC) (Optional)</Text>
+              <Text style={styles.complianceCardSubtitle}>
+                Valid emission test certificate if applicable.
+              </Text>
+
               <View style={styles.previewBox}>
                 {pucImage ? (
                   <View style={styles.previewCard}>
@@ -469,35 +461,35 @@ export const VehicleStepScreen = ({ navigation }: any) => {
                     style={styles.dropZone}
                     onPress={() => setActivePickerDoc('puc')}
                   >
-                    <Upload size={20} color="#FF6600" />
+                    <Upload size={22} color="#FF6600" />
                     <Text style={styles.dropZoneText}>Upload PUC Certificate</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
-          </View>
+          </>
         )}
 
+        {/* Safety Undertaking Trust Badge */}
         <View style={styles.trustBadge}>
-          <ShieldCheck size={16} color="#10B981" />
+          <ShieldCheck size={20} color="#10B981" />
           <Text style={styles.trustText}>
-            Vehicle information is strictly verified for road safety and regulatory compliance.
+            Vehicle records are verified via Government VAHAN & Sarathi database.
           </Text>
         </View>
 
-        {/* Document Picker Modal (Supports Camera, Gallery, and PDF/Document Browsing) */}
+        {/* Image Picker Modal */}
         <ImagePickerModal
           visible={activePickerDoc !== null}
           onClose={() => setActivePickerDoc(null)}
-          onImageSelected={handleFileSelected}
+          onImageSelected={handleImagePicked}
           title={
             activePickerDoc === 'rc'
               ? 'Upload Registration Certificate (RC)'
               : activePickerDoc === 'insurance'
-              ? 'Upload Vehicle Insurance'
-              : 'Upload PUC Certificate'
+              ? 'Upload Vehicle Insurance Policy'
+              : 'Upload Pollution Certificate (PUC)'
           }
-          aspect={[4, 3]}
           showDocumentOption={true}
         />
       </StepContainer>
@@ -506,78 +498,69 @@ export const VehicleStepScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: Spacing.md,
-  },
-  sectionLabel: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
+  sectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
   },
   sectionHeaderTitle: {
     ...Typography.titleSmall,
-    color: Colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chipsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-  },
-  vehicleChip: {
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  vehicleChipSelected: {
-    borderColor: '#FF6600',
-    backgroundColor: '#FFF7ED',
-  },
-  vehicleChipText: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  vehicleChipTextSelected: {
-    color: '#FF6600',
-    fontWeight: '700',
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
   },
   chipsRow: {
     flexDirection: 'row',
-    gap: Spacing.xs,
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  vehicleChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  vehicleChipSelected: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FF6600',
+  },
+  vehicleChipText: {
+    ...Typography.bodySmall,
+    color: '#64748B',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  vehicleChipTextSelected: {
+    color: '#FF6600',
+    fontWeight: '800',
   },
   ownershipChip: {
-    flex: 1,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
   ownershipChipSelected: {
-    borderColor: '#FF6600',
     backgroundColor: '#FFF7ED',
+    borderColor: '#FF6600',
   },
   ownershipChipText: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontWeight: '600',
+    fontSize: 12.5,
   },
   ownershipChipTextSelected: {
     color: '#FF6600',
-    fontWeight: '700',
+    fontWeight: '800',
   },
   row: {
     flexDirection: 'row',
@@ -586,31 +569,51 @@ const styles = StyleSheet.create({
   col: {
     flex: 1,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.lg,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
   },
-  docBlock: {
-    marginBottom: Spacing.md,
+  complianceHeaderTitle: {
+    ...Typography.titleMedium,
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 18,
   },
-  blockTitle: {
+  complianceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  complianceCardTitle: {
     ...Typography.titleSmall,
-    color: Colors.textPrimary,
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  complianceCardSubtitle: {
+    ...Typography.bodySmall,
+    color: '#64748B',
+    fontSize: 12.5,
+    lineHeight: 17,
     marginBottom: Spacing.xs,
-    fontSize: 13,
-    fontWeight: '700',
   },
   previewBox: {
     marginTop: Spacing.xs,
   },
   dropZone: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
     borderStyle: 'dashed',
     borderRadius: BorderRadius.lg,
-    height: 90,
+    height: 105,
     justifyContent: 'center',
     alignItems: 'center',
     gap: Spacing.xs,
@@ -618,70 +621,70 @@ const styles = StyleSheet.create({
   dropZoneText: {
     ...Typography.bodySmall,
     color: '#FF6600',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 13,
   },
   previewCard: {
     position: 'relative',
-    height: 100,
+    height: 110,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
   },
   previewImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover',
   },
   verifiedTag: {
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   verifiedTagText: {
     fontSize: 10,
-    color: '#065F46',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   replaceButton: {
     position: 'absolute',
     bottom: 6,
     right: 6,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
+    backgroundColor: '#FF6600',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   replaceButtonText: {
     fontSize: 11,
-    color: Colors.textPrimary,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   trustBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: '#A7F3D0',
     gap: Spacing.sm,
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
   },
   trustText: {
     ...Typography.bodySmall,
     color: '#065F46',
     flex: 1,
+    fontWeight: '600',
+    fontSize: 12.5,
   },
   errorText: {
     color: '#EF4444',

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SaveContinueButton } from './SaveContinueButton';
-import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
+import { Colors, Spacing } from '../../theme';
 
 export interface StepFooterProps {
   onSaveContinue: () => void;
@@ -15,12 +15,10 @@ export interface StepFooterProps {
 
 export const StepFooter: React.FC<StepFooterProps> = ({
   onSaveContinue,
-  onSaveExit,
   continueTitle,
   isLastStep = false,
   isLoading = false,
   disabled = false,
-  showSaveExit = true,
 }) => {
   return (
     <View style={styles.container}>
@@ -31,18 +29,6 @@ export const StepFooter: React.FC<StepFooterProps> = ({
         isLoading={isLoading}
         disabled={disabled}
       />
-
-      {showSaveExit && onSaveExit && (
-        <TouchableOpacity
-          onPress={onSaveExit}
-          style={styles.saveExitButton}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Save progress and exit"
-        >
-          <Text style={styles.saveExitText}>Save & Resume Later</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -55,16 +41,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    gap: Spacing.sm,
-  },
-  saveExitButton: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  saveExitText: {
-    ...Typography.bodyMedium,
-    color: '#FF6600',
-    fontWeight: '700',
   },
 });
 

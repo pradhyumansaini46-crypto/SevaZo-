@@ -18,6 +18,7 @@ import { BankingStepScreen } from '../screens/onboarding/BankingStepScreen';
 import { ServiceAreaStepScreen } from '../screens/onboarding/ServiceAreaStepScreen';
 import { PreferencesStepScreen } from '../screens/onboarding/PreferencesStepScreen';
 import { AvailabilityStepScreen } from '../screens/onboarding/AvailabilityStepScreen';
+import { ConsentStepScreen } from '../screens/onboarding/ConsentStepScreen';
 import { ReviewStepScreen } from '../screens/onboarding/ReviewStepScreen';
 import { OnboardingWizardScreen } from '../screens/OnboardingWizardScreen';
 import { ApplicationStatusScreen } from '../screens/ApplicationStatusScreen';
@@ -138,6 +139,11 @@ export const RootNavigator = () => {
         <Stack.Screen
           name="OnboardingAvailability"
           component={AvailabilityStepScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="OnboardingConsent"
+          component={ConsentStepScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
