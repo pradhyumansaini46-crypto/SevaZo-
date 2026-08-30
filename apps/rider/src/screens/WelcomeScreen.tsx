@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Bike, Clock, TrendingUp, ArrowRight } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { Button } from '../components/Button';
@@ -11,20 +11,12 @@ export const WelcomeScreen = ({ navigation }: any) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top Hero Brand Header */}
+      {/* Top Hero Brand Header with Typographic Logo */}
       <View style={styles.header}>
-        <View
-          style={[
-            styles.iconCircle,
-            {
-              backgroundColor: isDark ? colors.surface : '#FFF7ED',
-              borderColor: colors.primary,
-            },
-          ]}
-          accessible={true}
-          accessibilityLabel="Sevazo Rider Logo"
-        >
-          <Bike size={44} color={colors.primary} strokeWidth={2.5} />
+        <View style={styles.brandLogoContainer}>
+          <Text style={[styles.brandLogo, { color: colors.textPrimary }]}>
+            Seva<Text style={{ color: colors.primary }}>Zo</Text>
+          </Text>
         </View>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to Sevazo Rider</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -32,7 +24,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
         </Text>
       </View>
 
-      {/* Feature Value Props */}
+      {/* Feature Value Props - Untouched */}
       <View
         style={[
           styles.valueCard,
@@ -94,7 +86,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Action Buttons */}
+      {/* Action Buttons: Stacked Register & Login (minHeight 48px, removed redundant bottom text) */}
       <View style={styles.actions}>
         <Button
           title="Register as Rider"
@@ -112,20 +104,6 @@ export const WelcomeScreen = ({ navigation }: any) => {
           onPress={() => navigation.navigate('Login')}
           accessibilityLabel="Login to existing account"
         />
-
-        <View style={styles.footerRow}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            Already have a partner account?{' '}
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
-            accessible={true}
-            accessibilityRole="link"
-            accessibilityLabel="Login"
-          >
-            <Text style={[styles.footerLink, { color: colors.primary }]}>Login</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -135,31 +113,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
+    paddingTop: 64,
     paddingBottom: 40,
     justifyContent: 'space-between',
   },
   header: {
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    justifyContent: 'center',
+  brandLogoContainer: {
+    marginBottom: Spacing.md,
     alignItems: 'center',
-    borderWidth: 2,
-    marginBottom: Spacing.lg,
-    ...Shadows.glowOrange,
+    justifyContent: 'center',
+  },
+  brandLogo: {
+    fontSize: 40,
+    fontWeight: '900',
+    letterSpacing: -1.5,
   },
   title: {
     ...Typography.hero,
     fontSize: 26,
+    fontWeight: '800',
     textAlign: 'center',
   },
   subtitle: {
     ...Typography.bodyMedium,
     marginTop: Spacing.xs,
+    textAlign: 'center',
   },
   valueCard: {
     padding: Spacing.xl,
@@ -185,26 +165,16 @@ const styles = StyleSheet.create({
   },
   valueTitle: {
     ...Typography.titleSmall,
+    fontWeight: '700',
   },
   valueDesc: {
     ...Typography.bodySmall,
     marginTop: 2,
   },
   actions: {
+    flexDirection: 'column',
     gap: Spacing.md,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.xs,
-  },
-  footerText: {
-    ...Typography.bodySmall,
-  },
-  footerLink: {
-    ...Typography.bodySmall,
-    fontWeight: '700',
+    width: '100%',
   },
 });
 
