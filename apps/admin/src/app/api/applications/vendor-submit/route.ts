@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/server/prisma';
 import { upsertVendor, SharedVendorApplication, SharedDocument } from '@/lib/server/shared-storage';
 
 export async function POST(request: Request) {
@@ -6,7 +7,7 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const storeName = payload.storeDisplayName || payload.storeName || payload.store?.storeName || payload.businessName || 'Partner Store';
     const ownerName = payload.ownerName || (payload.firstName ? `${payload.firstName} ${payload.lastName || ''}`.trim() : 'Store Owner');
-    const email = payload.email || payload.storeEmail || 'vendor@example.com';
+    const email = payload.email || payload.storeEmail || `vendor.${Date.now()}@sevazo.com`;
     const phone = payload.phone || payload.storePhone || '+91 9988776655';
     const category = payload.businessCategory || payload.category || payload.business?.category || 'General Store';
 
@@ -16,8 +17,8 @@ export async function POST(request: Request) {
       city: payload.address?.city || payload.city || 'Jaipur',
       state: payload.address?.state || payload.state || 'Rajasthan',
       pincode: payload.address?.pincode || payload.pincode || '302020',
-      latitude: payload.address?.latitude || payload.latitude || 26.9124,
-      longitude: payload.address?.longitude || payload.longitude || 75.7873,
+      latitude: Number(payload.address?.latitude || payload.latitude) || 26.9124,
+      longitude: Number(payload.address?.longitude || payload.longitude) || 75.7873,
     };
 
     const docs: SharedDocument[] = [];
@@ -81,7 +82,112 @@ export async function POST(request: Request) {
       });
     }
 
-    const vendorId = payload.vendorId || `vnd-${phone.replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`;
+    // 1. Save directly into PostgreSQL Cloud Database via Prisma
+    let dbVendorId: string | null = null;
+    try {
+      const savedVendor = await prisma.vendor.upsert({
+        where: { phone },
+        update: {
+          ownerName,
+          email,
+          businessName: storeName,
+          businessCategory: category,
+          businessType: payload.businessType || 'RETAIL_STORE',
+          legalEntityType: payload.legalEntityType || 'PROPRIETORSHIP',
+          panNumber: pan || '',
+          gstin: gstin || '',
+          fssaiNumber: fssai || '',
+          status: 'SUBMITTED',
+          currentOnboardingStep: 13,
+          completionPercentage: 100,
+          agreedAt: new Date(),
+        },
+        create: {
+          phone,
+          ownerName,
+          email,
+          businessName: storeName,
+          businessCategory: category,
+          businessType: payload.businessType || 'RETAIL_STORE',
+          legalEntityType: payload.legalEntityType || 'PROPRIETORSHIP',
+          panNumber: pan || '',
+          gstin: gstin || '',
+          fssaiNumber: fssai || '',
+          status: 'SUBMITTED',
+          currentOnboardingStep: 13,
+          completionPercentage: 100,
+          agreedAt: new Date(),
+        },
+      });
+      dbVendorId = savedVendor.id;
+
+      // Save Address in DB
+      await prisma.vendorAddress.upsert({
+        where: { id: `addr-${savedVendor.id}` },
+        update: {
+          line1: addr.line1,
+          city: addr.city,
+          state: addr.state,
+          pincode: addr.pincode,
+          latitude: addr.latitude,
+          longitude: addr.longitude,
+        },
+        create: {
+          id: `addr-${savedVendor.id}`,
+          vendorId: savedVendor.id,
+          label: 'Storefront',
+          line1: addr.line1,
+          city: addr.city,
+          state: addr.state,
+          pincode: addr.pincode,
+          latitude: addr.latitude,
+          longitude: addr.longitude,
+          isDefault: true,
+        },
+      });
+
+      // Save Documents in DB
+      for (const d of docs) {
+        await prisma.vendorDocument.upsert({
+          where: { id: `doc-${savedVendor.id}-${d.type}` },
+          update: {
+            documentNumber: d.number,
+            fileUrl: d.fileUrl,
+            status: 'UPLOADED',
+          },
+          create: {
+            id: `doc-${savedVendor.id}-${d.type}`,
+            vendorId: savedVendor.id,
+            type: d.type.toUpperCase(),
+            documentNumber: d.number,
+            fileUrl: d.fileUrl,
+            status: 'UPLOADED',
+          },
+        });
+      }
+
+      // Save Store in DB
+      await prisma.store.upsert({
+        where: { slug: `store-${phone.replace(/\D/g, '').slice(-6)}` },
+        update: {
+          name: storeName,
+          vendorId: savedVendor.id,
+          isOpen: true,
+          isAcceptingOrders: false,
+        },
+        create: {
+          slug: `store-${phone.replace(/\D/g, '').slice(-6)}`,
+          name: storeName,
+          vendorId: savedVendor.id,
+          isOpen: true,
+          isAcceptingOrders: false,
+        },
+      });
+    } catch (dbErr) {
+      console.warn('Direct PostgreSQL sync notice:', dbErr);
+    }
+
+    const vendorId = dbVendorId || payload.vendorId || `vnd-${phone.replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`;
 
     const sharedVendor: SharedVendorApplication = {
       id: vendorId,

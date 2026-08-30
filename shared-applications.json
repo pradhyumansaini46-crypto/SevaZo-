@@ -1,7 +1,7 @@
 {
   "riders": [
     {
-      "id": "rdr-879797",
+      "id": "rdr-787679",
       "name": "Delivery Partner",
       "email": "partner@example.com",
       "phone": "+91 9876543210",
@@ -17,15 +17,15 @@
       "isOnline": false,
       "documents": [
         {
-          "id": "doc-rdr-879797-kyc",
+          "id": "doc-rdr-787679-kyc",
           "type": "identity_proof",
           "number": "Submitted",
           "fileUrl": "/docs/kyc.pdf",
           "verified": false
         }
       ],
-      "submittedAt": "2026-08-30T10:20:53.173Z",
-      "updatedAt": "2026-08-30T10:20:53.176Z",
+      "submittedAt": "2026-08-30T18:10:27.668Z",
+      "updatedAt": "2026-08-30T18:10:27.670Z",
       "draftData": {}
     },
     {
@@ -123,8 +123,8 @@
       "email": "pradhyuman.store@sevazo.com",
       "phone": "+91 91234 56789",
       "logo": "",
-      "status": "rejected",
-      "approvalStatus": "rejected",
+      "status": "pending",
+      "approvalStatus": "pending",
       "category": "Gourmet Foods",
       "address": {
         "line1": "Plot 15, Sector 5, Mansarovar",

@@ -71,24 +71,33 @@ export const onboardingService = {
   },
 
   async submitApplication(payload?: any): Promise<any> {
+    const adminHosts = [
+      process.env.EXPO_PUBLIC_ADMIN_URL,
+      'http://localhost:3000',
+      'http://192.168.1.7:3000',
+      'http://10.0.2.2:3000',
+    ].filter(Boolean);
+
+    const syncToAdmin = async () => {
+      for (const host of adminHosts) {
+        try {
+          const res = await fetch(`${host}/api/applications/rider-submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const json = await res.json();
+          if (json.success) break;
+        } catch (e) {}
+      }
+    };
+
     try {
       const res = await apiClient.post(ENDPOINTS.ONBOARDING.SUBMIT, payload);
-      try {
-        await fetch('http://192.168.1.7:3000/api/applications/rider-submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } catch (e) {}
+      await syncToAdmin();
       return res.data;
     } catch (err) {
-      try {
-        await fetch('http://192.168.1.7:3000/api/applications/rider-submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } catch (e) {}
+      await syncToAdmin();
       throw err;
     }
   },

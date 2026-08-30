@@ -178,18 +178,37 @@ export default function VendorsPage() {
     toast.success(`Vendor "${storeName}" deleted`);
   };
 
-  // Only map and display vendors where status !== 'rejected' (only shows pending and approved vendors)
-  const visibleVendors = vendors.filter(
-    (v) => v.status !== 'rejected' && v.approvalStatus !== 'rejected',
-  );
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  const pendingVendors = visibleVendors.filter(
+  const pendingVendors = vendors.filter(
     (v) =>
       v.approvalStatus === 'pending' ||
       (v.approvalStatus as string) === 'under_review' ||
       v.status === 'pending',
   );
   const pendingCount = pendingVendors.length;
+
+  const filteredVendors = vendors.filter((v) => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'pending') {
+      return (
+        v.approvalStatus === 'pending' ||
+        (v.approvalStatus as string) === 'under_review' ||
+        v.status === 'pending'
+      );
+    }
+    if (statusFilter === 'approved') {
+      return (
+        v.approvalStatus === 'approved' ||
+        v.status === 'active' ||
+        (v.status as string) === 'approved'
+      );
+    }
+    if (statusFilter === 'rejected') {
+      return v.approvalStatus === 'rejected' || v.status === 'rejected';
+    }
+    return true;
+  });
 
   const columns: ColumnDef<Vendor>[] = [
     {
@@ -378,11 +397,45 @@ export default function VendorsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <SearchInput placeholder="Search vendors by store or owner..." onSearch={handleSearch} className="max-w-sm" />
+        <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg border text-xs">
+          <Button
+            size="sm"
+            variant={statusFilter === 'all' ? 'default' : 'ghost'}
+            className="h-7 text-xs px-3"
+            onClick={() => setStatusFilter('all')}
+          >
+            All ({vendors.length})
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 'pending' ? 'default' : 'ghost'}
+            className="h-7 text-xs px-3"
+            onClick={() => setStatusFilter('pending')}
+          >
+            Pending Review ({pendingCount})
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 'approved' ? 'default' : 'ghost'}
+            className="h-7 text-xs px-3"
+            onClick={() => setStatusFilter('approved')}
+          >
+            Approved
+          </Button>
+          <Button
+            size="sm"
+            variant={statusFilter === 'rejected' ? 'default' : 'ghost'}
+            className="h-7 text-xs px-3"
+            onClick={() => setStatusFilter('rejected')}
+          >
+            Rejected
+          </Button>
+        </div>
       </div>
 
-      <DataTable columns={columns} data={visibleVendors} searchKey="storeName" searchValue={search} />
+      <DataTable columns={columns} data={filteredVendors} searchKey="storeName" searchValue={search} />
 
       {/* Add Vendor Modal */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

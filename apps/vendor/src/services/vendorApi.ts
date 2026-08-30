@@ -330,10 +330,11 @@ export const VendorApi = {
 
   async submitOnboarding(payload: any = {}): Promise<any> {
     const adminHosts = [
+      process.env.EXPO_PUBLIC_ADMIN_URL,
       'http://localhost:3000',
       'http://192.168.1.7:3000',
       'http://10.0.2.2:3000',
-    ];
+    ].filter(Boolean);
 
     const syncToAdmin = async () => {
       for (const host of adminHosts) {

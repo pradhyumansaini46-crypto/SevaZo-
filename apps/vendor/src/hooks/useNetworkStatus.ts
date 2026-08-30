@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useNetworkStore } from '../stores/networkStore';
 

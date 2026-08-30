@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/server/prisma';
 import { upsertRider, SharedRiderApplication, SharedDocument } from '@/lib/server/shared-storage';
 
 export async function POST(request: Request) {
@@ -74,7 +75,39 @@ export async function POST(request: Request) {
       });
     }
 
-    const riderId = payload.riderId || `rdr-${phone.replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`;
+    // 1. Direct PostgreSQL Cloud Database Sync via Prisma
+    let dbRiderId: string | null = null;
+    try {
+      const cleanPhone = phone.startsWith('+91') ? phone : `+91 ${phone.replace(/\D/g, '').slice(-10)}`;
+      const savedRider = await prisma.rider.upsert({
+        where: { phone: cleanPhone },
+        update: {
+          name: fullName,
+          email,
+          vehicleType: vType.toLowerCase().includes('scooter') ? 'SCOOTER' : 'BIKE',
+          vehicleNumber: vNumber,
+          status: 'INACTIVE',
+          approvalStatus: 'PENDING',
+          dlNumber: dl.licenseNumber || dl.number || null,
+        },
+        create: {
+          name: fullName,
+          phone: cleanPhone,
+          email,
+          vehicleType: vType.toLowerCase().includes('scooter') ? 'SCOOTER' : 'BIKE',
+          vehicleNumber: vNumber,
+          status: 'INACTIVE',
+          approvalStatus: 'PENDING',
+          dlNumber: dl.licenseNumber || dl.number || null,
+          isOnline: false,
+        },
+      });
+      dbRiderId = savedRider.id;
+    } catch (dbErr) {
+      console.warn('Direct PostgreSQL rider submission notice:', dbErr);
+    }
+
+    const riderId = dbRiderId || payload.riderId || `rdr-${phone.replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`;
 
     const sharedApp: SharedRiderApplication = {
       id: riderId,
