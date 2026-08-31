@@ -122,7 +122,14 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
           </Text>
 
           <View style={styles.photoRow}>
-            <View style={styles.avatarWrapper}>
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              onPress={() => setShowPickerModal(true)}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Upload or Change Profile Photo"
+            >
               {profilePhoto ? (
                 <Image source={{ uri: profilePhoto }} style={styles.avatarImage} />
               ) : (
@@ -130,18 +137,21 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
                   <User size={36} color={Colors.textMuted} />
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
 
             <View style={styles.photoActions}>
               <TouchableOpacity
                 style={styles.photoBtn}
                 onPress={() => setShowPickerModal(true)}
+                activeOpacity={0.8}
                 accessible={true}
                 accessibilityRole="button"
                 accessibilityLabel="Upload Profile Photo"
               >
                 <Camera size={16} color="#FF6600" />
-                <Text style={styles.photoBtnText}>Upload Photo</Text>
+                <Text style={styles.photoBtnText}>
+                  {profilePhoto ? 'Change Photo' : 'Upload Photo'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
