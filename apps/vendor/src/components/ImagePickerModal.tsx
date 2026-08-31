@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
-  TouchableWithoutFeedback,
   Alert,
   Platform,
 } from 'react-native';
@@ -46,13 +46,27 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
   // Web-compatible native HTML file input trigger
   const triggerWebFileInput = (acceptType: string, captureMode?: 'user' | 'environment') => {
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    if (typeof document !== 'undefined') {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = acceptType;
+      input.style.display = 'none';
+      input.style.position = 'fixed';
+      input.style.top = '-9999px';
+      input.style.left = '-9999px';
+      input.style.opacity = '0';
       if (captureMode) {
         input.capture = captureMode;
       }
+
+      const cleanup = () => {
+        try {
+          if (input.parentNode) {
+            document.body.removeChild(input);
+          }
+        } catch (e) {}
+      };
+
       input.onchange = (event: any) => {
         const file = event.target?.files?.[0];
         if (file) {
@@ -67,10 +81,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                 mimeType: file.type,
               });
             }
+            cleanup();
           };
           reader.readAsDataURL(file);
+        } else {
+          cleanup();
         }
       };
+
+      document.body.appendChild(input);
       input.click();
       onClose();
       return true;
@@ -85,17 +104,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
     }
 
     try {
-      const perm = await ImagePicker.requestCameraPermissionsAsync();
-      if (!perm.granted) {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync().catch(() => ({ status: 'granted' }));
+      if (status !== 'granted') {
         Alert.alert(
           'Camera Permission Required',
           'Please enable Camera permissions in your phone settings.'
         );
-        onClose();
         return;
       }
 
-      onClose();
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
@@ -114,6 +131,8 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       }
     } catch (err: any) {
       console.warn('Camera launch error:', err);
+    } finally {
+      onClose();
     }
   };
 
@@ -124,17 +143,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
     }
 
     try {
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync().catch(() => ({ status: 'granted' }));
+      if (status !== 'granted') {
         Alert.alert(
           'Photo Library Permission Required',
           'Please enable Photo Library permissions in your phone settings.'
         );
-        onClose();
         return;
       }
 
-      onClose();
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
@@ -146,13 +163,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         const asset = result.assets[0];
         onImageSelected(asset.uri, {
           uri: asset.uri,
-          name: asset.fileName || `gallery_${Date.now().toString().slice(-4)}.jpg`,
+          name: asset.fileName || `gallery_image_${Date.now().toString().slice(-4)}.jpg`,
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
         });
       }
     } catch (err: any) {
       console.warn('Gallery launch error:', err);
+    } finally {
+      onClose();
     }
   };
 
@@ -165,7 +184,6 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
     try {
       const DocumentPicker = await import('expo-document-picker').catch(() => null);
       if (DocumentPicker && DocumentPicker.getDocumentAsync) {
-        onClose();
         const result = await DocumentPicker.getDocumentAsync({
           type: ['application/pdf', 'image/*'],
           copyToCacheDirectory: true,
@@ -181,11 +199,13 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
           });
         }
       } else {
-        doLaunchGallery();
+        await doLaunchGallery();
       }
     } catch (err: any) {
       console.warn('Document picker error, falling back to gallery:', err);
-      doLaunchGallery();
+      await doLaunchGallery();
+    } finally {
+      onClose();
     }
   };
 
@@ -196,96 +216,101 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.backdrop}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.sheetContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              {/* Top drag handle indicator */}
-              <View style={[styles.handleBar, { backgroundColor: isDark ? '#334155' : '#CBD5E1' }]} />
+      <View style={styles.backdrop}>
+        {/* Dimmed Overlay Backdrop */}
+        <Pressable
+          style={styles.backdropOverlay}
+          onPress={onClose}
+          accessible={true}
+          accessibilityLabel="Close Picker Backdrop"
+        />
 
-              <View style={styles.headerRow}>
-                <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
-                  {title}
-                </Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={[styles.closeBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
-                  activeOpacity={0.7}
-                >
-                  <X size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
+        {/* Modal Bottom Sheet Content */}
+        <View style={[styles.sheetContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          {/* Top drag handle indicator */}
+          <View style={[styles.handleBar, { backgroundColor: isDark ? '#334155' : '#CBD5E1' }]} />
+
+          <View style={styles.headerRow}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
+              {title}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.closeBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+              activeOpacity={0.7}
+            >
+              <X size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.optionsList}>
+            {/* Option 1: Take Photo (Always Available) */}
+            <TouchableOpacity
+              style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+              onPress={doLaunchCamera}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Take Photo"
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#FFF7ED' }]}>
+                <Camera size={22} color="#FF6600" />
               </View>
-
-              <View style={styles.optionsList}>
-                {/* Option 1: Take Photo (Always Available) */}
-                <TouchableOpacity
-                  style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
-                  onPress={doLaunchCamera}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Take Photo"
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: '#FFF7ED' }]}>
-                    <Camera size={22} color="#FF6600" />
-                  </View>
-                  <View style={styles.optionTextContainer}>
-                    <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Take Photo</Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Use phone camera to capture clean photo</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Option 2: Choose from Gallery (Always Available) */}
-                <TouchableOpacity
-                  style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
-                  onPress={doLaunchGallery}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Choose from Gallery"
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
-                    <ImageIcon size={22} color="#10B981" />
-                  </View>
-                  <View style={styles.optionTextContainer}>
-                    <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Choose from Gallery</Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select image from device gallery</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
-                {showDocumentOption && (
-                  <TouchableOpacity
-                    style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
-                    onPress={doLaunchDocumentPicker}
-                    activeOpacity={0.7}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Browse Files (PDF / Documents)"
-                  >
-                    <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
-                      <FolderOpen size={22} color="#8B5CF6" />
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Browse Files (PDF / Documents)</Text>
-                      <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select PDF or document file from device</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
+              <View style={styles.optionTextContainer}>
+                <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Take Photo</Text>
+                <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Use phone camera to capture clean photo</Text>
               </View>
+            </TouchableOpacity>
 
-              {/* Cancel Button */}
+            {/* Option 2: Choose from Gallery (Always Available) */}
+            <TouchableOpacity
+              style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+              onPress={doLaunchGallery}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Choose from Gallery"
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <ImageIcon size={22} color="#10B981" />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Choose from Gallery</Text>
+                <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select image from device gallery</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
+            {showDocumentOption && (
               <TouchableOpacity
-                style={[styles.cancelBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
-                onPress={onClose}
+                style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+                onPress={doLaunchDocumentPicker}
                 activeOpacity={0.7}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Browse Files (PDF / Documents)"
               >
-                <Text style={[styles.cancelText, { color: colors.textPrimary }]}>Cancel</Text>
+                <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
+                  <FolderOpen size={22} color="#8B5CF6" />
+                </View>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Browse Files (PDF / Documents)</Text>
+                  <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select PDF or document file from device</Text>
+                </View>
               </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
+            )}
+          </View>
+
+          {/* Cancel Button */}
+          <TouchableOpacity
+            style={[styles.cancelBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
+            onPress={onClose}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.cancelText, { color: colors.textPrimary }]}>Cancel</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
@@ -295,7 +320,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'flex-end',
-    alignItems: 'center',
+  },
+  backdropOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheetContainer: {
     borderTopLeftRadius: 24,
@@ -310,6 +337,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 20,
+    zIndex: 10,
   },
   handleBar: {
     width: 44,

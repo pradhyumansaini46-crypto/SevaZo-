@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   Modal,
-  TouchableWithoutFeedback,
   Alert,
   Platform,
 } from 'react-native';
@@ -41,13 +41,27 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 }) => {
   // Web-compatible native HTML file input trigger
   const triggerWebFileInput = (acceptType: string, captureMode?: 'user' | 'environment') => {
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    if (typeof document !== 'undefined') {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = acceptType;
+      input.style.display = 'none';
+      input.style.position = 'fixed';
+      input.style.top = '-9999px';
+      input.style.left = '-9999px';
+      input.style.opacity = '0';
       if (captureMode) {
         input.capture = captureMode;
       }
+
+      const cleanup = () => {
+        try {
+          if (input.parentNode) {
+            document.body.removeChild(input);
+          }
+        } catch (e) {}
+      };
+
       input.onchange = (event: any) => {
         const file = event.target?.files?.[0];
         if (file) {
@@ -62,10 +76,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                 mimeType: file.type,
               });
             }
+            cleanup();
           };
           reader.readAsDataURL(file);
+        } else {
+          cleanup();
         }
       };
+
+      document.body.appendChild(input);
       input.click();
       onClose();
       return true;
@@ -74,23 +93,21 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   };
 
   const handleLaunchCamera = async () => {
-    // Web environment
     if (Platform.OS === 'web') {
       triggerWebFileInput('image/*', 'environment');
       return;
     }
 
     try {
-      const perm = await ImagePicker.requestCameraPermissionsAsync();
-      if (!perm.granted) {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync().catch(() => ({ status: 'granted' }));
+      if (status !== 'granted') {
         Alert.alert(
           'Camera Permission Required',
-          'Please enable camera access in settings to capture photo.'
+          'Please allow camera permissions in settings to take photos.'
         );
         return;
       }
 
-      onClose();
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
@@ -109,27 +126,27 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       }
     } catch (err: any) {
       console.warn('Camera launch error:', err);
+    } finally {
+      onClose();
     }
   };
 
   const handleLaunchGallery = async () => {
-    // Web environment
     if (Platform.OS === 'web') {
       triggerWebFileInput('image/*');
       return;
     }
 
     try {
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync().catch(() => ({ status: 'granted' }));
+      if (status !== 'granted') {
         Alert.alert(
           'Photo Library Permission Required',
-          'Please enable photo library access in settings to select photo.'
+          'Please allow photo library permissions in settings to select photo.'
         );
         return;
       }
 
-      onClose();
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
@@ -148,21 +165,20 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       }
     } catch (err: any) {
       console.warn('Gallery launch error:', err);
+    } finally {
+      onClose();
     }
   };
 
   const handleLaunchDocumentPicker = async () => {
-    // Web environment
     if (Platform.OS === 'web') {
       triggerWebFileInput('application/pdf,image/*,.pdf,.jpg,.jpeg,.png');
       return;
     }
 
     try {
-      // Dynamic import to avoid crashes if expo-document-picker is not installed
       const DocumentPicker = await import('expo-document-picker').catch(() => null);
       if (DocumentPicker && DocumentPicker.getDocumentAsync) {
-        onClose();
         const result = await DocumentPicker.getDocumentAsync({
           type: ['application/pdf', 'image/*'],
           copyToCacheDirectory: true,
@@ -178,12 +194,13 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
           });
         }
       } else {
-        // Fallback to gallery picker for documents on native
-        handleLaunchGallery();
+        await handleLaunchGallery();
       }
     } catch (err: any) {
-      console.warn('Document picker error, falling back to gallery:', err);
-      handleLaunchGallery();
+      console.warn('Document picker error:', err);
+      await handleLaunchGallery();
+    } finally {
+      onClose();
     }
   };
 
@@ -194,90 +211,95 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.backdrop}>
-          <TouchableWithoutFeedback>
-            <View style={styles.sheetContainer}>
-              {/* Drag Handle Bar */}
-              <View style={styles.handleBar} />
+      <View style={styles.backdrop}>
+        {/* Dimmed Overlay Backdrop (Tapping closes modal) */}
+        <Pressable
+          style={styles.backdropOverlay}
+          onPress={onClose}
+          accessible={true}
+          accessibilityLabel="Close Picker Backdrop"
+        />
 
-              {/* Sheet Header */}
-              <View style={styles.headerRow}>
-                <Text style={styles.title} numberOfLines={2}>
-                  {title}
-                </Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-                  <X size={20} color={Colors.textSecondary} />
-                </TouchableOpacity>
+        {/* Modal Bottom Sheet Content */}
+        <View style={styles.sheetContainer}>
+          {/* Drag Handle Bar */}
+          <View style={styles.handleBar} />
+
+          {/* Sheet Header */}
+          <View style={styles.headerRow}>
+            <Text style={styles.title} numberOfLines={2}>
+              {title}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+              <X size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Picker Options List */}
+          <View style={styles.optionsList}>
+            {/* Option 1: Take Photo (Always Available) */}
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={handleLaunchCamera}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Take Photo"
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#FFF7ED' }]}>
+                <Camera size={22} color="#FF6600" />
               </View>
-
-              {/* Picker Options List */}
-              <View style={styles.optionsList}>
-                {/* Option 1: Take Photo (Always Available) */}
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={handleLaunchCamera}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Take Photo"
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: '#FFF7ED' }]}>
-                    <Camera size={22} color="#FF6600" />
-                  </View>
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>Take Photo</Text>
-                    <Text style={styles.optionSubtitle}>Use camera to capture clean photo</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Option 2: Choose from Gallery (Always Available) */}
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={handleLaunchGallery}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Choose from Gallery"
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
-                    <ImageIcon size={22} color="#10B981" />
-                  </View>
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>Choose from Gallery</Text>
-                    <Text style={styles.optionSubtitle}>Select image from device gallery</Text>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
-                {showDocumentOption && (
-                  <TouchableOpacity
-                    style={styles.optionItem}
-                    onPress={handleLaunchDocumentPicker}
-                    activeOpacity={0.7}
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Browse Files (PDF / Documents)"
-                  >
-                    <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
-                      <FolderOpen size={22} color="#8B5CF6" />
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                      <Text style={styles.optionTitle}>Browse Files (PDF / Documents)</Text>
-                      <Text style={styles.optionSubtitle}>Select PDF or document file from device</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
+              <View style={styles.optionTextContainer}>
+                <Text style={styles.optionTitle}>Take Photo</Text>
+                <Text style={styles.optionSubtitle}>Use camera to capture clean photo</Text>
               </View>
+            </TouchableOpacity>
 
-              {/* Cancel Action Button */}
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
-                <Text style={styles.cancelText}>Cancel</Text>
+            {/* Option 2: Choose from Gallery (Always Available) */}
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={handleLaunchGallery}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Choose from Gallery"
+            >
+              <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <ImageIcon size={22} color="#10B981" />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={styles.optionTitle}>Choose from Gallery</Text>
+                <Text style={styles.optionSubtitle}>Select image from device gallery</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
+            {showDocumentOption && (
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={handleLaunchDocumentPicker}
+                activeOpacity={0.7}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Browse Files (PDF / Documents)"
+              >
+                <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
+                  <FolderOpen size={22} color="#8B5CF6" />
+                </View>
+                <View style={styles.optionTextContainer}>
+                  <Text style={styles.optionTitle}>Browse Files (PDF / Documents)</Text>
+                  <Text style={styles.optionSubtitle}>Select PDF or document file from device</Text>
+                </View>
               </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
+            )}
+          </View>
+
+          {/* Cancel Action Button */}
+          <TouchableOpacity style={styles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
@@ -287,7 +309,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'flex-end',
-    alignItems: 'center',
+  },
+  backdropOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheetContainer: {
     backgroundColor: '#FFFFFF',
@@ -304,6 +328,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 20,
+    zIndex: 10,
   },
   handleBar: {
     width: 44,
