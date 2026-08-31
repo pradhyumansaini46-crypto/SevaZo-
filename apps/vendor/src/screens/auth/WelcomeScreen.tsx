@@ -1,81 +1,108 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Store, ArrowRight, ShieldCheck, TrendingUp, Zap, Sparkles } from 'lucide-react-native';
-import { getThemeColors, BorderRadius, Shadows } from '../../theme';
-import { useThemeStore } from '../../stores/themeStore';
+import { View, Text, StyleSheet, Image, SafeAreaView } from 'react-native';
+import { Store, Clock, TrendingUp, ArrowRight } from 'lucide-react-native';
+import { Typography, Spacing, BorderRadius, Shadows, getThemeColors } from '../../theme';
 import { Button } from '../../components/Button';
+import { useThemeStore } from '../../stores/themeStore';
 
-export const WelcomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+export const WelcomeScreen = ({ navigation }: any) => {
   const { themeMode } = useThemeStore();
   const colors = getThemeColors(themeMode);
+  const isDark = themeMode === 'DARK';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        {/* Top Hero Visual */}
-        <View style={styles.heroSection}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary }]}>
-            <Store size={40} color="#FFFFFF" />
-            <View style={styles.sparkleBadge}>
-              <Sparkles size={14} color="#0F172A" />
-            </View>
+        {/* Top Group: Brand Header + Feature Cards with Tight Gap */}
+        <View style={styles.topGroup}>
+          {/* Top Hero Brand Header with Official Graphic Logo */}
+          <View style={styles.header}>
+            <Image
+              source={require('../../../assets/sevazo-logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+              accessible={true}
+              accessibilityLabel="Official SevaZo Logo"
+            />
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to SevaZo Vendor</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Hyperlocal merchant partner platform
+            </Text>
           </View>
 
-          <Text style={[styles.title, { color: colors.textPrimary }]}>SevaZo Vendor</Text>
-          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-            Grow your business with SevaZo
-          </Text>
+          {/* Feature Value Props */}
+          <View
+            style={[
+              styles.valueCard,
+              {
+                backgroundColor: isDark ? colors.surface : '#F8FAFC',
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.valueRow}>
+              <View
+                style={[
+                  styles.valueIconCircle,
+                  { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
+                ]}
+              >
+                <Store size={20} color="#FF6600" />
+              </View>
+              <View style={styles.valueTextContainer}>
+                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Reach local customers.</Text>
+                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                  Instant store discovery & high-volume orders in your area.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.valueRow}>
+              <View
+                style={[
+                  styles.valueIconCircle,
+                  { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
+                ]}
+              >
+                <Clock size={20} color="#10B981" />
+              </View>
+              <View style={styles.valueTextContainer}>
+                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Daily automated payouts.</Text>
+                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                  Next-day direct bank transfers & automated settlements.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.valueRow}>
+              <View
+                style={[
+                  styles.valueIconCircle,
+                  { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
+                ]}
+              >
+                <TrendingUp size={20} color="#D97706" />
+              </View>
+              <View style={styles.valueTextContainer}>
+                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with SevaZo.</Text>
+                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                  Dedicated fleet dispatch & real-time analytics portal.
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {/* Feature Highlights Grid */}
-        <View style={styles.featuresSection}>
-          <View style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight }]}>
-              <TrendingUp size={20} color={colors.primary} />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>Hyperlocal Reach</Text>
-              <Text style={[styles.featureSub, { color: colors.textSecondary }]}>
-                Connect directly with thousands of daily customers in your area.
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[styles.featureIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Zap size={20} color="#D97706" />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>Instant Settlement</Text>
-              <Text style={[styles.featureSub, { color: colors.textSecondary }]}>
-                Daily automated payouts directly to your verified bank account.
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[styles.featureIcon, { backgroundColor: '#EDE9FE' }]}>
-              <ShieldCheck size={20} color="#7C3AED" />
-            </View>
-            <View style={styles.featureText}>
-              <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>Verified Partner Network</Text>
-              <Text style={[styles.featureSub, { color: colors.textSecondary }]}>
-                Dedicated dispatch fleet and priority merchant partner support.
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Action CTAs */}
-        <View style={styles.actionSection}>
+        {/* Action Buttons: Stacked Register & Login */}
+        <View style={styles.actions}>
           <Button
             title="Register Your Business"
             variant="primary"
             size="lg"
             fullWidth
             onPress={() => navigation.navigate('Register')}
-            rightIcon={<ArrowRight size={18} color="#FFFFFF" />}
-            style={styles.registerButton}
+            rightIcon={<ArrowRight size={20} color="#FFFFFF" />}
+            accessibilityLabel="Register Your Business"
           />
 
           <Button
@@ -84,7 +111,7 @@ export const WelcomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
             size="lg"
             fullWidth
             onPress={() => navigation.navigate('Login')}
-            style={styles.loginButton}
+            accessibilityLabel="Login to existing vendor account"
           />
 
           <Text style={[styles.footerNotice, { color: colors.textSecondary }]}>
@@ -102,97 +129,80 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 32,
+    paddingBottom: 24,
     justifyContent: 'space-between',
   },
-  heroSection: {
-    alignItems: 'center',
-    marginTop: 12,
+  topGroup: {
+    gap: 14,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+  header: {
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    marginBottom: 16,
-    ...Shadows.elevated,
   },
-  sparkleBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: '#F59E0B',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+  logoImage: {
+    width: 105,
+    height: 105,
+    marginBottom: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    ...Typography.hero,
+    fontSize: 24,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 6,
+    marginTop: 6,
   },
-  tagline: {
-    fontSize: 16,
-    fontWeight: '500',
+  subtitle: {
+    ...Typography.bodyMedium,
+    marginTop: 2,
     textAlign: 'center',
+    fontSize: 13,
   },
-  featuresSection: {
-    gap: 12,
-    marginVertical: 20,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: BorderRadius.lg,
+  valueCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
+    gap: Spacing.md,
     ...Shadows.card,
   },
-  featureIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  valueRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+    gap: Spacing.md,
   },
-  featureText: {
+  valueIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  valueTextContainer: {
     flex: 1,
   },
-  featureTitle: {
-    fontSize: 14,
+  valueTitle: {
+    ...Typography.titleSmall,
     fontWeight: '700',
-    marginBottom: 2,
+    fontSize: 14,
   },
-  featureSub: {
+  valueDesc: {
+    ...Typography.bodySmall,
+    marginTop: 2,
     fontSize: 12,
-    lineHeight: 16,
   },
-  actionSection: {
+  actions: {
+    flexDirection: 'column',
     gap: 10,
-    alignItems: 'center',
-  },
-  registerButton: {
-    marginBottom: 2,
-  },
-  loginButton: {
-    borderWidth: 1.5,
+    width: '100%',
+    marginTop: 10,
   },
   footerNotice: {
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 16,
-    marginTop: 8,
+    marginTop: 4,
     paddingHorizontal: 12,
   },
 });
+
+export default WelcomeScreen;

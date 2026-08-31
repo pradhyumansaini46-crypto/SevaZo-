@@ -14,4 +14,5 @@ export * from './OfflineBanner';
 export * from './StatusToggle';
 export * from './EmptyState';
 export * from './ImagePickerModal';
+export * from './InteractiveLamp';
 export * from './onboarding';

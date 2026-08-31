@@ -2,68 +2,46 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
-import { ArrowLeft, Phone, Mail, Building2, ArrowRight, ShieldCheck } from 'lucide-react-native';
-import { getThemeColors, BorderRadius, Shadows } from '../../theme';
-import { useThemeStore } from '../../stores/themeStore';
-import { Input } from '../../components/Input';
-import { Button } from '../../components/Button';
+import { ArrowRight, CheckCircle2, Mail, ShieldCheck } from 'lucide-react-native';
+import { Spacing, BorderRadius } from '../../theme';
 import { phoneSchema, emailSchema } from '../../validation/schemas';
+import { InteractiveLamp } from '../../components/InteractiveLamp';
 import { VendorApi } from '../../services/vendorApi';
 import { normalizeApiError } from '../../utils';
 
-export const RegisterScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { themeMode } = useThemeStore();
-  const colors = getThemeColors(themeMode);
-
+export const RegisterScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [phoneError, setPhoneError] = useState<string | undefined>(undefined);
-  const [emailError, setEmailError] = useState<string | undefined>(undefined);
-  const [globalError, setGlobalError] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  const [isLampOn, setIsLampOn] = useState(true);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePhoneChange = (text: string) => {
-    const cleaned = text.replace(/[^0-9]/g, '');
-    if (cleaned.length <= 10) {
-      setPhone(cleaned);
-      if (phoneError) setPhoneError(undefined);
-      if (globalError) setGlobalError(undefined);
-    }
-  };
-
-  const handleEmailChange = (text: string) => {
-    setEmail(text);
-    if (emailError) setEmailError(undefined);
-    if (globalError) setGlobalError(undefined);
-  };
+  const isPhoneValid = phone.replace(/\D/g, '').length === 10;
+  const isEmailValid = email.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const handleCreateAccount = async () => {
-    let hasError = false;
+    setValidationError(null);
 
-    const phoneValidation = phoneSchema.safeParse(phone);
-    if (!phoneValidation.success) {
-      setPhoneError(phoneValidation.error.errors[0]?.message || 'Valid 10-digit mobile number required');
-      hasError = true;
+    const phoneResult = phoneSchema.safeParse(phone);
+    if (!phoneResult.success) {
+      setValidationError(phoneResult.error.errors[0]?.message || 'Please enter a valid 10-digit mobile number');
+      return;
     }
 
-    const emailValidation = emailSchema.safeParse(email);
-    if (!emailValidation.success) {
-      setEmailError(emailValidation.error.errors[0]?.message || 'Valid email address required');
-      hasError = true;
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      setValidationError(emailResult.error.errors[0]?.message || 'Please enter a valid business email address');
+      return;
     }
 
-    if (hasError) return;
-
-    setLoading(true);
-    setGlobalError(undefined);
-
+    setIsLoading(true);
     try {
       const res = await VendorApi.registerOtp({ phone, email });
       navigation.navigate('OtpVerification', {
@@ -75,205 +53,494 @@ export const RegisterScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     } catch (err: any) {
       const normalized = normalizeApiError(err);
       if (normalized.statusCode === 409) {
-        setGlobalError('An account with this mobile number already exists. Please login instead.');
+        setValidationError('An account with this mobile number already exists. Please login instead.');
       } else if (normalized.code === 'RATE_LIMIT_EXCEEDED' || normalized.statusCode === 429) {
-        setGlobalError('Too many attempts. Please wait a few minutes before trying again.');
+        setValidationError('Too many attempts. Please wait a few minutes before trying again.');
       } else {
-        setGlobalError(normalized.message || 'Registration request failed. Please try again.');
+        setValidationError(normalized.message || 'Registration request failed. Please try again.');
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const isFormValid = phone.length === 10 && email.trim().length > 4;
+  const handlePhoneChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    setPhone(cleaned);
+    if (validationError) setValidationError(null);
+  };
+
+  const isButtonDisabled = !isPhoneValid || !isEmailValid || isLoading;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
+        {/* 1. Brand Heading H1 Above Hanging Lamp */}
+        <Text style={styles.topBrandTitle}>SevaZo</Text>
+
+        {/* 2. Interactive Hanging Lamp */}
+        <InteractiveLamp
+          isLampOn={isLampOn}
+          onToggle={(state) => setIsLampOn(state)}
+        />
+
+        {/* Modern White Logic Card */}
+        <View
+          style={[
+            styles.card,
+            isLampOn ? styles.cardIlluminated : styles.cardDimmed,
+          ]}
         >
-          {/* Header */}
-          <View style={styles.header}>
+          {/* 3. Water Droplet Sliding Segmented Control */}
+          <View style={styles.tabPillContainer}>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
+              style={styles.tabBtn}
+              onPress={() => navigation.navigate('Login')}
+              activeOpacity={0.7}
             >
-              <ArrowLeft size={20} color={colors.textPrimary} />
+              <Text style={styles.tabBtnTextInactive}>Sign In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.tabBtn, styles.tabBtnActive]}
+              activeOpacity={1}
+            >
+              <Text style={styles.tabBtnTextActive}>Register</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Hero Content */}
-          <View style={styles.heroSection}>
-            <View style={[styles.iconBox, { backgroundColor: '#EDE9FE' }]}>
-              <Building2 size={28} color="#7C3AED" />
-            </View>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Register Your Business</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Create your merchant account to start selling products and services on SevaZo.
+          {/* Heading Greeting */}
+          <View style={styles.headingBlock}>
+            <Text style={styles.headingTitle}>Register Your Business</Text>
+            <Text style={styles.headingSubtitle}>
+              Join SevaZo as a verified merchant partner and scale your orders.
             </Text>
           </View>
 
           {/* Form Fields */}
-          <View style={styles.formSection}>
-            {globalError && (
-              <View style={styles.globalErrorBox}>
-                <Text style={styles.globalErrorText}>{globalError}</Text>
+          <View style={styles.formGroup}>
+            {/* Mobile Number */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Primary Mobile Number *</Text>
+                {isPhoneValid && (
+                  <View style={styles.verifiedTag}>
+                    <CheckCircle2 size={13} color="#10B981" />
+                    <Text style={styles.verifiedText}>Valid</Text>
+                  </View>
+                )}
               </View>
+
+              <View
+                style={[
+                  styles.inputRow,
+                  Boolean(validationError) && !isPhoneValid && styles.inputErrorRow,
+                ]}
+              >
+                <View style={styles.countryCodeBadge}>
+                  <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  placeholder="Enter 10-digit number"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  accessible={true}
+                  accessibilityLabel="Primary Mobile Number"
+                />
+              </View>
+            </View>
+
+            {/* Business / Owner Email Address */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Business / Owner Email *</Text>
+                {isEmailValid && (
+                  <View style={styles.verifiedTag}>
+                    <CheckCircle2 size={13} color="#10B981" />
+                    <Text style={styles.verifiedText}>Format OK</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.inputRow}>
+                <View style={styles.iconPrefix}>
+                  <Mail size={18} color="#94A3B8" />
+                </View>
+                <TextInput
+                  style={styles.textInput}
+                  value={email}
+                  onChangeText={(val) => {
+                    setEmail(val);
+                    if (validationError) setValidationError(null);
+                  }}
+                  placeholder="store.owner@example.com"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  accessible={true}
+                  accessibilityLabel="Business Email Address"
+                />
+              </View>
+            </View>
+
+            {validationError && (
+              <Text style={styles.errorText} accessibilityRole="alert">
+                {validationError}
+              </Text>
             )}
 
-            <Input
-              label="Primary Mobile Number"
-              placeholder="98765 43210"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={handlePhoneChange}
-              prefix="+91"
-              error={phoneError}
-              maxLength={10}
-              leftIcon={<Phone size={18} color={colors.textSecondary} />}
-              helperText="This mobile number will receive order dispatch OTPs and alerts."
-            />
+            {/* Floating Action Pill & Target Track */}
+            <View style={styles.actionTrack}>
+              <View style={styles.targetDottedSlot}>
+                <Text style={styles.targetDottedText}>
+                  {isLoading
+                    ? 'CREATING ACCOUNT...'
+                    : isPhoneValid && isEmailValid
+                    ? 'READY TO SUBMIT'
+                    : 'FILL DETAILS'}
+                </Text>
+              </View>
 
-            <Input
-              label="Business / Owner Email"
-              placeholder="store.owner@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={handleEmailChange}
-              error={emailError}
-              leftIcon={<Mail size={18} color={colors.textSecondary} />}
-              helperText="Official receipts, invoices, and settlement statements will be sent here."
-            />
+              <TouchableOpacity
+                style={[
+                  styles.submitPill,
+                  isPhoneValid && isEmailValid ? styles.submitPillActive : styles.submitPillInactive,
+                ]}
+                onPress={handleCreateAccount}
+                disabled={isButtonDisabled}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.submitPillText,
+                    isPhoneValid && isEmailValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
+                  ]}
+                >
+                  {isLoading ? 'Creating Account...' : 'Register Business'}
+                </Text>
+                <ArrowRight
+                  size={18}
+                  color={isPhoneValid && isEmailValid ? '#FFFFFF' : '#94A3B8'}
+                  strokeWidth={2.5}
+                />
+              </TouchableOpacity>
+            </View>
 
-            <Button
-              title="Create Account"
-              variant="primary"
-              size="lg"
-              fullWidth
-              loading={loading}
-              disabled={!isFormValid || loading}
-              onPress={handleCreateAccount}
-              rightIcon={<ArrowRight size={18} color="#FFFFFF" />}
-              style={styles.submitBtn}
-            />
-
-            {/* Verification Security Hint */}
-            <View style={[styles.hintCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <ShieldCheck size={16} color={colors.primary} />
-              <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                A 6-digit OTP will be sent to verify ownership of this mobile number.
+            {/* Progress Bullet Hint */}
+            <View style={styles.progressHintContainer}>
+              <View
+                style={[
+                  styles.progressDot,
+                  { backgroundColor: isPhoneValid && isEmailValid ? '#10B981' : '#FF6600' },
+                ]}
+              />
+              <Text style={styles.progressHintText}>
+                {isPhoneValid && isEmailValid
+                  ? 'One tap away — ready to receive OTP.'
+                  : 'Complete phone and email to get started.'}
               </Text>
             </View>
           </View>
 
-          {/* Login Link */}
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-              Already registered on SevaZo?{' '}
-            </Text>
+          {/* Switch to Login Link */}
+          <View style={styles.switchModeContainer}>
+            <Text style={styles.switchModeText}>Already have a vendor account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={[styles.loginLink, { color: colors.primary }]}>Login Here</Text>
+              <Text style={styles.switchModeLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+
+        {/* Security Trust Footer */}
+        <View style={styles.trustFooter}>
+          <ShieldCheck size={16} color="#10B981" />
+          <Text style={styles.trustFooterText}>
+            Official verified merchant partner registration portal
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  scroll: {
+  scrollContent: {
     flexGrow: 1,
-    padding: 24,
-    justifyContent: 'space-between',
-  },
-  header: {
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    ...Shadows.card,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 24,
   },
-  heroSection: {
-    marginBottom: 28,
-  },
-  iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 26,
+  topBrandTitle: {
+    fontSize: 30,
     fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
     letterSpacing: -0.5,
-    marginBottom: 8,
+    marginTop: 6,
+    marginBottom: 2,
   },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  formSection: {
-    gap: 16,
-  },
-  globalErrorBox: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
     borderWidth: 1,
-    padding: 12,
-    borderRadius: BorderRadius.md,
+    borderColor: '#E2E8F0',
+    padding: Spacing.xl,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  globalErrorText: {
-    color: '#991B1B',
-    fontSize: 13,
-    fontWeight: '600',
+  cardIlluminated: {
+    borderColor: '#FED7AA',
+    shadowColor: '#FF6600',
+    shadowOpacity: 0.12,
   },
-  submitBtn: {
-    marginTop: 8,
+  cardDimmed: {
+    borderColor: '#E2E8F0',
   },
-  hintCard: {
+  tabPillContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: BorderRadius.md,
+    alignSelf: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: BorderRadius.full,
+    padding: 3,
     borderWidth: 1,
-    gap: 8,
-    marginTop: 4,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.lg,
+    width: 220,
   },
-  hintText: {
-    fontSize: 12,
+  tabBtn: {
     flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
+    paddingVertical: 7,
+    borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 32,
   },
-  footerText: {
-    fontSize: 14,
+  tabBtnActive: {
+    backgroundColor: '#FF6600',
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  loginLink: {
+  tabBtnTextActive: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  tabBtnTextInactive: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  headingBlock: {
+    marginBottom: Spacing.xl,
+  },
+  headingTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+  },
+  headingSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 4,
+    lineHeight: 19,
+  },
+  formGroup: {
+    gap: Spacing.md + 2,
+  },
+  inputContainer: {
+    gap: 6,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  verifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  inputErrorRow: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  countryCodeBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
+    borderRightWidth: 1,
+    borderRightColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
+  },
+  countryCodeText: {
+    color: '#0F172A',
     fontSize: 14,
     fontWeight: '700',
   },
+  iconPrefix: {
+    paddingLeft: Spacing.md,
+    paddingRight: 4,
+  },
+  textInput: {
+    flex: 1,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
+  },
+  actionTrack: {
+    position: 'relative',
+    height: 56,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    overflow: 'hidden',
+  },
+  targetDottedSlot: {
+    position: 'absolute',
+    width: '80%',
+    height: 38,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  targetDottedText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  submitPill: {
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    top: 4,
+    bottom: 4,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+  },
+  submitPillActive: {
+    backgroundColor: '#FF6600',
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  submitPillInactive: {
+    backgroundColor: '#E2E8F0',
+  },
+  submitPillText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  submitPillTextActive: {
+    color: '#FFFFFF',
+  },
+  submitPillTextInactive: {
+    color: '#94A3B8',
+  },
+  progressHintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  progressDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  progressHintText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  switchModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+  },
+  switchModeText: {
+    color: '#64748B',
+    fontSize: 12,
+  },
+  switchModeLink: {
+    color: '#FF6600',
+    fontSize: 12,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  trustFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: Spacing.xl,
+  },
+  trustFooterText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  errorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontSize: 11,
+    marginTop: 2,
+  },
 });
+
+export default RegisterScreen;
