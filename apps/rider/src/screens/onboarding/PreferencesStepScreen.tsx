@@ -28,11 +28,11 @@ import {
 } from '../../validation/onboardingValidation';
 
 const FLEET_HUBS = [
-  { id: 'hub_central', name: 'Central Commercial Hub', code: 'HUB-01' },
-  { id: 'hub_north', name: 'North Market & Tech District', code: 'HUB-02' },
-  { id: 'hub_south', name: 'South Residential & Malls Hub', code: 'HUB-03' },
-  { id: 'hub_east', name: 'East Express Logistic Point', code: 'HUB-04' },
-  { id: 'hub_west', name: 'West Metro Corridor', code: 'HUB-05' },
+  { id: 'hub_mansarovar_vt', name: 'Mansarovar VT Road Central Hub', code: 'HUB-MSR-01' },
+  { id: 'hub_mansarovar_metro', name: 'Mansarovar Metro & B2 Bypass Point', code: 'HUB-MSR-02' },
+  { id: 'hub_madhyam_marg', name: 'Madhyam Marg Commercial Market', code: 'HUB-MSR-03' },
+  { id: 'hub_patel_marg', name: 'Patel Marg & Sector 5 Logistic Point', code: 'HUB-MSR-04' },
+  { id: 'hub_varun_path', name: 'Varun Path & City Park Delivery Hub', code: 'HUB-MSR-05' },
 ];
 
 const VENDOR_APP_CATEGORIES = [
@@ -50,7 +50,7 @@ const VENDOR_APP_CATEGORIES = [
   { id: 'DOCUMENTS_COURIER', label: 'Express Document Courier', icon: Package, desc: 'P2P papers & parcel drops' },
 ];
 
-const RULER_STOPS = [2, 4, 6, 8, 10, 12, 15, 20];
+const RULER_STOPS = [2, 4, 6, 8];
 
 export const PreferencesStepScreen = ({ navigation }: any) => {
   const { draftData, completionPercentage, saveSection, isSaving, error, clearError } =
@@ -66,16 +66,16 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     resolver: zodResolver(deliveryPreferencesSchema),
     defaultValues: {
       city: draftData?.serviceArea?.city || draftData?.deliveryPreferences?.city || 'Jaipur',
-      zone: draftData?.serviceArea?.zone || draftData?.deliveryPreferences?.zone || 'Central Zone',
+      zone: draftData?.serviceArea?.zone || draftData?.deliveryPreferences?.zone || 'Mansarovar Zone',
       locality:
         draftData?.serviceArea?.locality ||
         draftData?.deliveryPreferences?.locality ||
-        'Malviya Nagar',
+        'Mansarovar',
       preferredHubs:
         draftData?.serviceArea?.preferredHubs ||
         draftData?.deliveryPreferences?.preferredHubs ||
-        ['hub_central', 'hub_south'],
-      maxDistanceKm: draftData?.deliveryPreferences?.maxDistanceKm || 8,
+        ['hub_mansarovar_vt', 'hub_mansarovar_metro'],
+      maxDistanceKm: draftData?.deliveryPreferences?.maxDistanceKm || 6,
       acceptHeavyItems: draftData?.deliveryPreferences?.acceptHeavyItems || false,
       acceptSpecialHandling: draftData?.deliveryPreferences?.acceptSpecialHandling || true,
       categories:
@@ -88,7 +88,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     },
   });
 
-  const selectedRadius = watch('maxDistanceKm') || 8;
+  const selectedRadius = watch('maxDistanceKm') || 6;
   const selectedCategories = watch('categories') || [];
   const selectedHubs = watch('preferredHubs') || [];
 
@@ -115,7 +115,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
   };
 
   const handleStepDistance = (delta: number) => {
-    const nextVal = Math.max(2, Math.min(20, selectedRadius + delta));
+    const nextVal = Math.max(1, Math.min(8, selectedRadius + delta));
     setValue('maxDistanceKm', nextVal, { shouldValidate: true });
   };
 
@@ -143,8 +143,8 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     }
   };
 
-  const minKm = 2;
-  const maxKm = 20;
+  const minKm = 1;
+  const maxKm = 8;
   const fillPercentage = Math.min(100, Math.max(0, ((selectedRadius - minKm) / (maxKm - minKm)) * 100));
 
   return (
@@ -316,34 +316,34 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
           <View style={styles.stepperRow}>
             <TouchableOpacity
               style={styles.stepperBtn}
-              onPress={() => handleStepDistance(-2)}
-              disabled={selectedRadius <= 2}
+              onPress={() => handleStepDistance(-1)}
+              disabled={selectedRadius <= 1}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Decrease radius"
             >
-              <Minus size={18} color={selectedRadius <= 2 ? '#CBD5E1' : '#FF6600'} />
+              <Minus size={18} color={selectedRadius <= 1 ? '#CBD5E1' : '#FF6600'} />
             </TouchableOpacity>
 
             <View style={styles.rangeSummary}>
               <Text style={styles.rangeSummaryText}>
-                {selectedRadius <= 4
+                {selectedRadius <= 3
                   ? '⚡ Hyperlocal • Ultra-fast returns & high batching'
-                  : selectedRadius <= 10
-                  ? '⭐ Standard City Radius • Optimal volume & earnings'
-                  : '🚀 Wide Coverage • Maximum long-distance drop surge'}
+                  : selectedRadius <= 6
+                  ? '⭐ Mansarovar Core Sectors • Optimal volume & earnings'
+                  : '🚀 Full Mansarovar (8 km) • Maximum coverage & surge'}
               </Text>
             </View>
 
             <TouchableOpacity
               style={styles.stepperBtn}
-              onPress={() => handleStepDistance(2)}
-              disabled={selectedRadius >= 20}
+              onPress={() => handleStepDistance(1)}
+              disabled={selectedRadius >= 8}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel="Increase radius"
             >
-              <Plus size={18} color={selectedRadius >= 20 ? '#CBD5E1' : '#FF6600'} />
+              <Plus size={18} color={selectedRadius >= 8 ? '#CBD5E1' : '#FF6600'} />
             </TouchableOpacity>
           </View>
         </View>

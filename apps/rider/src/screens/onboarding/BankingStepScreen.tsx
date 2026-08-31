@@ -22,6 +22,81 @@ const POPULAR_UPI_SUFFIXES = [
   '@upi',
 ];
 
+interface IfscLookupResult {
+  bank: string;
+  branch: string;
+  city?: string;
+  state?: string;
+}
+
+const KNOWN_BANK_MAP: Record<string, string> = {
+  SBIN: 'State Bank of India',
+  HDFC: 'HDFC Bank Ltd',
+  ICIC: 'ICICI Bank Ltd',
+  UTIB: 'Axis Bank Ltd',
+  PUNB: 'Punjab National Bank',
+  BARB: 'Bank of Baroda',
+  KKBK: 'Kotak Mahindra Bank',
+  CNRB: 'Canara Bank',
+  UBIN: 'Union Bank of India',
+  BKID: 'Bank of India',
+  IDIB: 'Indian Bank',
+  INDB: 'IndusInd Bank',
+  YESB: 'Yes Bank',
+  CBIN: 'Central Bank of India',
+  IOBA: 'Indian Overseas Bank',
+  UCBA: 'UCO Bank',
+  MAHB: 'Bank of Maharashtra',
+  PSIB: 'Punjab & Sind Bank',
+  IDFB: 'IDFC FIRST Bank',
+  FDRL: 'Federal Bank',
+  RBLN: 'RBL Bank',
+  AUBL: 'AU Small Finance Bank',
+  ESFB: 'Equitas Small Finance Bank',
+  JSFB: 'Jana Small Finance Bank',
+  UJVN: 'Ujjivan Small Finance Bank',
+  PAYT: 'Paytm Payments Bank',
+  IPOS: 'India Post Payments Bank',
+  AIRP: 'Airtel Payments Bank',
+};
+
+async function fetchRealIfscData(code: string): Promise<IfscLookupResult | null> {
+  const clean = code.trim().toUpperCase().replace(/\s+/g, '');
+  if (clean.length !== 11) return null;
+
+  // 1. Try public official RBI Razorpay IFSC API
+  try {
+    const res = await fetch(`https://ifsc.razorpay.com/${clean}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.BANK || data.bank)) {
+        return {
+          bank: data.BANK || data.bank,
+          branch: data.BRANCH || data.branch || 'Branch',
+          city: data.CITY || data.city,
+          state: data.STATE || data.state,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Online IFSC API error, using known bank map:', err);
+  }
+
+  // 2. Intelligent prefix map fallback
+  const prefix = clean.slice(0, 4);
+  const matchedBank = KNOWN_BANK_MAP[prefix];
+  if (matchedBank) {
+    return {
+      bank: matchedBank,
+      branch: `Branch (${clean.slice(4)})`,
+    };
+  }
+
+  return null;
+}
+
 export const BankingStepScreen = ({ navigation }: any) => {
   const { rider } = useAuthStore();
   const { draftData, completionPercentage, saveSection, isSaving, error, clearError } =
@@ -64,13 +139,37 @@ export const BankingStepScreen = ({ navigation }: any) => {
   const currentAccountHolder = watch('accountHolder');
 
   const handleVerifyIfsc = async () => {
-    if (!ifscCode || ifscCode.length < 11) return;
+    const clean = (ifscCode || '').trim().toUpperCase();
+    if (!clean || clean.length !== 11) {
+      Alert.alert(
+        'Invalid IFSC Code',
+        'Please enter a valid 11-character IFSC code (e.g. SBIN0031804 or HDFC0000001).'
+      );
+      return;
+    }
+
     setVerifyingIfsc(true);
-    setTimeout(() => {
-      setValue('bankName', 'HDFC Bank Ltd (Indiranagar Branch)', { shouldValidate: true });
-      setBankVerified(true);
+    setBankVerified(false);
+
+    try {
+      const details = await fetchRealIfscData(clean);
+      if (details) {
+        const fullBankTitle = details.branch
+          ? `${details.bank} (${details.branch}${details.city ? `, ${details.city}` : ''})`
+          : details.bank;
+        setValue('bankName', fullBankTitle, { shouldValidate: true });
+        setBankVerified(true);
+      } else {
+        Alert.alert(
+          'IFSC Not Found',
+          'Could not verify details for this IFSC code. Please check the code printed on your cheque book or passbook.'
+        );
+      }
+    } catch (e) {
+      Alert.alert('Verification Error', 'Could not verify IFSC. Please check your connection or code.');
+    } finally {
       setVerifyingIfsc(false);
-    }, 600);
+    }
   };
 
   const handleVerifyUpi = async () => {
@@ -80,7 +179,7 @@ export const BankingStepScreen = ({ navigation }: any) => {
       const verifiedName = currentAccountHolder || 'Verified Delivery Partner';
       setUpiVerifiedName(verifiedName);
       setVerifyingUpi(false);
-    }, 600);
+    }, 400);
   };
 
   const handleApplyUpiSuffix = (suffix: string) => {
@@ -336,7 +435,7 @@ export const BankingStepScreen = ({ navigation }: any) => {
                 <Input
                   label="Bank Name & Branch *"
                   required
-                  placeholder="e.g. HDFC Bank Ltd (Indiranagar Branch)"
+                  placeholder="e.g. State Bank of India (Mansarovar Branch, Jaipur)"
                   value={value}
                   onChangeText={onChange}
                   error={errors.bankName?.message}

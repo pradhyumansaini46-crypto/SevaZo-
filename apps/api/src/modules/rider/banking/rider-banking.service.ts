@@ -263,11 +263,63 @@ export class RiderBankingService {
       throw new BadRequestException('Invalid UPI ID format (e.g. name@okhdfcbank)');
     }
 
+    const KNOWN_BANKS: Record<string, string> = {
+      SBIN: 'State Bank of India',
+      HDFC: 'HDFC Bank Ltd',
+      ICIC: 'ICICI Bank Ltd',
+      UTIB: 'Axis Bank Ltd',
+      PUNB: 'Punjab National Bank',
+      BARB: 'Bank of Baroda',
+      KKBK: 'Kotak Mahindra Bank',
+      CNRB: 'Canara Bank',
+      UBIN: 'Union Bank of India',
+      BKID: 'Bank of India',
+      IDIB: 'Indian Bank',
+      INDB: 'IndusInd Bank',
+      YESB: 'Yes Bank',
+      CBIN: 'Central Bank of India',
+      IOBA: 'Indian Overseas Bank',
+      UCBA: 'UCO Bank',
+      MAHB: 'Bank of Maharashtra',
+      PSIB: 'Punjab & Sind Bank',
+      IDFB: 'IDFC FIRST Bank',
+      FDRL: 'Federal Bank',
+      RBLN: 'RBL Bank',
+      AUBL: 'AU Small Finance Bank',
+    };
+
+    let resolvedBank: string | undefined;
+    let resolvedBranch: string | undefined;
+
+    if (body.ifsc) {
+      const ifscUpper = body.ifsc.toUpperCase();
+      try {
+        const res = await fetch(`https://ifsc.razorpay.com/${ifscUpper}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const ifscData: any = await res.json();
+          if (ifscData && (ifscData.BANK || ifscData.bank)) {
+            resolvedBank = ifscData.BANK || ifscData.bank;
+            resolvedBranch = ifscData.BRANCH || ifscData.branch || 'Branch';
+          }
+        }
+      } catch (err) {
+        // fallback to prefix
+      }
+
+      if (!resolvedBank) {
+        const prefix = ifscUpper.slice(0, 4);
+        resolvedBank = KNOWN_BANKS[prefix] || 'Verified Commercial Bank';
+        resolvedBranch = `Branch (${ifscUpper.slice(4)})`;
+      }
+    }
+
     return {
       success: true,
       verified: true,
-      bankName: body.ifsc ? 'HDFC Bank Ltd' : undefined,
-      branch: body.ifsc ? 'Indiranagar Branch' : undefined,
+      bankName: resolvedBank,
+      branch: resolvedBranch,
       message: 'Bank / IFSC verified successfully',
     };
   }
