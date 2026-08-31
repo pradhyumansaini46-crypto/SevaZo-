@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
 import { ShieldCheck } from 'lucide-react-native';
@@ -31,6 +31,14 @@ export const AddressScreen = ({ navigation }: any) => {
     },
   });
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Required Field Missing', firstError);
+    }
+  };
+
   const onSubmit = async (data: AddressFormValues) => {
     clearError();
     const success = await saveSection('address', data, true);
@@ -44,7 +52,7 @@ export const AddressScreen = ({ navigation }: any) => {
     handleSubmit(async (data) => {
       await saveSection('address', data, false);
       navigation.navigate('OnboardingResume');
-    })();
+    }, onInvalid)();
   };
 
   return (
@@ -54,7 +62,7 @@ export const AddressScreen = ({ navigation }: any) => {
       stepTitle="Residential Address"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingPersonal')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

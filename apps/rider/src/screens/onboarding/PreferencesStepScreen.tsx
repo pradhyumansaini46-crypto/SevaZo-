@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Package,
@@ -119,6 +119,14 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     setValue('maxDistanceKm', nextVal, { shouldValidate: true });
   };
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Preferences Incomplete', firstError);
+    }
+  };
+
   const onSubmit = async (data: DeliveryPreferencesFormValues) => {
     clearError();
     // Save to both service_area and delivery_preferences keys for backward compatibility
@@ -146,7 +154,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
       stepTitle="Service Area & Preferences"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingBanking')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

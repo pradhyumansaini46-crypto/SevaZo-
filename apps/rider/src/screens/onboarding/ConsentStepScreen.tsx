@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { ShieldCheck, FileCheck, CheckCircle2, AlertTriangle, Scale, Lock, UserCheck } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
@@ -38,6 +38,14 @@ export const ConsentStepScreen = ({ navigation }: any) => {
     },
   });
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Consent Form Incomplete', firstError);
+    }
+  };
+
   const onSubmit = async (data: ConsentFormValues) => {
     clearError();
     const payload = {
@@ -58,7 +66,7 @@ export const ConsentStepScreen = ({ navigation }: any) => {
       stepTitle="Consent & Declaration"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingAvailability')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

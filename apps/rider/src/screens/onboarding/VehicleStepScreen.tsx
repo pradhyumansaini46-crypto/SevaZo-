@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
 import { FileText, Upload, CheckCircle2, ShieldCheck } from 'lucide-react-native';
@@ -85,6 +85,14 @@ export const VehicleStepScreen = ({ navigation }: any) => {
     setActivePickerDoc(null);
   };
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Vehicle Details Required', firstError);
+    }
+  };
+
   const onSubmit = async (data: VehicleFormValues) => {
     clearError();
     const payload = {
@@ -105,7 +113,7 @@ export const VehicleStepScreen = ({ navigation }: any) => {
       stepTitle="Vehicle & Documents"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingIdentity')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

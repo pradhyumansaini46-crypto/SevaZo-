@@ -110,12 +110,6 @@ export const RegisterScreen = ({ navigation }: any) => {
             <View style={styles.inputContainer}>
               <View style={styles.labelRow}>
                 <Text style={styles.inputLabel}>Mobile Number *</Text>
-                {isPhoneValid && (
-                  <View style={styles.verifiedTag}>
-                    <CheckCircle2 size={13} color="#10B981" />
-                    <Text style={styles.verifiedText}>Valid</Text>
-                  </View>
-                )}
               </View>
 
               <View
@@ -145,12 +139,6 @@ export const RegisterScreen = ({ navigation }: any) => {
             <View style={styles.inputContainer}>
               <View style={styles.labelRow}>
                 <Text style={styles.inputLabel}>Email Address (Optional)</Text>
-                {email.length > 0 && isEmailValid && (
-                  <View style={styles.verifiedTag}>
-                    <CheckCircle2 size={13} color="#10B981" />
-                    <Text style={styles.verifiedText}>Format OK</Text>
-                  </View>
-                )}
               </View>
 
               <View style={styles.inputRow}>
@@ -188,12 +176,6 @@ export const RegisterScreen = ({ navigation }: any) => {
 
             {/* Floating Action Pill & Target Track */}
             <View style={styles.actionTrack}>
-              <View style={styles.targetDottedSlot}>
-                <Text style={styles.targetDottedText}>
-                  {isLoading ? 'VERIFYING...' : isPhoneValid ? 'READY TO SUBMIT' : 'ENTER MOBILE'}
-                </Text>
-              </View>
-
               <TouchableOpacity
                 style={[
                   styles.submitPill,
@@ -217,21 +199,6 @@ export const RegisterScreen = ({ navigation }: any) => {
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>
-            </View>
-
-            {/* Progress Bullet Hint */}
-            <View style={styles.progressHintContainer}>
-              <View
-                style={[
-                  styles.progressDot,
-                  { backgroundColor: isPhoneValid ? '#10B981' : '#FF6600' },
-                ]}
-              />
-              <Text style={styles.progressHintText}>
-                {isPhoneValid
-                  ? 'One tap away — ready to receive OTP.'
-                  : '1 field stands between you and the road.'}
-              </Text>
             </View>
           </View>
 

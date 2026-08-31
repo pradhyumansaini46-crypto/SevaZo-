@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { CheckCircle2, ShieldCheck, Landmark, Smartphone, Zap, Sparkles } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../../theme';
@@ -91,6 +91,14 @@ export const BankingStepScreen = ({ navigation }: any) => {
     setUpiVerifiedName(null);
   };
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Bank Account Details Required', firstError);
+    }
+  };
+
   const onSubmit = async (data: BankingFormValues) => {
     clearError();
     const payload = {
@@ -111,7 +119,7 @@ export const BankingStepScreen = ({ navigation }: any) => {
       stepTitle="Bank & Payout Details"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingVehicle')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

@@ -69,50 +69,48 @@ export const OtpScreen = ({ route, navigation }: any) => {
 
     if (res?.accessToken || res) {
       setVerifiedSuccess(true);
-      setTimeout(() => {
-        const isApproved =
-          res?.status === 'APPROVED' ||
-          (res as any)?.approvalStatus === 'APPROVED' ||
-          res?.rider?.approvalStatus === 'APPROVED' ||
-          res?.rider?.status === 'active' ||
-          res?.rider?.status === 'ACTIVE' ||
-          res?.nextAction === 'OPEN_HOME';
+      const isApproved =
+        res?.status === 'APPROVED' ||
+        (res as any)?.approvalStatus === 'APPROVED' ||
+        res?.rider?.approvalStatus === 'APPROVED' ||
+        res?.rider?.status === 'active' ||
+        res?.rider?.status === 'ACTIVE' ||
+        res?.nextAction === 'OPEN_HOME';
 
-        if (isApproved) {
-          // If approved by admin, redirect straight to Rider Dashboard
-          navigation.replace('Main');
-        } else if (
-          res?.isNewUser ||
-          isRegister ||
-          res?.status === 'DRAFT' ||
-          res?.nextAction === 'RESUME_REGISTRATION'
-        ) {
-          const isPersonalDone = Boolean((res as any)?.onboarding?.draftData?.personal?.firstName);
-          if (!isPersonalDone) {
-            useOnboardingStore.getState().resetOnboarding(cleanPhone, email || res?.rider?.email);
-            navigation.replace('OnboardingPersonal', {
-              phone: cleanPhone,
-              email: email || res?.rider?.email || '',
-            });
-          } else {
-            navigation.replace('OnboardingResume');
-          }
-        } else if (
-          res?.nextAction === 'OPEN_VERIFICATION_STATUS' ||
-          res?.status === 'UNDER_REVIEW' ||
-          res?.status === 'SUBMITTED'
-        ) {
-          navigation.replace('ApplicationStatus');
-        } else if (res?.nextAction === 'OPEN_CORRECTION' || res?.status === 'REJECTED') {
-          navigation.replace('Correction', { rejectionReason: res?.rejectionReason });
-        } else {
+      if (isApproved) {
+        // If approved by admin, redirect straight to Rider Dashboard
+        navigation.replace('Main');
+      } else if (
+        res?.isNewUser ||
+        isRegister ||
+        res?.status === 'DRAFT' ||
+        res?.nextAction === 'RESUME_REGISTRATION'
+      ) {
+        const isPersonalDone = Boolean((res as any)?.onboarding?.draftData?.personal?.firstName);
+        if (!isPersonalDone) {
           useOnboardingStore.getState().resetOnboarding(cleanPhone, email || res?.rider?.email);
           navigation.replace('OnboardingPersonal', {
             phone: cleanPhone,
             email: email || res?.rider?.email || '',
           });
+        } else {
+          navigation.replace('OnboardingResume');
         }
-      }, 600);
+      } else if (
+        res?.nextAction === 'OPEN_VERIFICATION_STATUS' ||
+        res?.status === 'UNDER_REVIEW' ||
+        res?.status === 'SUBMITTED'
+      ) {
+        navigation.replace('ApplicationStatus');
+      } else if (res?.nextAction === 'OPEN_CORRECTION' || res?.status === 'REJECTED') {
+        navigation.replace('Correction', { rejectionReason: res?.rejectionReason });
+      } else {
+        useOnboardingStore.getState().resetOnboarding(cleanPhone, email || res?.rider?.email);
+        navigation.replace('OnboardingPersonal', {
+          phone: cleanPhone,
+          email: email || res?.rider?.email || '',
+        });
+      }
     }
   };
 

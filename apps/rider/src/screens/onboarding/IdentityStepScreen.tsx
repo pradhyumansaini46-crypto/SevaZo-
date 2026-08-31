@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '../../utils/zodResolver';
 import { Upload, CheckCircle2, CreditCard, FileCheck, AlertCircle } from 'lucide-react-native';
@@ -153,6 +153,14 @@ export const IdentityStepScreen = ({ navigation }: any) => {
     setActivePickerTarget(null);
   };
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Verification Details Required', firstError);
+    }
+  };
+
   const onSubmit = async (data: IdentityFormValues) => {
     clearError();
     const payload = {
@@ -176,7 +184,7 @@ export const IdentityStepScreen = ({ navigation }: any) => {
       stepTitle="Identity & Licence"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('OnboardingAddress')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer

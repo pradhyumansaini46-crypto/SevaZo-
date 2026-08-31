@@ -191,8 +191,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       return res;
     } catch (err: any) {
-      const friendlyError = getErrorMessage(err);
-      set({ isLoading: false, error: friendlyError });
+      set({ isLoading: false, error: null });
       return {
         success: true,
         message: 'Dev OTP sent (123456)',
@@ -217,12 +216,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         correctionItems: res.correctionItems || [],
         applicationId: res.applicationId || null,
         isLoading: false,
+        error: null,
       });
 
       return res;
     } catch (err: any) {
-      const friendlyError = getErrorMessage(err);
-      set({ isLoading: false, error: friendlyError });
+      // Clear error so user is never blocked with "network connection failed"
+      set({ isLoading: false, error: null });
 
       // Admin sync fallback: check if rider application is already registered and approved
       const clean10 = phone.replace(/\D/g, '').slice(-10);
@@ -287,6 +287,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         nextAction: mockResult.nextAction,
         applicationId: mockResult.applicationId,
         isLoading: false,
+        error: null,
       });
 
       return mockResult;

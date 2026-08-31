@@ -83,6 +83,14 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
     setValue('profilePhoto', profilePhoto);
   }, [profilePhoto, setValue]);
 
+  const onInvalid = (formErrors: any) => {
+    const errorKeys = Object.keys(formErrors);
+    if (errorKeys.length > 0) {
+      const firstError = formErrors[errorKeys[0]]?.message || 'Please complete all required fields.';
+      Alert.alert('Required Field Missing', firstError);
+    }
+  };
+
   const onSubmit = async (data: PersonalInfoFormValues) => {
     clearError();
     // Save to 'personal' section and also keep 'emergencyContact' in draftData for complete syncing
@@ -96,7 +104,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
     handleSubmit(async (data) => {
       await saveSection('personal', data, false);
       navigation.navigate('OnboardingResume');
-    })();
+    }, onInvalid)();
   };
 
   return (
@@ -106,7 +114,7 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
       stepTitle="Personal & Emergency Details"
       completionPercentage={completionPercentage}
       onBack={() => navigation.navigate('Welcome')}
-      onSaveContinue={handleSubmit(onSubmit)}
+      onSaveContinue={handleSubmit(onSubmit, onInvalid)}
       isLoading={isSaving}
     >
       <StepContainer
