@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { Store, Clock, TrendingUp, ArrowRight, Sparkles, X, ChevronRight } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, getThemeColors } from '../../theme';
@@ -55,88 +56,98 @@ export const WelcomeScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        {/* Top Group: Brand Header + Feature Cards with Tight Gap */}
-        <View style={styles.topGroup}>
-          {/* Top Hero Brand Header with Official Graphic Logo */}
-          <View style={styles.header}>
-            <Image
-              source={require('../../../assets/sevazo-logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-              accessible={true}
-              accessibilityLabel="Official SevaZo Logo"
-            />
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to SevaZo Vendor</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Hyperlocal merchant partner platform
-            </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Top Hero Brand Header with Official Graphic Logo */}
+        <View style={styles.header}>
+          <Image
+            source={require('../../../assets/sevazo-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+            accessible={true}
+            accessibilityLabel="Official SevaZo Logo"
+          />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome to SevaZo Vendor</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Hyperlocal merchant partner platform
+          </Text>
+        </View>
+
+        {/* 1. Expanded Feature Value Card with Generous Breathing Room */}
+        <View
+          style={[
+            styles.valueCard,
+            {
+              backgroundColor: isDark ? colors.surface : '#FFFFFF',
+              borderColor: isDark ? colors.border : '#E2E8F0',
+            },
+          ]}
+        >
+          {/* Item 1: Reach local customers */}
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
+              ]}
+            >
+              <Store size={22} color="#FF6600" />
+            </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
+                Reach local customers.
+              </Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Instant store discovery & high-volume orders in your area.
+              </Text>
+            </View>
           </View>
 
-          {/* Feature Value Props - Tight & Compact */}
-          <View
-            style={[
-              styles.valueCard,
-              {
-                backgroundColor: isDark ? colors.surface : '#F8FAFC',
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={styles.valueRow}>
-              <View
-                style={[
-                  styles.valueIconCircle,
-                  { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
-                ]}
-              >
-                <Store size={18} color="#FF6600" />
-              </View>
-              <View style={styles.valueTextContainer}>
-                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Reach local customers.</Text>
-                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-                  Instant store discovery & high-volume orders in your area.
-                </Text>
-              </View>
+          {/* Item 2: Daily automated payouts */}
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
+              ]}
+            >
+              <Clock size={22} color="#10B981" />
             </View>
-
-            <View style={styles.valueRow}>
-              <View
-                style={[
-                  styles.valueIconCircle,
-                  { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
-                ]}
-              >
-                <Clock size={18} color="#10B981" />
-              </View>
-              <View style={styles.valueTextContainer}>
-                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Daily automated payouts.</Text>
-                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-                  Next-day direct bank transfers & automated settlements.
-                </Text>
-              </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
+                Daily automated payouts.
+              </Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Next-day direct bank transfers & automated settlements.
+              </Text>
             </View>
+          </View>
 
-            <View style={styles.valueRow}>
-              <View
-                style={[
-                  styles.valueIconCircle,
-                  { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
-                ]}
-              >
-                <TrendingUp size={18} color="#D97706" />
-              </View>
-              <View style={styles.valueTextContainer}>
-                <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with SevaZo.</Text>
-                <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-                  Dedicated fleet dispatch & real-time analytics portal.
-                </Text>
-              </View>
+          {/* Item 3: Grow with SevaZo */}
+          <View style={styles.valueRow}>
+            <View
+              style={[
+                styles.valueIconCircle,
+                { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
+              ]}
+            >
+              <TrendingUp size={22} color="#D97706" />
+            </View>
+            <View style={styles.valueTextContainer}>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
+                Grow with SevaZo.
+              </Text>
+              <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
+                Dedicated fleet dispatch & real-time analytics portal.
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Action Buttons: Tightly Anchored with Reduced Gap */}
+        {/* 3. Actions Section: Tightly Anchored with Reduced Margin */}
         <View style={styles.actions}>
           <Button
             title="Register Your Business"
@@ -144,7 +155,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             size="lg"
             fullWidth
             onPress={() => navigation.navigate('Register')}
-            rightIcon={<ArrowRight size={18} color="#FFFFFF" />}
+            rightIcon={<ArrowRight size={20} color="#FFFFFF" />}
             accessibilityLabel="Register Your Business"
           />
 
@@ -157,7 +168,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             accessibilityLabel="Login to existing vendor account"
           />
 
-          {/* Guest Login Test Button */}
+          {/* Guest Login Test Access */}
           <TouchableOpacity
             style={styles.guestBtn}
             onPress={() => setGuestModalVisible(true)}
@@ -174,7 +185,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             By continuing, you agree to SevaZo's Terms of Merchant Service and Privacy Policy.
           </Text>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Guest Login Category Chooser Modal */}
       <Modal
@@ -228,76 +239,79 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: 18,
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
     justifyContent: 'space-between',
-  },
-  topGroup: {
-    gap: 10,
   },
   header: {
     alignItems: 'center',
+    marginBottom: 16,
   },
   logoImage: {
-    width: 95,
-    height: 95,
-    marginBottom: 0,
+    width: 100,
+    height: 100,
+    marginBottom: 2,
   },
   title: {
     ...Typography.hero,
-    fontSize: 23,
-    fontWeight: '800',
+    fontSize: 25,
+    fontWeight: '900',
     textAlign: 'center',
     marginTop: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.bodyMedium,
-    marginTop: 1,
+    marginTop: 3,
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: 13.5,
   },
+  // Expanded Feature Value Card with generous padding (p-6) & relaxed vertical spacing (space-y-6)
   valueCard: {
-    padding: Spacing.md + 2,
-    borderRadius: BorderRadius.xl,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    gap: Spacing.sm + 2,
-    ...Shadows.card,
-    marginTop: 4,
+    gap: 20,
+    ...Shadows.elevated,
+    marginBottom: 20,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 16,
   },
   valueIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   valueTextContainer: {
     flex: 1,
   },
+  // Increased typography size: prominent bold headings
   valueTitle: {
-    ...Typography.titleSmall,
-    fontWeight: '700',
-    fontSize: 13,
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
+  // Increased typography size: clear, readable subtexts
   valueDesc: {
-    ...Typography.bodySmall,
-    marginTop: 1,
-    fontSize: 11.5,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2.5,
+    color: '#475569',
   },
+  // Actions section: tightly connected to feature card (reduced margin mt-4 / mt-6)
   actions: {
     flexDirection: 'column',
-    gap: 8,
+    gap: 10,
     width: '100%',
-    marginTop: 6,
   },
   guestBtn: {
     flexDirection: 'row',
@@ -307,7 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF7ED',
     borderWidth: 1.5,
     borderColor: '#FFEDD5',
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderRadius: BorderRadius.lg,
     marginTop: 2,
   },
@@ -317,9 +331,9 @@ const styles = StyleSheet.create({
     color: '#EA580C',
   },
   footerNotice: {
-    fontSize: 10.5,
+    fontSize: 11,
     textAlign: 'center',
-    lineHeight: 15,
+    lineHeight: 16,
     marginTop: 2,
     paddingHorizontal: 12,
   },
