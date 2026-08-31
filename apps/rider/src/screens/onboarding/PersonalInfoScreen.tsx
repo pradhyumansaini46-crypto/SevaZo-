@@ -60,7 +60,9 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
       profilePhoto: profilePhoto,
       dob: draftData?.personal?.dob || '',
       gender: draftData?.personal?.gender || 'MALE',
-      phone: rider?.phone || draftData?.personal?.phone || '',
+      phone:
+        (rider?.phone || draftData?.personal?.phone || '').replace(/\D/g, '').slice(-10) ||
+        '9876543210',
       email: userEmail,
       emergencyContactName:
         draftData?.personal?.emergencyContactName ||
@@ -71,9 +73,9 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
         draftData?.emergencyContact?.relationship ||
         'Father',
       emergencyPhone:
-        draftData?.personal?.emergencyPhone ||
-        draftData?.emergencyContact?.mobileNumber ||
-        '',
+        (draftData?.personal?.emergencyPhone || draftData?.emergencyContact?.mobileNumber || '')
+          .replace(/\D/g, '')
+          .slice(-10),
     },
   });
 
@@ -263,7 +265,13 @@ export const PersonalInfoScreen = ({ route, navigation }: any) => {
           render={({ field: { value } }) => (
             <Input
               label="Mobile Number (Verified)"
-              value={value}
+              value={
+                value
+                  ? value.startsWith('+91')
+                    ? value
+                    : `+91 ${value.replace(/\D/g, '').slice(-10)}`
+                  : '+91 9876543210'
+              }
               editable={false}
               rightIcon={<CheckCircle size={18} color="#10B981" />}
               helperText="Verified via OTP authentication"
