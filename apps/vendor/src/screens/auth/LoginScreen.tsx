@@ -148,12 +148,6 @@ export const LoginScreen = ({ navigation }: any) => {
 
             {/* Floating Action Pill & Target Track */}
             <View style={styles.actionTrack}>
-              <View style={styles.targetDottedSlot}>
-                <Text style={styles.targetDottedText}>
-                  {isLoading ? 'VERIFYING...' : isPhoneValid ? 'READY TO SIGN IN' : 'ENTER 10 DIGITS'}
-                </Text>
-              </View>
-
               <TouchableOpacity
                 style={[
                   styles.submitPill,
@@ -222,34 +216,33 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#E2E8F0',
     padding: Spacing.xl,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
     elevation: 8,
-    ...Platform.select({ web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any, default: {} }),
   },
   cardIlluminated: {
-    borderColor: 'rgba(254, 215, 170, 0.45)',
+    borderColor: '#FED7AA',
     shadowColor: '#FF6600',
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
   },
   cardDimmed: {
-    borderColor: 'rgba(226, 232, 240, 0.3)',
+    borderColor: '#E2E8F0',
   },
   tabPillContainer: {
     flexDirection: 'row',
     alignSelf: 'center',
-    backgroundColor: 'rgba(241, 245, 249, 0.6)',
+    backgroundColor: '#F1F5F9',
     borderRadius: BorderRadius.full,
     padding: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
+    borderColor: '#E2E8F0',
     marginBottom: Spacing.lg,
     width: 220,
   },
@@ -294,22 +287,22 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   formGroup: {
-    gap: Spacing.md + 4,
+    gap: Spacing.md + 2,
   },
   inputContainer: {
     gap: 6,
   },
   inputLabel: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '700',
     color: '#334155',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(248, 250, 252, 0.65)',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.45)',
+    borderColor: '#E2E8F0',
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -321,8 +314,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 13,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(226, 232, 240, 0.35)',
-    backgroundColor: 'rgba(241, 245, 249, 0.5)',
+    borderRightColor: '#E2E8F0',
+    backgroundColor: '#F1F5F9',
   },
   countryCodeText: {
     color: '#0F172A',
@@ -340,31 +333,14 @@ const styles = StyleSheet.create({
   actionTrack: {
     position: 'relative',
     height: 56,
-    backgroundColor: 'rgba(241, 245, 249, 0.55)',
+    backgroundColor: '#F1F5F9',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.35)',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.sm,
     overflow: 'hidden',
-  },
-  targetDottedSlot: {
-    position: 'absolute',
-    width: '80%',
-    height: 38,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: '#CBD5E1',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  targetDottedText: {
-    color: '#94A3B8',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
   },
   submitPill: {
     position: 'absolute',

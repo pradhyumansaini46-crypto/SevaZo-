@@ -4,11 +4,9 @@ import {
   Text,
   StyleSheet,
   Image,
-  SafeAreaView,
   TouchableOpacity,
-  Modal,
   ScrollView,
-  Platform,
+  Modal,
 } from 'react-native';
 import { Store, Clock, TrendingUp, ArrowRight, Sparkles, X, ChevronRight } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, getThemeColors } from '../../theme';
@@ -56,12 +54,12 @@ export const WelcomeScreen = ({ navigation }: any) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
+    <ScrollView
+      style={[styles.container, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.contentWrapper}>
         {/* Top Hero Brand Header with Official Graphic Logo */}
         <View style={styles.header}>
           <Image
@@ -77,17 +75,16 @@ export const WelcomeScreen = ({ navigation }: any) => {
           </Text>
         </View>
 
-        {/* 1. Expanded Feature Value Card with Generous Breathing Room */}
+        {/* Feature Value Props Card (Rider Style Compact Layout) */}
         <View
           style={[
             styles.valueCard,
             {
-              backgroundColor: isDark ? colors.surface : 'rgba(255, 255, 255, 0.72)',
-              borderColor: isDark ? colors.border : 'rgba(255, 255, 255, 0.35)',
+              backgroundColor: isDark ? colors.surface : '#F8FAFC',
+              borderColor: colors.border,
             },
           ]}
         >
-          {/* Item 1: Reach local customers */}
           <View style={styles.valueRow}>
             <View
               style={[
@@ -95,19 +92,16 @@ export const WelcomeScreen = ({ navigation }: any) => {
                 { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED' },
               ]}
             >
-              <Store size={22} color="#FF6600" />
+              <Store size={20} color="#FF6600" />
             </View>
             <View style={styles.valueTextContainer}>
-              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
-                Reach local customers.
-              </Text>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Reach local customers.</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
                 Instant store discovery & high-volume orders in your area.
               </Text>
             </View>
           </View>
 
-          {/* Item 2: Daily automated payouts */}
           <View style={styles.valueRow}>
             <View
               style={[
@@ -115,19 +109,16 @@ export const WelcomeScreen = ({ navigation }: any) => {
                 { backgroundColor: isDark ? '#052E16' : '#ECFDF5' },
               ]}
             >
-              <Clock size={22} color="#10B981" />
+              <Clock size={20} color="#10B981" />
             </View>
             <View style={styles.valueTextContainer}>
-              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
-                Daily automated payouts.
-              </Text>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Daily automated payouts.</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
                 Next-day direct bank transfers & automated settlements.
               </Text>
             </View>
           </View>
 
-          {/* Item 3: Grow with SevaZo */}
           <View style={styles.valueRow}>
             <View
               style={[
@@ -135,12 +126,10 @@ export const WelcomeScreen = ({ navigation }: any) => {
                 { backgroundColor: isDark ? '#2A1B0A' : '#FEF3C7' },
               ]}
             >
-              <TrendingUp size={22} color="#D97706" />
+              <TrendingUp size={20} color="#D97706" />
             </View>
             <View style={styles.valueTextContainer}>
-              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>
-                Grow with SevaZo.
-              </Text>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Grow with SevaZo.</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
                 Dedicated fleet dispatch & real-time analytics portal.
               </Text>
@@ -148,7 +137,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* 3. Actions Section: Tightly Anchored with Reduced Margin */}
+        {/* Action Buttons: Connected Directly */}
         <View style={styles.actions}>
           <Button
             title="Register Your Business"
@@ -178,7 +167,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             accessibilityRole="button"
             accessibilityLabel="Guest Login Test Access"
           >
-            <Sparkles size={16} color="#FF6600" />
+            <Sparkles size={16} color="#EA580C" />
             <Text style={styles.guestBtnText}>Guest Login (Direct Dashboard Access)</Text>
           </TouchableOpacity>
 
@@ -186,7 +175,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             By continuing, you agree to SevaZo's Terms of Merchant Service and Privacy Policy.
           </Text>
         </View>
-      </ScrollView>
+      </View>
 
       {/* Guest Login Category Chooser Modal */}
       <Modal
@@ -232,7 +221,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -242,97 +231,85 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: Spacing.xl,
-    paddingTop: 16,
-    paddingBottom: 24,
-    justifyContent: 'space-between',
+    paddingVertical: 24,
+  },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    gap: 16,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 16,
   },
   logoImage: {
-    width: 100,
-    height: 100,
+    width: 95,
+    height: 95,
     marginBottom: 2,
   },
   title: {
     ...Typography.hero,
-    fontSize: 25,
-    fontWeight: '900',
+    fontSize: 24,
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 4,
-    letterSpacing: -0.5,
   },
   subtitle: {
     ...Typography.bodyMedium,
-    marginTop: 3,
+    marginTop: 2,
     textAlign: 'center',
-    fontSize: 13.5,
+    fontSize: 13,
   },
-  // Expanded Feature Value Card with generous padding (p-6) & relaxed vertical spacing (space-y-6)
   valueCard: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    borderRadius: 24,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    gap: 20,
-    ...Shadows.elevated,
-    shadowColor: '#6366F1',
-    shadowOpacity: 0.06,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 8 },
-    marginBottom: 20,
-    ...Platform.select({
-      web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any,
-      default: {},
-    }),
+    gap: Spacing.md,
+    ...Shadows.card,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: Spacing.md,
   },
   valueIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   valueTextContainer: {
     flex: 1,
   },
-  // Increased typography size: prominent bold headings
   valueTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.2,
+    ...Typography.titleSmall,
+    fontWeight: '700',
+    fontSize: 14,
   },
-  // Increased typography size: clear, readable subtexts
   valueDesc: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 2.5,
-    color: '#475569',
+    ...Typography.bodySmall,
+    marginTop: 2,
+    fontSize: 12,
   },
-  // Actions section: tightly connected to feature card (reduced margin mt-4 / mt-6)
   actions: {
     flexDirection: 'column',
     gap: 10,
     width: '100%',
+    marginTop: 2,
   },
   guestBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255, 247, 237, 0.75)',
+    backgroundColor: '#FFF7ED',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 237, 213, 0.5)',
+    borderColor: '#FFEDD5',
     paddingVertical: 12,
     borderRadius: BorderRadius.lg,
-    marginTop: 2,
   },
   guestBtnText: {
     fontSize: 13,
@@ -355,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   categoryModalCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     width: '100%',
     maxWidth: 400,
@@ -365,10 +342,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 16,
-    ...Platform.select({
-      web: { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } as any,
-      default: {},
-    }),
   },
   modalHeader: {
     flexDirection: 'row',
@@ -398,8 +371,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(226, 232, 240, 0.5)',
-    backgroundColor: 'rgba(248, 250, 252, 0.7)',
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
   categoryEmojiBadge: {
     width: 44,

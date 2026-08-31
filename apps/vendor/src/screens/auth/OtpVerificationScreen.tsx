@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { ArrowLeft, ShieldCheck, CheckCircle2, RotateCw } from 'lucide-react-native';
-import { getThemeColors, BorderRadius, Shadows } from '../../theme';
+import { getThemeColors, BorderRadius, Shadows, Spacing } from '../../theme';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/Button';
@@ -24,6 +24,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
 }) => {
   const { themeMode } = useThemeStore();
   const colors = getThemeColors(themeMode);
+  const isDark = themeMode === 'DARK';
   const { setAuth } = useAuthStore();
 
   const phone = route.params?.phone || '9876543210';
@@ -178,7 +179,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
   const isComplete = otp.every((digit) => digit !== '');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? colors.background : '#FFFFFF' }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -188,7 +189,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
-              style={[styles.backBtn, { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}
+              style={[styles.backBtn, { backgroundColor: isDark ? colors.surface : '#FFFFFF', borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
@@ -198,8 +199,8 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
 
           {/* Hero Content */}
           <View style={styles.heroSection}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 102, 0, 0.1)' }]}>
-              <ShieldCheck size={28} color={colors.primary} />
+            <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED', borderColor: '#FF6600' }]}>
+              <ShieldCheck size={32} color="#FF6600" />
             </View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>Verify OTP</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -219,9 +220,9 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
                 style={[
                   styles.otpBox,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: isDark ? colors.surface : '#FFFFFF',
                     borderColor: digit
-                      ? colors.primary
+                      ? '#FF6600'
                       : error
                       ? colors.danger
                       : colors.border,
@@ -257,8 +258,8 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
                 disabled={resending}
                 style={styles.resendBtn}
               >
-                <RotateCw size={14} color={colors.primary} />
-                <Text style={[styles.resendText, { color: colors.primary }]}>
+                <RotateCw size={14} color="#FF6600" />
+                <Text style={[styles.resendText, { color: '#FF6600' }]}>
                   {resending ? 'Sending OTP...' : 'Resend OTP'}
                 </Text>
               </TouchableOpacity>
@@ -279,8 +280,8 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
           />
 
           {/* Quick Demo Hint */}
-          <View style={[styles.hintCard, { backgroundColor: 'rgba(255, 255, 255, 0.6)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}>
-            <ShieldCheck size={16} color={colors.primary} />
+          <View style={[styles.hintCard, { backgroundColor: isDark ? colors.surface : '#F1F5F9', borderColor: colors.border }]}>
+            <ShieldCheck size={16} color="#FF6600" />
             <Text style={[styles.hintText, { color: colors.textSecondary }]}>
               Demo environment verification code: <Text style={{ fontWeight: '700', color: colors.textPrimary }}>123456</Text>
             </Text>
@@ -297,11 +298,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
+    padding: Spacing.xl,
+    justifyContent: 'center',
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   backBtn: {
     width: 40,
@@ -313,31 +317,36 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   heroSection: {
-    marginBottom: 28,
+    alignItems: 'center',
+    marginBottom: 24,
   },
   iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
+    ...Shadows.glowOrange,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '900',
+    fontSize: 24,
+    fontWeight: '800',
     letterSpacing: -0.5,
-    marginBottom: 8,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
     lineHeight: 20,
+    textAlign: 'center',
   },
   otpGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
-    marginVertical: 16,
+    marginBottom: 18,
   },
   otpBox: {
     flex: 1,
@@ -347,15 +356,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 22,
     fontWeight: '800',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    ...Shadows.card,
   },
   errorBox: {
-    backgroundColor: 'rgba(254, 242, 242, 0.75)',
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
     borderWidth: 1,
     padding: 10,
     borderRadius: BorderRadius.md,
@@ -369,7 +374,7 @@ const styles = StyleSheet.create({
   },
   timerRow: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   timerText: {
     fontSize: 13,
@@ -385,7 +390,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   verifyBtn: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   hintCard: {
     flexDirection: 'row',
@@ -394,16 +399,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     gap: 8,
-    ...Platform.select({
-      web: {
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-      } as any,
-      default: {},
-    }),
   },
   hintText: {
     fontSize: 12,
     flex: 1,
   },
 });
+
+export default OtpVerificationScreen;
