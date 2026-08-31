@@ -1,13 +1,37 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { Bike, Clock, TrendingUp, ArrowRight } from 'lucide-react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Bike, Clock, TrendingUp, ArrowRight, Sparkles } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, useAppColors } from '../theme';
 import { Button } from '../components/Button';
 import { useThemeStore } from '../store/themeStore';
+import { useAuthStore } from '../store/authStore';
 
 export const WelcomeScreen = ({ navigation }: any) => {
   const colors = useAppColors();
   const isDark = useThemeStore((state) => state.isDark);
+  const { setAuth } = useAuthStore();
+
+  const handleGuestLogin = () => {
+    // Initialize mock authenticated rider for instant dashboard testing
+    setAuth(
+      'guest-jwt-token-preview',
+      {
+        id: 'rdr-guest-preview',
+        applicationId: 'SVZ-RID-000123',
+        name: 'Rahul Sharma (Guest)',
+        phone: '+91 9876543210',
+        status: 'ACTIVE',
+        approvalStatus: 'APPROVED',
+        isOnline: true,
+        rating: 4.95,
+        totalEarnings: 14850,
+        walletBalance: 2450,
+        deliveriesCount: 142,
+      },
+      'APPROVED'
+    );
+    navigation.replace('Main');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -91,7 +115,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Action Buttons: Stacked Register & Login (minHeight 48px) */}
+      {/* Action Buttons: Stacked Register, Login & Guest Login for Testing */}
       <View style={styles.actions}>
         <Button
           title="Register as Rider"
@@ -109,6 +133,19 @@ export const WelcomeScreen = ({ navigation }: any) => {
           onPress={() => navigation.navigate('Login')}
           accessibilityLabel="Login to existing account"
         />
+
+        {/* Guest Login Direct Access (Test Mode) */}
+        <TouchableOpacity
+          style={styles.guestBtn}
+          onPress={handleGuestLogin}
+          activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Guest Login Test Access"
+        >
+          <Sparkles size={16} color="#EA580C" />
+          <Text style={styles.guestBtnText}>Guest Login (Direct Dashboard Access)</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -118,38 +155,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: 48,
-    paddingBottom: 40,
+    paddingTop: 44,
+    paddingBottom: 32,
     justifyContent: 'space-between',
   },
   topGroup: {
-    gap: 16,
+    gap: 14,
   },
   header: {
     alignItems: 'center',
   },
   logoImage: {
-    width: 110,
-    height: 110,
+    width: 105,
+    height: 105,
     marginBottom: 2,
   },
   title: {
     ...Typography.hero,
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: '800',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   subtitle: {
     ...Typography.bodyMedium,
-    marginTop: Spacing.xs,
+    marginTop: 2,
     textAlign: 'center',
+    fontSize: 13,
   },
   valueCard: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    gap: Spacing.lg,
+    gap: Spacing.md,
     ...Shadows.card,
   },
   valueRow: {
@@ -158,9 +196,9 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   valueIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -170,15 +208,35 @@ const styles = StyleSheet.create({
   valueTitle: {
     ...Typography.titleSmall,
     fontWeight: '700',
+    fontSize: 14,
   },
   valueDesc: {
     ...Typography.bodySmall,
     marginTop: 2,
+    fontSize: 12,
   },
   actions: {
     flexDirection: 'column',
-    gap: Spacing.md,
+    gap: 10,
     width: '100%',
+    marginTop: 10,
+  },
+  guestBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#FFEDD5',
+    paddingVertical: 12,
+    borderRadius: BorderRadius.lg,
+    marginTop: 2,
+  },
+  guestBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#EA580C',
   },
 });
 
