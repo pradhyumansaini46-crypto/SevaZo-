@@ -6,32 +6,39 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  StyleProp,
   View,
 } from 'react-native';
-import { Colors, BorderRadius, Typography, Shadows } from '../theme';
+import { Colors, BorderRadius, Typography, Shadows, Spacing } from '../theme';
 
-interface ButtonProps {
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'small' | 'medium' | 'large';
+
+export interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
+  isLoading?: boolean;
   disabled?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   icon?: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   fullWidth?: boolean;
   accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
-  size = 'md',
+  size = 'lg',
   loading = false,
+  isLoading = false,
   disabled = false,
   leftIcon,
   rightIcon,
@@ -39,100 +46,115 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
   fullWidth = true,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
+  const isBusy = loading || isLoading;
+  const isInteractive = !disabled && !isBusy;
   const effectiveRightIcon = rightIcon || icon;
-  const getContainerStyle = (): ViewStyle => {
-    let bg: string = Colors.primary;
-    let borderColor: string | undefined = undefined;
-    let borderWidth = 0;
+
+  const normalizedSize = size === 'sm' || size === 'small' ? 'small' : size === 'md' || size === 'medium' ? 'medium' : 'large';
+
+  const getContainerStyle = (): StyleProp<ViewStyle> => {
+    const base: ViewStyle[] = [
+      styles.base,
+      styles[normalizedSize],
+      fullWidth ? { width: '100%' } : {},
+    ];
 
     switch (variant) {
       case 'primary':
-        bg = Colors.primary;
+        base.push(styles.primary);
         break;
       case 'secondary':
-        bg = Colors.secondary;
+        base.push(styles.secondary);
         break;
       case 'outline':
-        bg = 'transparent';
-        borderColor = Colors.border;
-        borderWidth = 1.5;
-        break;
-      case 'danger':
-        bg = Colors.danger;
+        base.push(styles.outline);
         break;
       case 'success':
-        bg = Colors.success;
+        base.push(styles.success);
+        break;
+      case 'danger':
+        base.push(styles.danger);
         break;
       case 'ghost':
-        bg = 'transparent';
+        base.push(styles.ghost);
         break;
     }
 
-    let paddingVertical = 12;
-    let paddingHorizontal = 18;
-
-    if (size === 'sm') {
-      paddingVertical = 8;
-      paddingHorizontal = 12;
-    } else if (size === 'lg') {
-      paddingVertical = 16;
-      paddingHorizontal = 24;
+    if (!isInteractive) {
+      base.push(styles.disabled);
     }
 
-    return {
-      backgroundColor: bg,
-      borderColor,
-      borderWidth,
-      paddingVertical,
-      paddingHorizontal,
-      borderRadius: BorderRadius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-      opacity: disabled ? 0.5 : 1,
-      width: fullWidth ? '100%' : undefined,
-      ...(variant === 'primary' ? Shadows.primaryGlow : {}),
-    };
+    return [base, style];
   };
 
-  const getTextStyle = (): TextStyle => {
-    let color = Colors.textInverse;
+  const getTextStyle = (): StyleProp<TextStyle> => {
+    const base: TextStyle[] = [
+      styles.textBase,
+      styles[`text_${normalizedSize}` as keyof typeof styles] as TextStyle,
+    ];
 
-    if (variant === 'outline') {
-      color = Colors.textPrimary;
-    } else if (variant === 'ghost') {
-      color = Colors.primary;
+    switch (variant) {
+      case 'primary':
+        base.push(styles.textPrimary);
+        break;
+      case 'secondary':
+        base.push(styles.textSecondary);
+        break;
+      case 'outline':
+        base.push(styles.textOutline);
+        break;
+      case 'success':
+        base.push(styles.textSuccess);
+        break;
+      case 'danger':
+        base.push(styles.textDanger);
+        break;
+      case 'ghost':
+        base.push(styles.textGhost);
+        break;
     }
 
-    let fontSize = 15;
-    if (size === 'sm') fontSize = 13;
-    if (size === 'lg') fontSize = 17;
+    return [base, textStyle];
+  };
 
-    return {
-      color,
-      fontSize,
-      fontWeight: '600',
-    };
+  const getIndicatorColor = (): string => {
+    switch (variant) {
+      case 'primary':
+      case 'success':
+      case 'danger':
+        return '#FFFFFF';
+      case 'outline':
+      case 'ghost':
+        return '#FF6600';
+      case 'secondary':
+        return Colors.textPrimary;
+      default:
+        return '#FFFFFF';
+    }
   };
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      style={getContainerStyle()}
       onPress={onPress}
-      disabled={disabled || loading}
-      style={[getContainerStyle(), style]}
+      disabled={!isInteractive}
+      activeOpacity={0.8}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !isInteractive, busy: isBusy }}
     >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'outline' || variant === 'ghost' ? Colors.primary : '#FFFFFF'}
-        />
+      {isBusy ? (
+        <ActivityIndicator color={getIndicatorColor()} size="small" />
       ) : (
         <View style={styles.contentRow}>
-          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-          <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-          {effectiveRightIcon && <View style={styles.rightIcon}>{effectiveRightIcon}</View>}
+          {leftIcon && <View style={styles.leftIconWrapper}>{leftIcon}</View>}
+          <Text style={getTextStyle()}>{title}</Text>
+          {effectiveRightIcon && <View style={styles.rightIconWrapper}>{effectiveRightIcon}</View>}
         </View>
       )}
     </TouchableOpacity>
@@ -140,15 +162,100 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  contentRow: {
+  base: {
+    borderRadius: BorderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  leftIcon: {
-    marginRight: 8,
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
   },
-  rightIcon: {
-    marginLeft: 8,
+  leftIconWrapper: {
+    marginRight: 2,
+  },
+  rightIconWrapper: {
+    marginLeft: 2,
+  },
+  small: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    minHeight: 38,
+  },
+  medium: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    minHeight: 48,
+  },
+  large: {
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    minHeight: 56,
+  },
+  primary: {
+    backgroundColor: '#FF6600',
+    ...Shadows.glowOrange,
+  },
+  secondary: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#FF6600',
+  },
+  success: {
+    backgroundColor: '#10B981',
+    ...Shadows.glowGreen,
+  },
+  danger: {
+    backgroundColor: '#EF4444',
+  },
+  ghost: {
+    backgroundColor: 'transparent',
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+  textBase: {
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  text_small: {
+    ...Typography.bodySmall,
+    fontWeight: '700',
+  },
+  text_medium: {
+    ...Typography.bodyMedium,
+    fontWeight: '700',
+  },
+  text_large: {
+    ...Typography.bodyLarge,
+    fontWeight: '800',
+  },
+  textPrimary: {
+    color: '#FFFFFF',
+  },
+  textSecondary: {
+    color: Colors.textPrimary,
+  },
+  textOutline: {
+    color: '#FF6600',
+  },
+  textSuccess: {
+    color: '#FFFFFF',
+  },
+  textDanger: {
+    color: '#FFFFFF',
+  },
+  textGhost: {
+    color: '#FF6600',
   },
 });
+
+export default Button;

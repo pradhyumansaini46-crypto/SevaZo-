@@ -1,92 +1,103 @@
 export const lightColors = {
-  // Brand & Primary
-  primary: '#059669',          // Emerald Green
-  primaryDark: '#047857',
-  primaryLight: '#E3FDF5',     // User Specified Mint Palette
-  primaryGlow: 'rgba(5, 150, 105, 0.15)',
+  // Brand: Signature SevaZo Velocity Orange & Eco Green Touch
+  primary: '#FF6600',          // Electric High-Visibility Orange
+  primaryDark: '#EA580C',
+  primaryLight: '#FFF7ED',
+  primaryGlow: 'rgba(255, 102, 0, 0.2)',
+
+  // Green Accents
+  accentGreen: '#10B981',      // Emerald Green Touch
+  accentGreenDark: '#059669',
+  accentGreenLight: '#ECFDF5',
+  accentGreenGlow: 'rgba(16, 185, 129, 0.2)',
 
   // Secondary & Accents
-  secondary: '#6366F1',        // Indigo
-  secondaryLight: '#FFE6FA',   // User Specified Soft Lavender/Pink Palette
+  secondary: '#F59E0B',
+  secondaryLight: '#FEF3C7',
   accentPurple: '#8B5CF6',
-  accentPurpleLight: '#FFE6FA',
-
-  // Gradient Background Stops (#E3FDF5 -> #FFE6FA)
-  gradientStart: '#E3FDF5',
-  gradientEnd: '#FFE6FA',
+  accentPurpleLight: '#F5F3FF',
 
   // Status & Notifications
   success: '#10B981',
   successLight: '#ECFDF5',
-  warning: '#D97706',
+  warning: '#F59E0B',
   warningLight: '#FEF3C7',
   danger: '#EF4444',
   dangerLight: '#FEE2E2',
-  info: '#2563EB',
-  infoLight: '#EFF6FF',
+  info: '#FF6600',
+  infoLight: '#FFF7ED',
 
-  // Clean Light Canvas
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
+  // Neutral & Surfaces (Classic White Theme)
+  background: '#FFFFFF',       // Pure Classic White
+  backgroundSecondary: '#F8FAFC',
+  surface: '#FFFFFF',          // Pure White Card
   surfaceCard: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
+  surfaceElevated: '#F8FAFC',
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
 
-  // High-Contrast Light Typography (Crystal Clear)
-  textPrimary: '#0F172A',      // Slate 900
-  textSecondary: '#334155',    // Slate 700
-  textMuted: '#64748B',        // Slate 500
+  // Text Colors (High Contrast for White Background)
+  textPrimary: '#0F172A',      // Crisp Dark Slate
+  textSecondary: '#475569',
+  textMuted: '#94A3B8',
   textInverse: '#FFFFFF',
-  textAccent: '#059669',
+  textAccent: '#FF6600',
+  textGreen: '#059669',
 
+  // Online / Offline Switch
   onlineGreen: '#10B981',
-  offlineGray: '#64748B',
+  offlineGray: '#94A3B8',
 };
 
 export const darkColors = {
-  // Brand & Primary for Dark Mode (Vibrant High-Luminance Emerald)
-  primary: '#10B981',
-  primaryDark: '#059669',
-  primaryLight: 'rgba(16, 185, 129, 0.2)',
-  primaryGlow: 'rgba(16, 185, 129, 0.35)',
+  // Brand: Signature SevaZo Velocity Orange & Eco Green Touch
+  primary: '#FF6600',          // Electric High-Visibility Orange
+  primaryDark: '#EA580C',
+  primaryLight: '#FFF7ED',
+  primaryGlow: 'rgba(255, 102, 0, 0.25)',
+
+  // Green Accents
+  accentGreen: '#10B981',      // Emerald Green Touch
+  accentGreenDark: '#059669',
+  accentGreenLight: '#ECFDF5',
+  accentGreenGlow: 'rgba(16, 185, 129, 0.25)',
 
   // Secondary & Accents
-  secondary: '#38BDF8',
-  secondaryLight: 'rgba(56, 189, 248, 0.18)',
-  accentPurple: '#A855F7',
-  accentPurpleLight: 'rgba(168, 85, 247, 0.18)',
-
-  gradientStart: '#0B0F19',
-  gradientEnd: '#131B2A',
+  secondary: '#F59E0B',        // Warm Amber
+  secondaryLight: '#FEF3C7',
+  accentPurple: '#8B5CF6',
+  accentPurpleLight: '#F5F3FF',
 
   // Status & Notifications
-  success: '#22C55E',
-  successLight: '#052E16',
+  success: '#10B981',          // Emerald Green
+  successLight: '#ECFDF5',
   warning: '#F59E0B',
-  warningLight: '#2A1B0A',
+  warningLight: '#FEF3C7',
   danger: '#EF4444',
-  dangerLight: '#450A0A',
-  info: '#38BDF8',
-  infoLight: '#0C2D48',
+  dangerLight: '#FEE2E2',
+  info: '#FF6600',
+  infoLight: '#FFF7ED',
 
-  // Deep Obsidian Dark Surfaces
-  background: '#090D16',       // Deep Dark Canvas
-  surface: '#131B2A',          // Slate 900
-  surfaceCard: '#1A2438',      // Slate 850
-  surfaceElevated: '#222F46',  // Slate 800
-  border: '#334155',           // Slate 700 (High-definition borders)
-  borderLight: '#2A374A',
+  // Neutral & Surfaces (Dark Theme)
+  background: '#0F172A',       // Obsidian Slate
+  backgroundSecondary: '#1E293B',
+  surface: '#1E293B',          // Deep Slate
+  surfaceCard: '#1E293B',
+  surfaceElevated: '#334155',
+  border: '#334155',
+  borderLight: '#475569',
 
-  // Ultra-Crisp Dark Mode Typography (Sabhi letters bilkul saaf)
-  textPrimary: '#FFFFFF',      // 100% Crisp White
-  textSecondary: '#E2E8F0',    // Slate 200 (Bright & easy to read)
-  textMuted: '#94A3B8',        // Slate 400 (Clean metadata text)
-  textInverse: '#090D16',
-  textAccent: '#38BDF8',
+  // Text Colors (Dark Theme)
+  textPrimary: '#F8FAFC',
+  textSecondary: '#94A3B8',
+  textMuted: '#64748B',
+  textInverse: '#0F172A',
+  textAccent: '#FF7A00',
+  textGreen: '#10B981',
 
-  onlineGreen: '#22C55E',
-  offlineGray: '#94A3B8',
+  // Online / Offline Switch
+  onlineGreen: '#10B981',
+  offlineGray: '#64748B',
 };
 
 export const getThemeColors = (mode: 'LIGHT' | 'DARK') => {

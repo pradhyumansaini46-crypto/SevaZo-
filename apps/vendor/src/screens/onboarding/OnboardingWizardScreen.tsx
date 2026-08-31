@@ -850,7 +850,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                       style={[
                         styles.categoryCard,
                         {
-                          backgroundColor: isSelected ? (isDark ? '#132822' : '#E3FDF5') : colors.surface,
+                          backgroundColor: isSelected ? (isDark ? '#2A1B0A' : '#FFF7ED') : colors.surface,
                           borderColor: isSelected ? colors.primary : colors.borderLight,
                         },
                       ]}
@@ -891,11 +891,11 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   {profilePhoto ? (
                     <Image source={{ uri: profilePhoto }} style={styles.avatarImg} />
                   ) : (
-                    <View style={[styles.avatarImg, styles.avatarPlaceholder, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                      <User size={30} color={colors.textSecondary} />
+                    <View style={[styles.avatarImg, styles.avatarPlaceholder, { backgroundColor: isDark ? colors.surface : '#F8FAFC', borderColor: colors.border }]}>
+                      <User size={32} color={colors.textMuted} />
                     </View>
                   )}
-                  <View style={[styles.avatarEditBadge, { backgroundColor: colors.primary }]}>
+                  <View style={[styles.avatarEditBadge, { backgroundColor: '#FF6600' }]}>
                     <Camera size={12} color="#FFFFFF" />
                   </View>
                 </TouchableOpacity>
@@ -904,10 +904,10 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                     setPickerTarget('PROFILE');
                     setShowImagePickerModal(true);
                   }}
-                  style={[styles.uploadPhotoBtn, { backgroundColor: colors.primaryLight }]}
+                  style={[styles.uploadPhotoBtn, { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED', borderColor: isDark ? '#FF6600' : '#FFEDD5' }]}
                 >
-                  <Camera size={16} color={colors.primary} />
-                  <Text style={[styles.uploadPhotoText, { color: colors.primary }]}>
+                  <Camera size={16} color="#FF6600" />
+                  <Text style={[styles.uploadPhotoText, { color: '#EA580C' }]}>
                     {profilePhoto ? 'Change Profile Photo' : 'Upload Profile Photo'}
                   </Text>
                 </TouchableOpacity>
@@ -1874,11 +1874,11 @@ const styles = StyleSheet.create({
   selectedPill: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   catTitle: { fontSize: 14, fontWeight: '700' },
   catDesc: { fontSize: 11, marginTop: 4, lineHeight: 15 },
-  avatarRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
+  avatarRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   avatarWrap: { position: 'relative' },
-  avatarImg: { width: 68, height: 68, borderRadius: 34 },
-  avatarEditBadge: { position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
-  uploadPhotoBtn: { flexDirection: 'row', alignItems: 'center', marginLeft: 14, paddingHorizontal: 12, paddingVertical: 8, borderRadius: BorderRadius.md, gap: 6 },
+  avatarImg: { width: 76, height: 76, borderRadius: 38, borderWidth: 2, borderColor: '#E2E8F0' },
+  avatarEditBadge: { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
+  uploadPhotoBtn: { flexDirection: 'row', alignItems: 'center', marginLeft: 16, paddingHorizontal: 16, paddingVertical: 11, borderRadius: BorderRadius.lg, borderWidth: 1.5, gap: 8 },
   uploadPhotoText: { fontSize: 13, fontWeight: '700' },
   fieldLabel: { fontSize: 13, fontWeight: '700', marginBottom: 8, marginTop: 10 },
   entityTypesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
@@ -1886,8 +1886,8 @@ const styles = StyleSheet.create({
   categoryBox: { padding: 14, borderRadius: BorderRadius.xl, borderWidth: 1.5, marginBottom: 16 },
   categoryBoxTitle: { fontSize: 14, fontWeight: '800', marginBottom: 10 },
   addressHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 },
-  gpsAutoBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: BorderRadius.md, gap: 4 },
-  gpsAutoText: { fontSize: 12, fontWeight: '700' },
+  gpsAutoBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: BorderRadius.md, borderWidth: 1.5, backgroundColor: '#FFF7ED', borderColor: '#FFEDD5', gap: 6 },
+  gpsAutoText: { fontSize: 12, fontWeight: '700', color: '#EA580C' },
   twoColRow: { flexDirection: 'row' },
   mapCanvas: { height: 200, borderRadius: BorderRadius.xl, borderWidth: 1.5, overflow: 'hidden', position: 'relative', marginBottom: 16 },
   mapGridBackground: { flex: 1, alignItems: 'center', justifyContent: 'center' },
