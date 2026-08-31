@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Image as ImageIcon, Sparkles, X, Check } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, FolderOpen, X } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../theme';
 
 export interface SelectedFilePayload {
@@ -30,30 +30,21 @@ interface ImagePickerModalProps {
   showDocumentOption?: boolean;
 }
 
-// High-quality verified sample images for instant test/demo fallback
-const DEMO_PRESET_IMAGES: Record<string, string> = {
-  profile:
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-  document:
-    'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80',
-  vehicle:
-    'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=600&q=80',
-};
-
 export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   visible,
   onClose,
   onImageSelected,
-  title = 'Select Document Source',
-  allowsEditing = true,
+  title = 'Select Source',
+  allowsEditing = false,
   aspect = [1, 1],
+  showDocumentOption = false,
 }) => {
   // Web-compatible native HTML file input trigger
-  const triggerWebFileInput = (captureMode?: 'user' | 'environment') => {
+  const triggerWebFileInput = (acceptType: string, captureMode?: 'user' | 'environment') => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'image/*';
+      input.accept = acceptType;
       if (captureMode) {
         input.capture = captureMode;
       }
@@ -83,19 +74,18 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   };
 
   const handleLaunchCamera = async () => {
-    // If running in web browser, use HTML5 camera capture
+    // Web environment
     if (Platform.OS === 'web') {
-      triggerWebFileInput('environment');
+      triggerWebFileInput('image/*', 'environment');
       return;
     }
 
     try {
-      // Request camera permission
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
         Alert.alert(
-          'Camera Permission',
-          'Camera access is required to take photos of documents. Please enable camera in your device settings.'
+          'Camera Permission Required',
+          'Please enable camera access in settings to capture photo.'
         );
         return;
       }
@@ -118,16 +108,14 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         });
       }
     } catch (err: any) {
-      console.warn('Camera launch failed, using fallback:', err);
-      // Graceful fallback to demo photo on simulator/device error
-      handleUseDemoPhoto();
+      console.warn('Camera launch error:', err);
     }
   };
 
   const handleLaunchGallery = async () => {
-    // If running in web browser, use standard file picker
+    // Web environment
     if (Platform.OS === 'web') {
-      triggerWebFileInput();
+      triggerWebFileInput('image/*');
       return;
     }
 
@@ -135,8 +123,8 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
         Alert.alert(
-          'Photo Library Permission',
-          'Photo library access is required to choose photos. Please enable permissions in device settings.'
+          'Photo Library Permission Required',
+          'Please enable photo library access in settings to select photo.'
         );
         return;
       }
@@ -159,27 +147,44 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         });
       }
     } catch (err: any) {
-      console.warn('Gallery launch failed, using fallback:', err);
-      handleUseDemoPhoto();
+      console.warn('Gallery launch error:', err);
     }
   };
 
-  const handleUseDemoPhoto = () => {
-    onClose();
-    const isProfile = title.toLowerCase().includes('profile') || title.toLowerCase().includes('photo');
-    const isVehicle = title.toLowerCase().includes('vehicle') || title.toLowerCase().includes('rc');
-    const demoUri = isProfile
-      ? DEMO_PRESET_IMAGES.profile
-      : isVehicle
-      ? DEMO_PRESET_IMAGES.vehicle
-      : DEMO_PRESET_IMAGES.document;
+  const handleLaunchDocumentPicker = async () => {
+    // Web environment
+    if (Platform.OS === 'web') {
+      triggerWebFileInput('application/pdf,image/*,.pdf,.jpg,.jpeg,.png');
+      return;
+    }
 
-    onImageSelected(demoUri, {
-      uri: demoUri,
-      name: `demo_${Date.now().toString().slice(-4)}.jpg`,
-      size: 1024 * 350,
-      mimeType: 'image/jpeg',
-    });
+    try {
+      // Dynamic import to avoid crashes if expo-document-picker is not installed
+      const DocumentPicker = await import('expo-document-picker').catch(() => null);
+      if (DocumentPicker && DocumentPicker.getDocumentAsync) {
+        onClose();
+        const result = await DocumentPicker.getDocumentAsync({
+          type: ['application/pdf', 'image/*'],
+          copyToCacheDirectory: true,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          onImageSelected(asset.uri, {
+            uri: asset.uri,
+            name: asset.name,
+            size: asset.size,
+            mimeType: asset.mimeType || 'application/pdf',
+          });
+        }
+      } else {
+        // Fallback to gallery picker for documents on native
+        handleLaunchGallery();
+      }
+    } catch (err: any) {
+      console.warn('Document picker error, falling back to gallery:', err);
+      handleLaunchGallery();
+    }
   };
 
   return (
@@ -208,7 +213,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
               {/* Picker Options List */}
               <View style={styles.optionsList}>
-                {/* Option 1: Take Photo (Camera) */}
+                {/* Option 1: Take Photo (Always Available) */}
                 <TouchableOpacity
                   style={styles.optionItem}
                   onPress={handleLaunchCamera}
@@ -226,7 +231,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   </View>
                 </TouchableOpacity>
 
-                {/* Option 2: Choose from Gallery / Files */}
+                {/* Option 2: Choose from Gallery (Always Available) */}
                 <TouchableOpacity
                   style={styles.optionItem}
                   onPress={handleLaunchGallery}
@@ -240,34 +245,29 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   </View>
                   <View style={styles.optionTextContainer}>
                     <Text style={styles.optionTitle}>Choose from Gallery</Text>
-                    <Text style={styles.optionSubtitle}>Select image file from your device</Text>
+                    <Text style={styles.optionSubtitle}>Select image from device gallery</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* Option 3: Instant Demo / Test Photo Preset */}
-                <TouchableOpacity
-                  style={[styles.optionItem, styles.demoOptionItem]}
-                  onPress={handleUseDemoPhoto}
-                  activeOpacity={0.7}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Use Demo Photo"
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
-                    <Sparkles size={22} color="#D97706" />
-                  </View>
-                  <View style={styles.optionTextContainer}>
-                    <View style={styles.demoTitleRow}>
-                      <Text style={[styles.optionTitle, { color: '#92400E' }]}>Use Sample Photo</Text>
-                      <View style={styles.instantTag}>
-                        <Text style={styles.instantTagText}>INSTANT</Text>
-                      </View>
+                {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
+                {showDocumentOption && (
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={handleLaunchDocumentPicker}
+                    activeOpacity={0.7}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Browse Files (PDF / Documents)"
+                  >
+                    <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
+                      <FolderOpen size={22} color="#8B5CF6" />
                     </View>
-                    <Text style={[styles.optionSubtitle, { color: '#B45309' }]}>
-                      Quickly populate verified sample photo for testing
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Browse Files (PDF / Documents)</Text>
+                      <Text style={styles.optionSubtitle}>Select PDF or document file from device</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Cancel Action Button */}
@@ -346,27 +346,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
     gap: 14,
-  },
-  demoOptionItem: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-  },
-  demoTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  instantTag: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  instantTagText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
   },
   iconCircle: {
     width: 44,

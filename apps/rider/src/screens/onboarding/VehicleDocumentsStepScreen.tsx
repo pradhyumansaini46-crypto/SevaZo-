@@ -252,6 +252,7 @@ export const VehicleDocumentsStepScreen = ({ navigation }: any) => {
               : 'Upload PUC Certificate'
           }
           aspect={[4, 3]}
+          showDocumentOption={true}
         />
       </StepContainer>
     </OnboardingLayout>

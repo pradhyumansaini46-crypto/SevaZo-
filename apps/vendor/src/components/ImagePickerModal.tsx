@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import { Camera, Image as ImageIcon, FolderOpen, X } from 'lucide-react-native';
 import { getThemeColors, BorderRadius } from '../theme';
 import { useThemeStore } from '../stores/themeStore';
@@ -36,41 +35,58 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
   visible,
   onClose,
   onImageSelected,
-  title = 'Select Image Source',
+  title = 'Select Source',
   allowsEditing = true,
   aspect = [1, 1],
-  showDocumentOption = true,
+  showDocumentOption = false,
 }) => {
   const { themeMode } = useThemeStore();
   const colors = getThemeColors(themeMode);
   const isDark = themeMode === 'DARK';
 
-  const ensureCameraPermission = async (): Promise<boolean> => {
-    try {
-      const current = await ImagePicker.getCameraPermissionsAsync();
-      if (current.status === 'granted') return true;
-      const req = await ImagePicker.requestCameraPermissionsAsync();
-      return req.status === 'granted';
-    } catch {
+  // Web-compatible native HTML file input trigger
+  const triggerWebFileInput = (acceptType: string, captureMode?: 'user' | 'environment') => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = acceptType;
+      if (captureMode) {
+        input.capture = captureMode;
+      }
+      input.onchange = (event: any) => {
+        const file = event.target?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e: any) => {
+            const dataUrl = e.target?.result as string;
+            if (dataUrl) {
+              onImageSelected(dataUrl, {
+                uri: dataUrl,
+                name: file.name,
+                size: file.size,
+                mimeType: file.type,
+              });
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+      onClose();
       return true;
     }
-  };
-
-  const ensureMediaPermission = async (): Promise<boolean> => {
-    try {
-      const current = await ImagePicker.getMediaLibraryPermissionsAsync();
-      if (current.status === 'granted') return true;
-      const req = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      return req.status === 'granted';
-    } catch {
-      return true;
-    }
+    return false;
   };
 
   const doLaunchCamera = async () => {
+    if (Platform.OS === 'web') {
+      triggerWebFileInput('image/*', 'environment');
+      return;
+    }
+
     try {
-      const hasPermission = await ensureCameraPermission();
-      if (!hasPermission) {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
         Alert.alert(
           'Camera Permission Required',
           'Please enable Camera permissions in your phone settings.'
@@ -79,8 +95,9 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         return;
       }
 
+      onClose();
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
         aspect: aspect,
         quality: 0.85,
@@ -90,22 +107,25 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         const asset = result.assets[0];
         onImageSelected(asset.uri, {
           uri: asset.uri,
-          name: asset.fileName || `photo_${Date.now().toString().slice(-4)}.jpg`,
+          name: asset.fileName || `camera_${Date.now().toString().slice(-4)}.jpg`,
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
         });
       }
     } catch (err: any) {
       console.warn('Camera launch error:', err);
-    } finally {
-      onClose();
     }
   };
 
   const doLaunchGallery = async () => {
+    if (Platform.OS === 'web') {
+      triggerWebFileInput('image/*');
+      return;
+    }
+
     try {
-      const hasPermission = await ensureMediaPermission();
-      if (!hasPermission) {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
         Alert.alert(
           'Photo Library Permission Required',
           'Please enable Photo Library permissions in your phone settings.'
@@ -114,8 +134,9 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         return;
       }
 
+      onClose();
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: allowsEditing,
         aspect: aspect,
         quality: 0.85,
@@ -125,39 +146,46 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
         const asset = result.assets[0];
         onImageSelected(asset.uri, {
           uri: asset.uri,
-          name: asset.fileName || `gallery_image_${Date.now().toString().slice(-4)}.jpg`,
+          name: asset.fileName || `gallery_${Date.now().toString().slice(-4)}.jpg`,
           size: asset.fileSize,
           mimeType: asset.mimeType || 'image/jpeg',
         });
       }
     } catch (err: any) {
       console.warn('Gallery launch error:', err);
-    } finally {
-      onClose();
     }
   };
 
   const doLaunchDocumentPicker = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
-        copyToCacheDirectory: true,
-      });
+    if (Platform.OS === 'web') {
+      triggerWebFileInput('application/pdf,image/*,.pdf,.jpg,.jpeg,.png');
+      return;
+    }
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        onImageSelected(asset.uri, {
-          uri: asset.uri,
-          name: asset.name,
-          size: asset.size,
-          mimeType: asset.mimeType || 'application/pdf',
+    try {
+      const DocumentPicker = await import('expo-document-picker').catch(() => null);
+      if (DocumentPicker && DocumentPicker.getDocumentAsync) {
+        onClose();
+        const result = await DocumentPicker.getDocumentAsync({
+          type: ['application/pdf', 'image/*'],
+          copyToCacheDirectory: true,
         });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          onImageSelected(asset.uri, {
+            uri: asset.uri,
+            name: asset.name,
+            size: asset.size,
+            mimeType: asset.mimeType || 'application/pdf',
+          });
+        }
+      } else {
+        doLaunchGallery();
       }
     } catch (err: any) {
-      console.warn('Document picker error:', err);
-      Alert.alert('Document Error', err?.message || 'Could not open document picker.');
-    } finally {
-      onClose();
+      console.warn('Document picker error, falling back to gallery:', err);
+      doLaunchGallery();
     }
   };
 
@@ -189,7 +217,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
               </View>
 
               <View style={styles.optionsList}>
-                {/* Option 1: Take Photo */}
+                {/* Option 1: Take Photo (Always Available) */}
                 <TouchableOpacity
                   style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
                   onPress={doLaunchCamera}
@@ -199,15 +227,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   accessibilityLabel="Take Photo"
                 >
                   <View style={[styles.iconCircle, { backgroundColor: '#FFF7ED' }]}>
-                    <Camera size={24} color="#FF6600" />
+                    <Camera size={22} color="#FF6600" />
                   </View>
                   <View style={styles.optionTextContainer}>
                     <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Take Photo</Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Use phone camera to capture photo</Text>
+                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Use phone camera to capture clean photo</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* Option 2: Choose from Gallery */}
+                {/* Option 2: Choose from Gallery (Always Available) */}
                 <TouchableOpacity
                   style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
                   onPress={doLaunchGallery}
@@ -217,15 +245,15 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                   accessibilityLabel="Choose from Gallery"
                 >
                   <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
-                    <ImageIcon size={24} color="#10B981" />
+                    <ImageIcon size={22} color="#10B981" />
                   </View>
                   <View style={styles.optionTextContainer}>
                     <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Choose from Gallery</Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select photo from library album</Text>
+                    <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select image from device gallery</Text>
                   </View>
                 </TouchableOpacity>
 
-                {/* Option 3: Browse Files (PDF) */}
+                {/* Option 3: Browse Files (PDF / Documents) - ONLY when showDocumentOption is true */}
                 {showDocumentOption && (
                   <TouchableOpacity
                     style={[styles.optionItem, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? '#334155' : '#E2E8F0' }]}
@@ -233,14 +261,14 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
                     activeOpacity={0.7}
                     accessible={true}
                     accessibilityRole="button"
-                    accessibilityLabel="Browse Files (PDF)"
+                    accessibilityLabel="Browse Files (PDF / Documents)"
                   >
                     <View style={[styles.iconCircle, { backgroundColor: '#F5F3FF' }]}>
-                      <FolderOpen size={24} color="#8B5CF6" />
+                      <FolderOpen size={22} color="#8B5CF6" />
                     </View>
                     <View style={styles.optionTextContainer}>
-                      <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Browse Files (PDF)</Text>
-                      <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select PDF or document from device files</Text>
+                      <Text style={[styles.optionTitle, { color: colors.textPrimary }]}>Browse Files (PDF / Documents)</Text>
+                      <Text style={[styles.optionSubtitle, { color: colors.textSecondary }]}>Select PDF or document file from device</Text>
                     </View>
                   </TouchableOpacity>
                 )}
@@ -299,7 +327,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     flex: 1,
     marginRight: 8,
   },
@@ -308,21 +336,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   optionsList: {
-    gap: 12,
-    marginBottom: 18,
+    gap: 10,
+    marginBottom: 16,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
-    gap: 16,
+    gap: 14,
   },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -331,21 +359,21 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 15,
   },
   optionSubtitle: {
     marginTop: 2,
     fontSize: 12,
   },
   cancelBtn: {
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderRadius: 14,
     alignItems: 'center',
     borderWidth: 1,
   },
   cancelText: {
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 14,
   },
 });
 

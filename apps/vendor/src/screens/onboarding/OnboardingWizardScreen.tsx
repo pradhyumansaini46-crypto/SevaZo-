@@ -1787,7 +1787,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         </View>
       </Modal>
 
-      {/* Image Picker Modal (Using exact rider app settings & implementation) */}
+      {/* Image Picker Modal */}
       <ImagePickerModal
         visible={showImagePickerModal}
         onClose={() => setShowImagePickerModal(false)}
@@ -1805,6 +1805,12 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         }
         allowsEditing={pickerTarget === 'PROFILE' || pickerTarget === 'LOGO' || pickerTarget === 'BANNER'}
         aspect={pickerTarget === 'BANNER' ? [16, 9] : [1, 1]}
+        showDocumentOption={
+          pickerTarget !== 'PROFILE' &&
+          pickerTarget !== 'SHOP' &&
+          pickerTarget !== 'BANNER' &&
+          pickerTarget !== 'LOGO'
+        }
       />
     </View>
   );

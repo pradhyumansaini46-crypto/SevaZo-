@@ -198,6 +198,7 @@ export const DrivingLicenceStepScreen = ({ navigation }: any) => {
           onImageSelected={handleImageSelected}
           title={activePickerSide === 'front' ? 'Upload DL Front Side' : 'Upload DL Back Side'}
           aspect={[4, 3]}
+          showDocumentOption={true}
         />
       </StepContainer>
     </OnboardingLayout>
