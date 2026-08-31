@@ -388,11 +388,11 @@ export const IdentityStepScreen = ({ navigation }: any) => {
                   <Input
                     label="Licence Expiry Date"
                     required
-                    placeholder="YYYY-MM-DD"
+                    placeholder="DD/MM/YYYY or YYYY-MM-DD"
                     value={value}
                     onChangeText={onChange}
                     error={errors.expiryDate?.message}
-                    helperText="Must be a valid non-expired date."
+                    helperText="Enter valid non-expired date (e.g. 31/12/2030 or 2030-12-31)."
                     maxLength={10}
                   />
                 )}

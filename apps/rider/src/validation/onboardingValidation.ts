@@ -1,64 +1,139 @@
 import { z } from 'zod';
 import { phoneSchema } from './authValidation';
 
-// Helper to check for dummy repetitive strings
-const isDummyRepetitive = (val: string): boolean => {
+/**
+ * Utility to check for dummy or repetitive strings like "1111111111", "1234567890", "0000000000"
+ */
+function isDummyRepetitive(val: string): boolean {
+  if (!val) return true;
   const clean = val.replace(/[\s-]/g, '');
-  if (!clean || clean.length < 4) return true;
-  // All same characters (e.g. 111111111111 or AAAAAAAAAA)
-  if (/^(.)\1+$/.test(clean)) return true;
-  // Common dummy sequences
-  const dummyList = [
-    '123456789012',
-    '987654321098',
-    '1234567890',
-    'ABCDE1234F',
-    'XXXXX1234X',
-    '0123456789',
-    '000000000000',
-    '999999999999',
-    'DL0000000000000',
-  ];
-  return dummyList.includes(clean.toUpperCase());
-};
+  if (/^(\w)\1+$/.test(clean)) return true; // All identical characters
+  if (clean === '1234567890' || clean === '0123456789' || clean === '123456789012') return true;
+  return false;
+}
 
 /**
- * Step 1: Personal Information & Emergency Contact Schema (Merged)
+ * Robust flexible date parser for Indian formats (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, etc.)
+ */
+export function parseFlexibleDate(dateStr?: string | null): {
+  isValid: boolean;
+  isFuture: boolean;
+  date?: Date;
+  formatted?: string;
+  error?: string;
+} {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return { isValid: false, isFuture: false, error: 'Date is required' };
+  }
+
+  const clean = dateStr.trim().replace(/[\.\s]/g, '-').replace(/\//g, '-');
+  const parts = clean.split('-');
+
+  let year: number;
+  let month: number;
+  let day: number;
+
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      day = parseInt(parts[2], 10);
+    } else if (parts[2].length === 4) {
+      // DD-MM-YYYY
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      year = parseInt(parts[2], 10);
+    } else if (parts[2].length === 2) {
+      // DD-MM-YY -> 20YY
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      year = 2000 + parseInt(parts[2], 10);
+    } else {
+      return { isValid: false, isFuture: false, error: 'Enter date as DD/MM/YYYY or YYYY-MM-DD' };
+    }
+  } else if (/^\d{8}$/.test(clean)) {
+    // 8 digits: e.g. 25122030 (DDMMYYYY) or 20301225 (YYYYMMDD)
+    if (parseInt(clean.slice(0, 4), 10) >= 2020) {
+      year = parseInt(clean.slice(0, 4), 10);
+      month = parseInt(clean.slice(4, 6), 10);
+      day = parseInt(clean.slice(6, 8), 10);
+    } else {
+      day = parseInt(clean.slice(0, 2), 10);
+      month = parseInt(clean.slice(2, 4), 10);
+      year = parseInt(clean.slice(4, 8), 10);
+    }
+  } else {
+    // Attempt standard Date parsing
+    const parsed = new Date(dateStr);
+    if (isNaN(parsed.getTime())) {
+      return { isValid: false, isFuture: false, error: 'Enter date as DD/MM/YYYY or YYYY-MM-DD' };
+    }
+    year = parsed.getFullYear();
+    month = parsed.getMonth() + 1;
+    day = parsed.getDate();
+  }
+
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+    return { isValid: false, isFuture: false, error: 'Invalid date values' };
+  }
+
+  // Days in month validation
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day > daysInMonth) {
+    return { isValid: false, isFuture: false, error: `Day must be between 1 and ${daysInMonth}` };
+  }
+
+  const parsedDate = new Date(year, month - 1, day, 23, 59, 59);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const formatted = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const isFuture = parsedDate.getTime() >= now.getTime();
+
+  return {
+    isValid: true,
+    isFuture,
+    date: parsedDate,
+    formatted,
+  };
+}
+
+/**
+ * Step 1: Personal Information Schema
  */
 export const personalInfoSchema = z.object({
   firstName: z
     .string()
     .min(2, 'First name must be at least 2 characters')
-    .max(50, 'First name must not exceed 50 characters')
     .regex(/^[a-zA-Z\s]+$/, 'First name should only contain letters'),
   lastName: z
     .string()
     .min(1, 'Last name is required')
-    .max(50, 'Last name must not exceed 50 characters')
     .regex(/^[a-zA-Z\s]+$/, 'Last name should only contain letters'),
-  profilePhoto: z.string().min(1, 'Profile photo is required. Please upload a clear photo of yourself.'),
+  profilePhoto: z.string().min(1, 'Profile photo is required. Please upload a clear headshot.'),
   dob: z
     .string()
     .min(1, 'Date of birth is required')
-    .refine((dateStr) => {
-      const birthDate = new Date(dateStr);
-      if (isNaN(birthDate.getTime())) return false;
+    .refine((date) => {
+      const birth = new Date(date);
+      if (isNaN(birth.getTime())) return false;
       const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
         age--;
       }
       return age >= 18;
     }, 'You must be at least 18 years old to register as a delivery rider'),
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
-  phone: z.string().min(10, 'Valid phone is required'),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
+  phone: phoneSchema,
   email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
-  // Emergency Contact fields (Merged)
+  // Integrated Emergency Contact
   emergencyContactName: z
     .string()
     .min(2, 'Emergency contact full name must be at least 2 characters')
-    .regex(/^[a-zA-Z\s]+$/, 'Contact name should only contain letters'),
+    .regex(/^[a-zA-Z\s]+$/, 'Name should only contain letters'),
   emergencyRelationship: z
     .string()
     .min(2, 'Relationship is required (e.g. Father, Mother, Spouse, Brother)'),
@@ -175,8 +250,10 @@ export const identitySchema = z
         });
       } else {
         const dlClean = data.licenseNumber.replace(/[\s-]/g, '').toUpperCase();
-        // Indian DL format: 2-letter state code + 2-digit RTO + 4-digit Year + 7-digit unique number (Total 15 chars)
-        const isStandardDl = /^[A-Z]{2}[0-9]{2}[0-9]{4}[0-9]{7}$/.test(dlClean) || /^[A-Z]{2}[0-9]{13}$/.test(dlClean) || dlClean.length >= 10;
+        const isStandardDl =
+          /^[A-Z]{2}[0-9]{2}[0-9]{4}[0-9]{7}$/.test(dlClean) ||
+          /^[A-Z]{2}[0-9]{13}$/.test(dlClean) ||
+          dlClean.length >= 10;
         if (!isStandardDl || isDummyRepetitive(dlClean)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -190,16 +267,21 @@ export const identitySchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['expiryDate'],
-          message: 'Licence expiry date is required (YYYY-MM-DD)',
+          message: 'Licence expiry date is required (e.g. DD/MM/YYYY or YYYY-MM-DD)',
         });
       } else {
-        const exp = new Date(data.expiryDate);
-        const today = new Date();
-        if (isNaN(exp.getTime()) || exp < today) {
+        const parsed = parseFlexibleDate(data.expiryDate);
+        if (!parsed.isValid) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['expiryDate'],
-            message: 'Driving Licence has expired. Please enter a valid non-expired date.',
+            message: parsed.error || 'Enter a valid expiry date (e.g. DD/MM/YYYY or YYYY-MM-DD)',
+          });
+        } else if (!parsed.isFuture) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['expiryDate'],
+            message: 'Driving Licence has expired. Please enter a valid future expiry date.',
           });
         }
       }
@@ -231,7 +313,11 @@ export const drivingLicenceSchema = z.object({
     .string()
     .min(5, 'Valid Driving Licence number is required')
     .regex(/^[A-Z0-9\s-]+$/i, 'Invalid Driving Licence format'),
-  expiryDate: z.string().min(4, 'Licence expiry date is required (YYYY-MM-DD)'),
+  expiryDate: z
+    .string()
+    .min(4, 'Licence expiry date is required')
+    .refine((val) => parseFlexibleDate(val).isValid, 'Enter a valid date (e.g. DD/MM/YYYY or YYYY-MM-DD)')
+    .refine((val) => parseFlexibleDate(val).isFuture, 'Driving Licence has expired. Enter a future date.'),
   frontImage: z.string().min(1, 'Front photo of driving licence is required'),
   backImage: z.string().min(1, 'Back photo of driving licence is required'),
 });
@@ -277,18 +363,27 @@ export const vehicleSchema = z
           message: 'Vehicle model is required',
         });
       }
-      if (!data.manufacturingYear || !/^\d{4}$/.test(data.manufacturingYear)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['manufacturingYear'],
-          message: 'Enter a valid 4-digit year (e.g. 2022)',
-        });
-      }
-      if (!data.registrationNumber || data.registrationNumber.trim().length < 4) {
+      if (!data.registrationNumber || data.registrationNumber.trim().length < 5) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['registrationNumber'],
-          message: 'Vehicle registration number is required (e.g. DL 01 AB 1234)',
+          message: 'Vehicle registration number is required (e.g. DL01AB1234)',
+        });
+      } else {
+        const regClean = data.registrationNumber.replace(/[\s-]/g, '').toUpperCase();
+        if (regClean.length < 6 || isDummyRepetitive(regClean)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['registrationNumber'],
+            message: 'Invalid registration number entered (e.g. DL-01-AB-1234)',
+          });
+        }
+      }
+      if (!data.rcNumber || data.rcNumber.trim().length < 5) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['rcNumber'],
+          message: 'RC number is required',
         });
       }
       if (!data.rcImage) {
@@ -309,8 +404,23 @@ export const vehicleSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['insuranceExpiry'],
-          message: 'Insurance expiry date is required (YYYY-MM-DD)',
+          message: 'Insurance expiry date is required (e.g. DD/MM/YYYY or YYYY-MM-DD)',
         });
+      } else {
+        const parsed = parseFlexibleDate(data.insuranceExpiry);
+        if (!parsed.isValid) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['insuranceExpiry'],
+            message: parsed.error || 'Enter a valid expiry date (e.g. DD/MM/YYYY or YYYY-MM-DD)',
+          });
+        } else if (!parsed.isFuture) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['insuranceExpiry'],
+            message: 'Insurance policy has expired. Please enter a valid future expiry date.',
+          });
+        }
       }
       if (!data.insuranceImage) {
         ctx.addIssue({
@@ -333,145 +443,116 @@ export const vehicleSchema = z
 export type VehicleFormValues = z.infer<typeof vehicleSchema>;
 
 /**
- * Step 5: Banking & Payout Schema
+ * Step 5: Bank Details Schema
  */
 export const bankingSchema = z
   .object({
-    preferredPayoutMethod: z.enum(['BANK_ACCOUNT', 'UPI']),
-    accountHolder: z
-      .string()
-      .min(2, 'Account holder name must match bank / UPI records')
-      .regex(/^[a-zA-Z\s.]+$/, 'Name should only contain letters'),
+    preferredPayoutMethod: z.enum(['BANK_ACCOUNT', 'BANK_TRANSFER', 'UPI']),
+    accountHolder: z.string().optional(),
+    accountHolderName: z.string().optional(),
     accountNumber: z.string().optional(),
     confirmAccountNumber: z.string().optional(),
     ifsc: z.string().optional(),
+    ifscCode: z.string().optional(),
     bankName: z.string().optional(),
+    accountType: z.enum(['SAVINGS', 'CURRENT']).optional(),
+    chequeImage: z.string().optional(),
     upiId: z.string().optional(),
-    chequePassbookImage: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.preferredPayoutMethod === 'UPI') {
-      if (!data.upiId || !/^[\w.-]+@[\w.-]+$/.test(data.upiId.trim())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['upiId'],
-          message: 'Valid UPI ID is required (e.g. mobile@paytm or name@okhdfcbank)',
-        });
-      }
-    } else {
-      if (!data.accountNumber || !/^\d{9,18}$/.test(data.accountNumber)) {
+    const isBank = data.preferredPayoutMethod === 'BANK_ACCOUNT' || data.preferredPayoutMethod === 'BANK_TRANSFER';
+    if (isBank) {
+      const accNum = data.accountNumber;
+      const confirmAccNum = data.confirmAccountNumber;
+      const ifsc = (data.ifsc || data.ifscCode || '').trim().toUpperCase();
+
+      if (!accNum || accNum.length < 8 || accNum.length > 20 || !/^\d+$/.test(accNum)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['accountNumber'],
-          message: 'Bank account number must be between 9 and 18 digits',
+          message: 'Valid bank account number is required (8-20 digits)',
         });
       }
-      if (!data.confirmAccountNumber) {
+      if (confirmAccNum !== undefined && accNum !== confirmAccNum) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['confirmAccountNumber'],
-          message: 'Please re-enter to confirm account number',
-        });
-      } else if (data.accountNumber !== data.confirmAccountNumber) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['confirmAccountNumber'],
-          message: 'Account numbers do not match',
+          message: 'Bank account numbers do not match',
         });
       }
-      if (!data.ifsc || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.ifsc.toUpperCase())) {
+      if (!ifsc || !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['ifsc'],
-          message: 'Valid 11-digit IFSC code required (e.g. HDFC0001234)',
-        });
-      }
-      if (!data.bankName || data.bankName.trim().length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['bankName'],
-          message: 'Bank name & branch is required',
+          message: 'Valid 11-character IFSC code is required (e.g. HDFC0001234)',
         });
       }
     }
   });
 
 export type BankingFormValues = z.infer<typeof bankingSchema>;
+export const bankDetailsSchema = bankingSchema;
+export type BankDetailsFormValues = BankingFormValues;
 
 /**
- * Vehicle Documents Schema (Maintained for backward compatibility)
- */
-export const vehicleDocumentsSchema = z.object({
-  rcNumber: z.string().min(4, 'Registration Certificate number is required'),
-  rcImage: z.string().min(1, 'RC photo is required'),
-  insuranceNumber: z.string().min(4, 'Insurance policy number is required'),
-  insuranceExpiry: z.string().min(4, 'Insurance expiry date is required'),
-  insuranceImage: z.string().min(1, 'Insurance document photo is required'),
-  pucImage: z.string().optional(),
-});
-
-export type VehicleDocumentsFormValues = z.infer<typeof vehicleDocumentsSchema>;
-
-/**
- * Step 6: Service Area & Delivery Preferences (Merged)
+ * Step 6: Delivery & Category Preferences Schema
  */
 export const deliveryPreferencesSchema = z.object({
-  city: z.string().min(2, 'City is required'),
-  zone: z.string().min(2, 'Operational zone is required'),
-  locality: z.string().min(2, 'Primary locality is required'),
-  preferredHubs: z.array(z.string()).min(1, 'Select at least one preferred delivery hub'),
-  maxDistanceKm: z.number().min(1).max(25),
+  city: z.string(),
+  zone: z.string(),
+  locality: z.string(),
+  preferredHubs: z.array(z.string()),
+  maxDistanceKm: z.number(),
   acceptHeavyItems: z.boolean(),
   acceptSpecialHandling: z.boolean(),
-  categories: z.array(z.string()).min(1, 'Select at least one delivery category'),
+  categories: z.array(z.string()),
 });
 
 export type DeliveryPreferencesFormValues = z.infer<typeof deliveryPreferencesSchema>;
-
-// Backward compatibility alias
-export const serviceAreaSchema = deliveryPreferencesSchema;
-export type ServiceAreaFormValues = DeliveryPreferencesFormValues;
+export const preferencesSchema = deliveryPreferencesSchema;
+export type PreferencesFormValues = DeliveryPreferencesFormValues;
 
 /**
- * Step 7: Working Hours & Availability Schema
+ * Step 7: Working Hours & Availability Shift Schema
  */
-export const availabilitySchema = z.object({
-  weeklySchedule: z.record(
-    z.object({
-      enabled: z.boolean(),
-      slots: z.array(z.string()),
-    })
-  ),
+export const workingHoursSchema = z.object({
+  preferredShift: z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT', 'FLEXIBLE']),
+  workingDays: z.array(z.string()).min(1, 'Please select at least one working day'),
+  maxHoursPerDay: z.number().min(2).max(14),
+  isFullTime: z.boolean(),
 });
 
-export type AvailabilityFormValues = z.infer<typeof availabilitySchema>;
+export type WorkingHoursFormValues = z.infer<typeof workingHoursSchema>;
 
 /**
  * Step 8: Rider Consent & Declaration Form Schema
  */
 export const consentSchema = z.object({
-  codeOfConductAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to SevaZo Rider Code of Conduct' }),
-  }),
-  safetyGuidelinesAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to Traffic and Safety Guidelines' }),
-  }),
-  zeroTolerancePolicyAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'You must accept the Zero Tolerance Policy on Substance and Harassment' }),
-  }),
-  backgroundCheckAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'Consent for identity and background verification is required' }),
-  }),
-  dataConsentAgreed: z.literal(true, {
-    errorMap: () => ({ message: 'You must agree to Data Privacy & Location Tracking Terms' }),
-  }),
-  declarationConfirmed: z.literal(true, {
-    errorMap: () => ({ message: 'You must confirm that all provided details are true and accurate' }),
-  }),
-  signatureName: z
-    .string()
-    .min(2, 'Digital signature (Full Legal Name) is required')
-    .regex(/^[a-zA-Z\s.]+$/, 'Signature must contain your legal name in letters'),
+  codeOfConductAgreed: z.boolean(),
+  safetyGuidelinesAgreed: z.boolean(),
+  zeroTolerancePolicyAgreed: z.boolean(),
+  backgroundCheckAgreed: z.boolean(),
+  dataConsentAgreed: z.boolean(),
+  declarationConfirmed: z.boolean(),
+  signatureName: z.string().min(2, 'Please type your full legal name as digital signature'),
 });
 
 export type ConsentFormValues = z.infer<typeof consentSchema>;
+
+/**
+ * Individual Standalone Schemas
+ */
+export const vehicleDocumentsSchema = z.object({
+  rcNumber: z.string().min(5, 'RC number is required (e.g. DL-01-AB-1234)'),
+  rcImage: z.string().min(1, 'Registration Certificate photo is required'),
+  insuranceNumber: z.string().min(4, 'Insurance policy number is required'),
+  insuranceExpiry: z
+    .string()
+    .min(4, 'Insurance expiry date is required')
+    .refine((val) => parseFlexibleDate(val).isValid, 'Enter a valid date (e.g. DD/MM/YYYY or YYYY-MM-DD)')
+    .refine((val) => parseFlexibleDate(val).isFuture, 'Insurance policy has expired. Enter a future date.'),
+  insuranceImage: z.string().min(1, 'Insurance policy photo is required'),
+  pucImage: z.string().optional(),
+});
+
+export type VehicleDocumentsFormValues = z.infer<typeof vehicleDocumentsSchema>;

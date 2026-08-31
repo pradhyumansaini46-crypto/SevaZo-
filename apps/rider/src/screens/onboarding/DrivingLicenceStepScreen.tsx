@@ -100,13 +100,14 @@ export const DrivingLicenceStepScreen = ({ navigation }: any) => {
           name="expiryDate"
           render={({ field: { onChange, value } }) => (
             <Input
-              label="Valid Till / Expiry Date (YYYY-MM-DD)"
+              label="Valid Till / Expiry Date"
               required
-              placeholder="e.g. 2032-12-31"
+              placeholder="DD/MM/YYYY or YYYY-MM-DD"
               value={value}
               onChangeText={onChange}
               error={errors.expiryDate?.message}
-              helperText="Licence must not be expired"
+              helperText="Licence must not be expired (e.g. 31/12/2030 or 2030-12-31)"
+              maxLength={10}
             />
           )}
         />

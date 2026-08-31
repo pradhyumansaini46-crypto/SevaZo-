@@ -96,7 +96,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     let updated: string[];
     if (selectedCategories.includes(catId)) {
       if (selectedCategories.length === 1) return;
-      updated = selectedCategories.filter((c) => c !== catId);
+      updated = selectedCategories.filter((c: string) => c !== catId);
     } else {
       updated = [...selectedCategories, catId];
     }
@@ -107,7 +107,7 @@ export const PreferencesStepScreen = ({ navigation }: any) => {
     let updated: string[];
     if (selectedHubs.includes(hubId)) {
       if (selectedHubs.length === 1) return;
-      updated = selectedHubs.filter((h) => h !== hubId);
+      updated = selectedHubs.filter((h: string) => h !== hubId);
     } else {
       updated = [...selectedHubs, hubId];
     }

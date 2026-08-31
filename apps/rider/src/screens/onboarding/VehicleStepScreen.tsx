@@ -391,12 +391,13 @@ export const VehicleStepScreen = ({ navigation }: any) => {
                     name="insuranceExpiry"
                     render={({ field: { onChange, value } }) => (
                       <Input
-                        label="Expiry Date"
+                        label="Insurance Expiry Date"
                         required
-                        placeholder="YYYY-MM-DD"
+                        placeholder="DD/MM/YYYY or YYYY-MM-DD"
                         value={value}
                         onChangeText={onChange}
                         error={errors.insuranceExpiry?.message}
+                        helperText="Must be a future valid date (e.g. 31/12/2028)"
                         maxLength={10}
                       />
                     )}
