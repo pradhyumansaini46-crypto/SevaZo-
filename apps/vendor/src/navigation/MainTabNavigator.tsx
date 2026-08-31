@@ -33,6 +33,7 @@ import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { OrdersScreen } from '../screens/orders/OrdersScreen';
 import { ProductsListScreen } from '../screens/products/ProductsListScreen';
 import { InventoryListScreen } from '../screens/inventory/InventoryListScreen';
+import { RevenueScreen } from '../screens/finance/RevenueScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 
 type TabKey = 'Dashboard' | 'Orders' | 'Products' | 'Inventory' | 'Store';
@@ -53,7 +54,7 @@ export const MainTabNavigator: React.FC<{ navigation: any; route: any }> = ({
   const navItems = [
     {
       key: 'Dashboard' as TabKey,
-      label: 'Dashboard',
+      label: 'Home',
       icon: (active: boolean) => (
         <LayoutDashboard
           size={22}
@@ -84,9 +85,9 @@ export const MainTabNavigator: React.FC<{ navigation: any; route: any }> = ({
     },
     {
       key: 'Inventory' as TabKey,
-      label: 'Inventory',
+      label: 'Reports',
       icon: (active: boolean) => (
-        <Boxes
+        <TrendingUp
           size={22}
           color={active ? colors.primary : colors.textMuted}
         />
@@ -94,7 +95,7 @@ export const MainTabNavigator: React.FC<{ navigation: any; route: any }> = ({
     },
     {
       key: 'Store' as TabKey,
-      label: 'Store',
+      label: 'More',
       icon: (active: boolean) => (
         <Store
           size={22}
@@ -139,7 +140,7 @@ export const MainTabNavigator: React.FC<{ navigation: any; route: any }> = ({
       case 'Products':
         return <ProductsListScreen navigation={navigation} />;
       case 'Inventory':
-        return <InventoryListScreen navigation={navigation} />;
+        return <RevenueScreen navigation={navigation} />;
       case 'Store':
         return <SettingsScreen navigation={navigation} />;
       case 'Dashboard':
