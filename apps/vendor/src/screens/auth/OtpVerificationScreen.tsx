@@ -188,7 +188,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
           <View style={styles.header}>
             <TouchableOpacity
               onPress={() => navigation.goBack()}
-              style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.backBtn, { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
@@ -198,7 +198,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
 
           {/* Hero Content */}
           <View style={styles.heroSection}>
-            <View style={[styles.iconBox, { backgroundColor: colors.primaryLight }]}>
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 102, 0, 0.1)' }]}>
               <ShieldCheck size={28} color={colors.primary} />
             </View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>Verify OTP</Text>
@@ -279,7 +279,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
           />
 
           {/* Quick Demo Hint */}
-          <View style={[styles.hintCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.hintCard, { backgroundColor: 'rgba(255, 255, 255, 0.6)', borderColor: 'rgba(255, 255, 255, 0.3)' }]}>
             <ShieldCheck size={16} color={colors.primary} />
             <Text style={[styles.hintText, { color: colors.textSecondary }]}>
               Demo environment verification code: <Text style={{ fontWeight: '700', color: colors.textPrimary }}>123456</Text>
@@ -347,11 +347,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 22,
     fontWeight: '800',
-    ...Shadows.card,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   errorBox: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
+    backgroundColor: 'rgba(254, 242, 242, 0.75)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
     borderWidth: 1,
     padding: 10,
     borderRadius: BorderRadius.md,
@@ -390,6 +394,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     gap: 8,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+      default: {},
+    }),
   },
   hintText: {
     fontSize: 12,

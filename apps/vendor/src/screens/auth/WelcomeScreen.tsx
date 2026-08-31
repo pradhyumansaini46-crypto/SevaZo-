@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Store, Clock, TrendingUp, ArrowRight, Sparkles, X, ChevronRight } from 'lucide-react-native';
 import { Typography, Spacing, BorderRadius, Shadows, getThemeColors } from '../../theme';
@@ -81,8 +82,8 @@ export const WelcomeScreen = ({ navigation }: any) => {
           style={[
             styles.valueCard,
             {
-              backgroundColor: isDark ? colors.surface : '#FFFFFF',
-              borderColor: isDark ? colors.border : '#E2E8F0',
+              backgroundColor: isDark ? colors.surface : 'rgba(255, 255, 255, 0.72)',
+              borderColor: isDark ? colors.border : 'rgba(255, 255, 255, 0.35)',
             },
           ]}
         >
@@ -277,7 +278,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 20,
     ...Shadows.elevated,
+    shadowColor: '#6366F1',
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 8 },
     marginBottom: 20,
+    ...Platform.select({
+      web: { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } as any,
+      default: {},
+    }),
   },
   valueRow: {
     flexDirection: 'row',
@@ -318,9 +327,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: 'rgba(255, 247, 237, 0.75)',
     borderWidth: 1.5,
-    borderColor: '#FFEDD5',
+    borderColor: 'rgba(255, 237, 213, 0.5)',
     paddingVertical: 12,
     borderRadius: BorderRadius.lg,
     marginTop: 2,
@@ -346,7 +355,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   categoryModalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
     borderRadius: 24,
     width: '100%',
     maxWidth: 400,
@@ -356,6 +365,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 16,
+    ...Platform.select({
+      web: { backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' } as any,
+      default: {},
+    }),
   },
   modalHeader: {
     flexDirection: 'row',
@@ -385,8 +398,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(226, 232, 240, 0.5)',
+    backgroundColor: 'rgba(248, 250, 252, 0.7)',
   },
   categoryEmojiBadge: {
     width: 44,
