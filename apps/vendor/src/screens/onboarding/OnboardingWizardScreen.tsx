@@ -83,6 +83,20 @@ const POPULAR_UPI_SUFFIXES = [
   '@upi',
 ];
 
+const STEP_TITLES: Record<number, string> = {
+  1: 'Business Category',
+  2: 'Owner Details',
+  3: 'Business Information',
+  4: 'Store Address',
+  5: 'Set Map Location',
+  6: 'KYC Documents',
+  7: 'Storefront Photos',
+  8: 'Operating Hours',
+  9: 'Banking & Payouts',
+  10: 'Partner Consent',
+  11: 'Review & Submit',
+};
+
 interface DocItem {
   type: string;
   title: string;
@@ -768,50 +782,47 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        title="Vendor Onboarding"
-        subtitle={`Step ${currentStep} of 11 • ${Math.round((currentStep / 11) * 100)}% Complete`}
-        onBack={currentStep > 1 ? () => setCurrentStep(currentStep - 1) : () => navigation.navigate('Welcome')}
-      />
+      {/* Standardized Clean Rider-Style Fixed Header */}
+      <View
+        style={[
+          styles.standardHeader,
+          {
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.borderLight,
+            paddingTop: Math.max(insets.top, 12),
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={currentStep > 1 ? () => setCurrentStep(currentStep - 1) : () => navigation.navigate('Welcome')}
+          style={[styles.headerIconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Go Back"
+        >
+          <ArrowLeft size={20} color={colors.textPrimary} />
+        </TouchableOpacity>
 
-      {/* Stepper Bar */}
-      <View style={[styles.stepperContainer, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepperScroll}>
-          {stepsList.map((step) => {
-            const isDone = currentStep > step.number;
-            const isCurrent = currentStep === step.number;
+        <Text style={[styles.headerCenterTitle, { color: colors.textPrimary }]}>
+          {STEP_TITLES[currentStep] || 'Business Category'}
+        </Text>
 
-            return (
-              <TouchableOpacity
-                key={step.number}
-                onPress={() => step.number < currentStep && setCurrentStep(step.number)}
-                style={styles.stepItem}
-              >
-                <View
-                  style={[
-                    styles.stepCircle,
-                    {
-                      backgroundColor: isDone ? colors.success : isCurrent ? colors.primary : colors.borderLight,
-                    },
-                  ]}
-                >
-                  {isDone ? <Check size={12} color="#FFF" /> : step.icon}
-                </View>
-                <Text
-                  style={[
-                    styles.stepLabel,
-                    {
-                      color: isCurrent ? colors.primary : isDone ? colors.textPrimary : colors.textMuted,
-                      fontWeight: isCurrent ? '700' : '500',
-                    },
-                  ]}
-                >
-                  {step.title}
-                </Text>
-              </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              'Save Draft & Exit?',
+              'Your onboarding progress has been saved as a draft.',
+              [
+                { text: 'Continue Setup', style: 'cancel' },
+                { text: 'Save & Exit', style: 'destructive', onPress: () => navigation.navigate('Welcome') },
+              ]
             );
-          })}
-        </ScrollView>
+          }}
+          style={[styles.headerIconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Save as Draft & Exit"
+        >
+          <X size={20} color={colors.textPrimary} />
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
@@ -1818,6 +1829,30 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  standardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    zIndex: 50,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    ...Shadows.card,
+  },
+  headerCenterTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
   saveDraftBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: BorderRadius.md },
   saveDraftText: { fontSize: 12, fontWeight: '700', marginLeft: 4 },
   resumeBanner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 12, padding: 12, borderRadius: BorderRadius.lg, borderWidth: 1 },

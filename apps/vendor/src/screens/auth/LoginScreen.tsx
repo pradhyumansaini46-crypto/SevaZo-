@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react-native';
+import { ArrowRight, ShieldCheck } from 'lucide-react-native';
 import { Spacing, BorderRadius } from '../../theme';
 import { phoneSchema } from '../../validation/schemas';
 import { InteractiveLamp } from '../../components/InteractiveLamp';
@@ -116,16 +116,7 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.formGroup}>
             {/* Mobile Number */}
             <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>Mobile Number *</Text>
-                {isPhoneValid && (
-                  <View style={styles.verifiedTag}>
-                    <CheckCircle2 size={13} color="#10B981" />
-                    <Text style={styles.verifiedText}>Valid</Text>
-                  </View>
-                )}
-              </View>
-
+              <Text style={styles.inputLabel}>Mobile Number *</Text>
               <View
                 style={[
                   styles.inputRow,
@@ -186,21 +177,6 @@ export const LoginScreen = ({ navigation }: any) => {
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>
-            </View>
-
-            {/* Progress Bullet Hint */}
-            <View style={styles.progressHintContainer}>
-              <View
-                style={[
-                  styles.progressDot,
-                  { backgroundColor: isPhoneValid ? '#10B981' : '#FF6600' },
-                ]}
-              />
-              <Text style={styles.progressHintText}>
-                {isPhoneValid
-                  ? 'One tap away — ready to receive OTP.'
-                  : 'Enter your 10-digit registered number.'}
-              </Text>
             </View>
           </View>
 
@@ -317,30 +293,15 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   formGroup: {
-    gap: Spacing.md + 2,
+    gap: Spacing.md + 4,
   },
   inputContainer: {
     gap: 6,
   },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#334155',
-  },
-  verifiedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  verifiedText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#10B981',
   },
   inputRow: {
     flexDirection: 'row',
@@ -436,23 +397,6 @@ const styles = StyleSheet.create({
   },
   submitPillTextInactive: {
     color: '#94A3B8',
-  },
-  progressHintContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  progressDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  progressHintText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
   },
   switchModeContainer: {
     flexDirection: 'row',
