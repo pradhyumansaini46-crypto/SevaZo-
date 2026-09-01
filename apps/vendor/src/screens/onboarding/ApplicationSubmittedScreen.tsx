@@ -1,147 +1,212 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  FileText,
-  Home,
-  MessageSquare,
-} from 'lucide-react-native';
-import { getThemeColors, Spacing, BorderRadius, Shadows } from '../../theme';
-import { useThemeStore } from '../../stores/themeStore';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, ScrollView } from 'react-native';
+import { Typography, Spacing, BorderRadius } from '../../theme';
 import { useAuthStore } from '../../stores/authStore';
-import { Button } from '../../components/Button';
-import { Badge } from '../../components/Badge';
 
 export const ApplicationSubmittedScreen: React.FC<{ navigation: any; route: any }> = ({
   navigation,
   route,
 }) => {
-  const insets = useSafeAreaInsets();
-  const { themeMode } = useThemeStore();
-  const colors = getThemeColors(themeMode);
-  const isDark = themeMode === 'DARK';
   const { vendor } = useAuthStore();
-
   const applicationId = route.params?.applicationId || `SVZ-VND-${vendor?.id ? vendor.id.slice(-6).toUpperCase() : '000123'}`;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: Math.max(insets.top, 24) + 20,
-            paddingBottom: Math.max(insets.bottom, 20) + 24,
-          },
-        ]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Celebration Badge */}
-        <View style={[styles.iconBox, { backgroundColor: isDark ? '#132822' : '#E3FDF5' }]}>
-          <Text style={{ fontSize: 44 }}>🎉</Text>
+        {/* Official Brand Logo Icon Wrap */}
+        <View style={styles.logoWrap}>
+          <Image
+            source={require('../../../assets/sevazo-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+            accessible={true}
+            accessibilityLabel="Official SevaZo Logo"
+          />
         </View>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Application Submitted</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Your SevaZo vendor application has been submitted successfully and is currently queued for audit.
+        <Text style={styles.title}>Application Submitted</Text>
+        <Text style={styles.subtitle}>
+          Your SevaZo Vendor application has been submitted successfully to the operations verification desk.
         </Text>
 
-        {/* Application ID & Status Card */}
-        <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Application ID:</Text>
-            <Text style={[styles.metaValue, { color: colors.primary }]}>{applicationId}</Text>
-          </View>
-          <View style={[styles.metaDivider, { backgroundColor: colors.borderLight }]} />
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Status:</Text>
-            <Badge label="Under Review" variant="warning" size="sm" />
-          </View>
-          <View style={[styles.metaDivider, { backgroundColor: colors.borderLight }]} />
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Estimated Review SLA:</Text>
-            <Text style={[styles.metaValue, { color: colors.textPrimary }]}>24 - 48 Hours</Text>
+        <View style={styles.idCard}>
+          <Text style={styles.idLabel}>Application ID</Text>
+          <Text style={styles.idValue}>{applicationId}</Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusDot}>●</Text>
+            <Text style={styles.statusText}>Under Review</Text>
           </View>
         </View>
 
-        {/* Informational Callout */}
-        <View style={[styles.infoBanner, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: colors.borderLight }]}>
-          <Clock size={20} color={colors.primary} />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>What happens next?</Text>
-            <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
-              Our merchant compliance desk will verify your legal documents, tax registration, and store geofencing. We will notify you via SMS and WhatsApp when verification is complete.
-            </Text>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
-          <Button
-            title="View Application Status Tracker"
-            onPress={() => navigation.replace('StatusTracker')}
-            icon={<ArrowRight size={16} color="#FFF" />}
-            style={{ marginBottom: 12 }}
-          />
-
-          <Button
-            title="Go to Welcome"
-            variant="outline"
-            onPress={() => navigation.replace('Welcome')}
-            leftIcon={<Home size={16} color={colors.textPrimary} />}
-          />
+        <View style={styles.infoBox}>
+          <Text style={styles.infoTitle}>What happens next?</Text>
+          <Text style={styles.infoText}>
+            Our merchant compliance team is actively reviewing your legal documents, store catalog, and geofencing. Verification typically completes within 24–48 hours.
+          </Text>
+          <Text style={styles.infoSubText}>
+            You will receive instant SMS and WhatsApp notification updates as soon as your store is activated.
+          </Text>
         </View>
       </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={() => navigation.replace('StatusTracker', { applicationId })}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.primaryBtnText}>Track Verification Status</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: Spacing.xl, alignItems: 'center' },
-  iconBox: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
+  },
+  content: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 24,
+  },
+  logoWrap: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 2,
+    borderColor: '#FFEDD5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    ...Shadows.card,
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  title: { fontSize: 24, fontWeight: '800', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  metaCard: {
+  logoImage: {
+    width: 86,
+    height: 86,
+  },
+  title: {
+    ...Typography.titleLarge,
+    color: '#0F172A',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontWeight: '800',
+  },
+  subtitle: {
+    ...Typography.bodyMedium,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    fontSize: 13.5,
+  },
+  idCard: {
     width: '100%',
-    padding: 16,
-    borderRadius: BorderRadius.xl,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
     borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginBottom: 20,
   },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
-  metaLabel: { fontSize: 13, fontWeight: '600' },
-  metaValue: { fontSize: 14, fontWeight: '800' },
-  metaDivider: { height: 1, marginVertical: 8 },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    width: '100%',
-    padding: 14,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginBottom: 28,
+  idLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
   },
-  infoTitle: { fontSize: 13, fontWeight: '700', marginBottom: 3 },
-  infoDesc: { fontSize: 12, lineHeight: 17 },
-  actionsContainer: { width: '100%' },
+  idValue: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FF6600',
+    letterSpacing: 1.5,
+    marginBottom: 10,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  statusDot: {
+    color: '#EA580C',
+    fontSize: 10,
+    marginRight: 6,
+  },
+  statusText: {
+    color: '#EA580C',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  infoBox: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  infoText: {
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  infoSubText: {
+    fontSize: 11.5,
+    color: '#94A3B8',
+    lineHeight: 16,
+  },
+  footer: {
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  primaryBtn: {
+    backgroundColor: '#FF6600',
+    paddingVertical: 15,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });
+
+export default ApplicationSubmittedScreen;

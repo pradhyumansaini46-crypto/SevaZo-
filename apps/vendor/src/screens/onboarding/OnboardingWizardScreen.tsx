@@ -533,12 +533,28 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         updateVendor({ businessType, businessCategory, currentOnboardingStep: 2 });
         setCurrentStep(2);
       } else if (currentStep === 2) {
-        if (!firstName || !lastName || !email || !dateOfBirth) {
+        if (!firstName.trim() || !lastName.trim() || !email.trim() || !dateOfBirth.trim()) {
           Alert.alert('Required Fields', 'Please fill in First Name, Last Name, Email and Date of Birth.');
           return;
         }
-        await VendorApi.saveOnboardingStep(2, { firstName, lastName, email, dateOfBirth, profilePhoto });
-        updateVendor({ firstName, lastName, ownerName: `${firstName} ${lastName}`.trim(), email, currentOnboardingStep: 3 });
+        await VendorApi.saveOnboardingStep(2, {
+          firstName,
+          lastName,
+          email,
+          dateOfBirth,
+          profilePhoto,
+          signatoryRole,
+          escalationContactName,
+          escalationContactPhone,
+          escalationContactEmail,
+        });
+        updateVendor({
+          firstName,
+          lastName,
+          ownerName: `${firstName} ${lastName}`.trim(),
+          email,
+          currentOnboardingStep: 3,
+        });
         setCurrentStep(3);
       } else if (currentStep === 3) {
         if (!businessName || !displayName) {
@@ -642,25 +658,12 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         updateVendor({ bankAccount: bank, currentOnboardingStep: 10 });
         setCurrentStep(10);
       } else if (currentStep === 10) {
-        if (!escalationContactName || !escalationContactPhone) {
-          Alert.alert('Required Fields', 'Please provide Escalation Contact Person Name and Phone Number.');
-          return;
-        }
-        if (escalationContactPhone.replace(/\D/g, '').length < 10) {
-          Alert.alert('Invalid Phone', 'Please enter a valid 10-digit escalation contact mobile number.');
-          return;
-        }
         const allAgreed = agreeAccurateInfo && agreeVendorTerms && agreePrivacyPolicy && agreeSupplyAgreement && agreeVerifyAuth;
         if (!allAgreed) {
           Alert.alert('Consent Required', 'Please accept all 5 statutory declaration checkboxes to proceed.');
           return;
         }
         await VendorApi.saveOnboardingStep(10, {
-          signatoryRole,
-          signatoryName: `${firstName} ${lastName}`.trim(),
-          escalationContactName,
-          escalationContactPhone,
-          escalationContactEmail,
           taxComplianceType,
           agreeAccurateInfo,
           agreeVendorTerms,
@@ -771,8 +774,8 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         approvalStatus: 'PENDING',
         currentOnboardingStep: 11,
       });
-      // Redirect directly to Vendor Pending Dashboard (StatusTracker)
-      navigation.replace('StatusTracker', { applicationId: generatedAppId });
+      // Redirect to ApplicationSubmitted screen (matching rider app)
+      navigation.replace('ApplicationSubmitted', { applicationId: generatedAppId });
     } catch (err: any) {
       Alert.alert('Submission Error', err.message || 'Could not submit application.');
     } finally {
@@ -919,6 +922,65 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               <Input label="Registered Mobile Number *" value={vendor?.phone || ''} editable={false} leftIcon={<Badge label="Verified Mobile" variant="success" size="sm" />} placeholder="Enter mobile number" />
               <Input label="Official Email Address *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="Enter email address" />
               <Input label="Date of Birth (DOB) *" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="DD/MM/YYYY" leftIcon={<Calendar size={18} color={colors.textSecondary} />} />
+
+              {/* Signatory Designation / Capacity */}
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 10, marginBottom: 8 }]}>
+                Signatory Designation / Capacity *
+              </Text>
+              <View style={styles.rolePillsRow}>
+                {(['Proprietor', 'Director', 'Managing Partner', 'Authorized Signatory', 'Store Manager'] as const).map((role) => {
+                  const isSel = signatoryRole === role;
+                  return (
+                    <TouchableOpacity
+                      key={role}
+                      onPress={() => setSignatoryRole(role)}
+                      style={[
+                        styles.rolePill,
+                        {
+                          backgroundColor: isSel ? colors.primaryLight : colors.surface,
+                          borderColor: isSel ? colors.primary : colors.borderLight,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.rolePillText, { color: isSel ? colors.primary : colors.textPrimary, fontWeight: isSel ? '700' : '500' }]}>
+                        {role}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Emergency Contact Details Section */}
+              <View style={{ marginTop: 18, marginBottom: 4 }}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontSize: 14, fontWeight: '800', marginBottom: 2 }]}>
+                  Emergency Contact Details
+                </Text>
+                <Text style={[styles.secDesc, { color: colors.textSecondary, marginBottom: 10 }]}>
+                  Primary contact for operations, emergency escalations & store queries.
+                </Text>
+              </View>
+              <Input
+                label="Emergency Contact Person Name *"
+                value={escalationContactName}
+                onChangeText={setEscalationContactName}
+                placeholder="e.g. Suresh Kumar (Manager / In-charge)"
+              />
+              <Input
+                label="Emergency Contact Mobile Number *"
+                value={escalationContactPhone}
+                onChangeText={setEscalationContactPhone}
+                keyboardType="phone-pad"
+                maxLength={10}
+                placeholder="10-digit mobile number"
+              />
+              <Input
+                label="Emergency Contact Email (Optional)"
+                value={escalationContactEmail}
+                onChangeText={setEscalationContactEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder="emergency@store.com"
+              />
             </View>
           )}
 
@@ -1514,61 +1576,6 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 </View>
               </View>
 
-              {/* Authorized Designation Capacity Selector */}
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 14, marginBottom: 8 }]}>
-                Signatory Designation / Capacity *
-              </Text>
-              <View style={styles.rolePillsRow}>
-                {(['Proprietor', 'Director', 'Managing Partner', 'Authorized Signatory', 'Store Manager'] as const).map((role) => {
-                  const isSel = signatoryRole === role;
-                  return (
-                    <TouchableOpacity
-                      key={role}
-                      onPress={() => setSignatoryRole(role)}
-                      style={[
-                        styles.rolePill,
-                        {
-                          backgroundColor: isSel ? colors.primaryLight : colors.surface,
-                          borderColor: isSel ? colors.primary : colors.borderLight,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.rolePillText, { color: isSel ? colors.primary : colors.textPrimary, fontWeight: isSel ? '700' : '500' }]}>
-                        {role}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Escalation & Operations Contact Details */}
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 14, marginBottom: 6 }]}>
-                Operations & Escalation Contact
-              </Text>
-              <Input
-                label="Escalation Contact Person Name *"
-                value={escalationContactName}
-                onChangeText={setEscalationContactName}
-                placeholder="e.g. Suresh Kumar (Manager / In-charge)"
-                helperText="Primary point of contact for customer disputes & fulfillment queries."
-              />
-              <Input
-                label="Escalation Contact Mobile Number *"
-                value={escalationContactPhone}
-                onChangeText={setEscalationContactPhone}
-                keyboardType="phone-pad"
-                maxLength={10}
-                placeholder="10-digit mobile number"
-              />
-              <Input
-                label="Escalation Email (Optional)"
-                value={escalationContactEmail}
-                onChangeText={setEscalationContactEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="escalation@store.com"
-              />
-
               {/* Tax & GST Compliance Scheme */}
               <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 12, marginBottom: 8 }]}>
                 GST & Tax Compliance Declaration *
@@ -1705,7 +1712,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               {/* 10-Section Structured Checklist */}
               {[
                 { title: '1. Business Category', sub: `${businessCategory} (${businessType})`, step: 1 },
-                { title: '2. Owner & Contact', sub: `${firstName} ${lastName} • ${email} • ${vendor?.phone || '+91 98765 43210'}`, step: 2 },
+                { title: '2. Owner & Emergency Contact', sub: `${firstName} ${lastName} (${signatoryRole}) • Emergency: ${escalationContactName || 'Configured'} (${escalationContactPhone || 'Verified'})`, step: 2 },
                 { title: '3. Legal Business Entity', sub: `${businessName} (${legalEntityType})`, step: 3 },
                 { title: '4. Physical Address', sub: `${line1}, ${area}, ${city} - ${pincode}`, step: 4 },
                 { title: '5. Location Verification', sub: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)} • 5 Store Photos`, step: 5 },
@@ -1721,7 +1728,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 },
                 {
                   title: '10. Consent & Authorization',
-                  sub: `Signed as ${signatoryRole} by ${firstName} ${lastName} • Escalation: ${escalationContactName || 'Configured'} (${escalationContactPhone || 'Verified'})`,
+                  sub: `GST: ${taxComplianceType} • Statutory terms & declarations accepted`,
                   step: 10,
                 },
               ].map((sec) => (
@@ -1770,7 +1777,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
             />
           )}
           <Button
-            title={currentStep === 11 ? 'Review & Submit Application' : 'Save & Continue'}
+            title={currentStep === 11 ? 'Submit Application' : 'Save & Continue'}
             onPress={handleSaveAndContinue}
             loading={loading}
             icon={<ArrowRight size={16} color="#FFFFFF" />}
@@ -1786,13 +1793,13 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
             <View style={[styles.modalIconBox, { backgroundColor: colors.primaryLight }]}>
               <ShieldCheck size={32} color={colors.primary} />
             </View>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Review & Submit Application?</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Submit Application?</Text>
             <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
               Once submitted, your application will be reviewed by the SevaZo onboarding desk within 24-48 hours. Information cannot be edited while verification is in progress.
             </Text>
             <View style={styles.modalActionsRow}>
               <Button title="Cancel" variant="outline" onPress={() => setShowSubmitModal(false)} style={{ flex: 1, marginRight: 8 }} />
-              <Button title="Confirm & Submit Application" onPress={handleConfirmFinalSubmit} loading={loading} style={{ flex: 1.5 }} />
+              <Button title="Submit Application" onPress={handleConfirmFinalSubmit} loading={loading} style={{ flex: 1.5 }} />
             </View>
           </View>
         </View>
@@ -1920,7 +1927,7 @@ const styles = StyleSheet.create({
   changeMediaText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
   storeLogoOverlapBox: { position: 'absolute', bottom: -16, left: 16 },
   storeLogoSquare: { width: 60, height: 60, borderRadius: BorderRadius.md, borderWidth: 2, borderColor: '#FFF' },
-  changeLogoBtn: { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#059669', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  changeLogoBtn: { position: 'absolute', bottom: -4, right: -4, backgroundColor: '#FF6600', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   scheduleHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 },
   applyAllBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: BorderRadius.md, gap: 4 },
   applyAllText: { fontSize: 12, fontWeight: '700' },
