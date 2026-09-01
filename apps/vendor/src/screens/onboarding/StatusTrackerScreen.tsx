@@ -6,32 +6,37 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Alert,
+  Platform,
+  Modal,
+  TouchableWithoutFeedback,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ShieldAlert,
-  ShieldCheck,
   Clock,
   CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
+  ArrowLeft,
   RefreshCw,
-  Edit3,
-  HelpCircle,
-  Sparkles,
-  PhoneCall,
+  Phone,
+  Mail,
+  MessageCircle,
+  Headphones,
+  ExternalLink,
+  MapPin,
+  X,
+  ShieldCheck,
 } from 'lucide-react-native';
-import { getThemeColors, Spacing, BorderRadius, Shadows } from '../../theme';
+import { getThemeColors, Spacing, BorderRadius, Shadows, Typography } from '../../theme';
 import { useThemeStore } from '../../stores/themeStore';
-import { Header } from '../../components/Header';
-import { Button } from '../../components/Button';
 import { Badge } from '../../components/Badge';
 import { useAuthStore } from '../../stores/authStore';
 import { VendorApi } from '../../services/vendorApi';
 import { VendorStatus } from '../../types';
 
-export const StatusTrackerScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+export const StatusTrackerScreen: React.FC<{ navigation: any; route?: any }> = ({
+  navigation,
+  route,
+}) => {
   const insets = useSafeAreaInsets();
   const { themeMode } = useThemeStore();
   const colors = getThemeColors(themeMode);
@@ -40,6 +45,12 @@ export const StatusTrackerScreen: React.FC<{ navigation: any }> = ({ navigation 
 
   const [onboardingState, setOnboardingState] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+
+  const applicationId =
+    route?.params?.applicationId ||
+    vendor?.id?.slice(0, 8).toUpperCase() ||
+    `SVZ-VND-${vendor?.phone ? vendor.phone.replace(/\D/g, '').slice(-6) : '000123'}`;
 
   const loadStatus = async () => {
     setLoading(true);
@@ -66,171 +77,307 @@ export const StatusTrackerScreen: React.FC<{ navigation: any }> = ({ navigation 
   }, []);
 
   const currentStatus: VendorStatus = onboardingState?.status || vendor?.status || 'SUBMITTED';
+  const isOverallApproved = currentStatus === 'APPROVED' || vendor?.approvalStatus === 'APPROVED';
 
-  const getStatusBadge = () => {
-    switch (currentStatus) {
-      case 'APPROVED':
-        return <Badge label="APPROVED & ACTIVE" variant="success" size="md" dot />;
-      case 'UNDER_REVIEW':
-        return <Badge label="UNDER ACTIVE VERIFICATION" variant="warning" size="md" dot />;
-      case 'SUBMITTED':
-        return <Badge label="APPLICATION SUBMITTED" variant="info" size="md" dot />;
-      case 'REJECTED':
-        return <Badge label="ACTION REQUIRED / REJECTED" variant="danger" size="md" dot />;
-      case 'SUSPENDED':
-        return <Badge label="ACCOUNT SUSPENDED" variant="danger" size="md" dot />;
-      default:
-        return <Badge label="DRAFT IN PROGRESS" variant="neutral" size="md" dot />;
+  const verificationStages = [
+    { id: 'cat', title: '1. Business Category', desc: 'Catalog classification and merchant business type.' },
+    { id: 'owner', title: '2. Owner & Emergency Contact', desc: 'Authorized signatory, verified mobile & emergency contact.' },
+    { id: 'biz', title: '3. Legal Business Information', desc: 'Registered legal entity name, structure & PAN / GST.' },
+    { id: 'address', title: '4. Physical Store Address', desc: 'Store street address, landmark, city & postal code.' },
+    { id: 'location', title: '5. Location & Geo-Pin', desc: 'GPS coordinates lock and 5 storefront shop photos.' },
+    { id: 'kyc', title: '6. KYC & Legal Documents', desc: 'PAN card, GST certificate & FSSAI / trade licence.' },
+    { id: 'storefront', title: '7. Customer Storefront', desc: 'Store display name, logo & 16:9 banner preview.' },
+    { id: 'hours', title: '8. Operating Hours & Shifts', desc: '7-day active store dispatch & order schedule.' },
+    { id: 'banking', title: '9. Settlement Account', desc: 'Direct bank account / Instant UPI settlement gateway.' },
+    { id: 'consent', title: '10. Consent & Declarations', desc: 'Statutory compliance, tax declarations & digital signature.' },
+  ];
+
+  const handleCallSupport = () => {
+    Linking.openURL('tel:+919876543210').catch(() => {});
+  };
+
+  const handleEmailSupport = () => {
+    Linking.openURL(
+      `mailto:merchant-support@sevazo.in?subject=Application Query - ${applicationId}&body=Hello SevaZo Merchant Support Team,\n\nI have a question regarding my Vendor application (ID: ${applicationId}).`
+    ).catch(() => {});
+  };
+
+  const handleWhatsAppSupport = () => {
+    Linking.openURL(
+      `https://wa.me/919876543210?text=Hi SevaZo Support, I need help with my Vendor Application: ${applicationId}`
+    ).catch(() => {});
+  };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('Welcome');
     }
   };
 
-  const checklistItems = [
-    { label: 'Business Type & Catalog Classification', checked: onboardingState?.checklist?.step1_businessType ?? true },
-    { label: 'Owner Identification & Mobile Verification', checked: onboardingState?.checklist?.step2_ownerDetails ?? true },
-    { label: 'Legal Firm Name & Entity Structure', checked: onboardingState?.checklist?.step3_businessDetails ?? true },
-    { label: 'Store Pickup Address & Geo-Pin', checked: onboardingState?.checklist?.step4_businessAddress ?? true },
-    { label: 'Statutory KYC Documents (GST, PAN, FSSAI)', checked: onboardingState?.checklist?.step5_documents ?? true },
-    { label: 'Direct Settlement Bank Account', checked: onboardingState?.checklist?.step6_bankAccount ?? true },
-    { label: 'Storefront Setup & Preparation Window', checked: onboardingState?.checklist?.step7_storeDetails ?? true },
-    { label: 'Service Area & Hyperlocal Delivery Model', checked: onboardingState?.checklist?.step8_deliveryPreferences ?? true },
-  ];
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        title="Application Status"
-        subtitle="Verification & compliance progress"
-        rightAction={
-          <TouchableOpacity onPress={loadStatus} style={[styles.refreshIcon, { backgroundColor: colors.borderLight }]}>
-            <RefreshCw size={16} color={colors.primary} />
+    <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
+      {/* Standardized Header with Back Button */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={handleBack} style={styles.headerBackBtn} activeOpacity={0.7}>
+            <ArrowLeft size={20} color="#0F172A" />
           </TouchableOpacity>
-        }
-      />
+          <Text style={styles.headerTitle}>Verification Status</Text>
+        </View>
+
+        <TouchableOpacity onPress={loadStatus} style={styles.refreshBtn} activeOpacity={0.7}>
+          <RefreshCw size={16} color="#FF6600" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: Math.max(insets.bottom, 20) + 30 }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={loadStatus} />}
       >
-        {/* Status Hero Card */}
-        <View
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.borderLight,
-            },
-          ]}
-        >
-          <View style={styles.heroHeader}>
-            <View style={styles.heroLeft}>
-              <Text style={[styles.storeTitle, { color: colors.textPrimary }]}>
-                {vendor?.storeName || vendor?.businessName || 'Fresh Supermarket'}
-              </Text>
-              <Text style={[styles.appId, { color: colors.textMuted }]}>
-                Application Ref: #{vendor?.id?.slice(0, 8).toUpperCase() || 'VND-884102'}
-              </Text>
-            </View>
-            {getStatusBadge()}
+        {/* Main Status Hero Card */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroBadgeDot}>●</Text>
+            <Text style={styles.heroBadgeText}>
+              {isOverallApproved ? 'Approved & Active' : 'Under Review'}
+            </Text>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+          <Text style={styles.heroTitle}>
+            {isOverallApproved
+              ? 'Your store has been approved!'
+              : 'Your application is under review.'}
+          </Text>
+          <Text style={styles.heroSubtitle}>
+            {isOverallApproved
+              ? 'Welcome to the SevaZo Merchant Network. Your storefront is now active and ready to accept orders.'
+              : 'Our merchant compliance desk is actively reviewing your legal documents, store catalog, and settlement bank credentials.'}
+          </Text>
 
-          {/* Under Review Notice */}
-          <View style={[styles.statusNotice, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}>
-            <Clock size={20} color="#F59E0B" />
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <Text style={[styles.noticeTitle, { color: colors.textPrimary }]}>
-                Estimated Verification SLA: 24 - 48 Hours
-              </Text>
-              <Text style={[styles.noticeDesc, { color: colors.textSecondary }]}>
-                Our compliance team is verifying your GST, FSSAI, and settlement bank credentials. You will receive an SMS upon activation.
-              </Text>
-            </View>
+          <View style={styles.appIdRow}>
+            <Text style={styles.appIdLabel}>Application ID:</Text>
+            <Text style={styles.appIdValue}>{applicationId}</Text>
           </View>
         </View>
 
-        {/* 4-Step Visual Timeline */}
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Verification Journey</Text>
+        {/* 10-Stage Verification Progress Section */}
+        <View style={styles.progressCard}>
+          <View style={styles.progressCardHeader}>
+            <Text style={styles.progressCardTitle}>Verification Progress</Text>
+            <Text style={styles.progressCountText}>
+              {isOverallApproved ? '10 of 10 Verified' : '10 Steps Submitted'}
+            </Text>
+          </View>
 
-        <View style={[styles.timelineCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          {[
-            { step: '1', title: 'Application Submitted', desc: 'Merchant profile and KYC documents submitted', done: true },
-            { step: '2', title: 'Legal & KYC Verification', desc: 'GST, PAN and food safety license validation', done: true, inProgress: true },
-            { step: '3', title: 'Store Profile & Delivery Routing', desc: 'Geofencing, radius check & rider routing', done: false },
-            { step: '4', title: 'Live Dashboard & Payout Activation', desc: 'Store goes live on SevaZo instant commerce', done: false },
-          ].map((item, idx) => (
-            <View key={idx} style={styles.timelineRow}>
-              <View style={styles.timelineIconCol}>
+          {verificationStages.map((stage) => {
+            const isVerified = isOverallApproved;
+
+            return (
+              <View key={stage.id} style={styles.stageRow}>
+                {/* Status Indicator Icon */}
                 <View
                   style={[
-                    styles.timelineDot,
-                    {
-                      backgroundColor: item.done ? colors.success : item.inProgress ? colors.warning : colors.borderLight,
-                    },
+                    styles.stageIconWrap,
+                    isVerified ? styles.stageIconWrapDone : styles.stageIconWrapProg,
                   ]}
                 >
-                  {item.done ? (
-                    <CheckCircle2 size={14} color="#FFF" />
-                  ) : item.inProgress ? (
-                    <Clock size={14} color="#FFF" />
-                  ) : (
-                    <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '700' }}>{item.step}</Text>
-                  )}
+                  <Text
+                    style={[
+                      styles.stageIconText,
+                      isVerified ? styles.stageIconTextDone : styles.stageIconTextProg,
+                    ]}
+                  >
+                    {isVerified ? '✓' : '●'}
+                  </Text>
                 </View>
-                {idx < 3 && <View style={[styles.timelineLine, { backgroundColor: item.done ? colors.success : colors.borderLight }]} />}
+
+                {/* Section Title & Description */}
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.stageTitle}>{stage.title}</Text>
+                  <Text style={styles.stageDesc}>{stage.desc}</Text>
+                </View>
+
+                {/* Status Badge Pill */}
+                <View
+                  style={[
+                    styles.stageStatusPill,
+                    isVerified ? styles.stageStatusPillDone : styles.stageStatusPillProg,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.stageStatusPillText,
+                      isVerified ? styles.stageStatusPillTextDone : styles.stageStatusPillTextProg,
+                    ]}
+                  >
+                    {isVerified ? 'Verified' : 'Reviewing'}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.timelineContent}>
-                <Text style={[styles.timelineTitle, { color: colors.textPrimary }]}>{item.title}</Text>
-                <Text style={[styles.timelineDesc, { color: colors.textSecondary }]}>{item.desc}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
-        {/* Verification Checklist */}
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Submitted Compliance Checklist</Text>
-        <View style={[styles.checklistCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          {checklistItems.map((item, idx) => (
-            <View key={idx} style={[styles.checklistItem, idx < checklistItems.length - 1 && { borderBottomColor: colors.borderLight, borderBottomWidth: 1 }]}>
-              <CheckCircle2 size={18} color={item.checked ? colors.success : colors.textMuted} />
-              <Text style={[styles.checklistText, { color: colors.textPrimary }]}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Merchant Support Footer */}
-        <View style={[styles.supportBox, { backgroundColor: isDark ? '#132822' : '#E3FDF5', borderColor: isDark ? '#059669' : '#A7F3D0' }]}>
-          <HelpCircle size={20} color={colors.primary} />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text style={[styles.supportTitle, { color: isDark ? '#A7F3D0' : colors.primaryDark }]}>
-              Need Expedited Approval?
-            </Text>
-            <Text style={[styles.supportDesc, { color: isDark ? '#E2E8F0' : colors.textSecondary }]}>
-              Contact our Merchant Onboarding Desk at 1800-SEVAZO-MERCHANT or write to onboarding@sevazo.com.
-            </Text>
+        {/* Average Turnaround SLA Card */}
+        <View style={styles.etaCard}>
+          <View style={styles.etaIconCircle}>
+            <Clock size={20} color="#EA580C" />
           </View>
-        </View>
-
-        {/* Quick Testing Switchers */}
-        <View style={[styles.devSwitcher, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-          <Text style={[styles.devTitle, { color: colors.textMuted }]}>🧪 PREVIEW ROLE SIMULATOR</Text>
-          <View style={styles.devButtonsRow}>
-            <TouchableOpacity
-              onPress={() => navigation.replace('Main')}
-              style={[styles.devPill, { backgroundColor: colors.primary }]}
-            >
-              <Text style={styles.devPillText}>Simulate Approved ➔ Dashboard</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.replace('Correction')}
-              style={[styles.devPill, { backgroundColor: '#EF4444' }]}
-            >
-              <Text style={styles.devPillText}>Simulate Rejection ➔ Fix</Text>
-            </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.etaTitle}>Average Turnaround Time</Text>
+            <Text style={styles.etaDesc}>
+              Verification usually completes in <Text style={{ fontWeight: '800' }}>24–48 hours</Text> during standard business shifts (8:00 AM – 10:00 PM).
+            </Text>
           </View>
         </View>
       </ScrollView>
+
+      {/* Fixed Bottom Footer Actions (Back Button + Contact Support) */}
+      <View style={styles.footer}>
+        {/* Back Button */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={handleBack}
+          activeOpacity={0.8}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Back to previous screen"
+        >
+          <ArrowLeft size={18} color="#334155" />
+          <Text style={styles.backBtnText}>Back</Text>
+        </TouchableOpacity>
+
+        {/* Contact Support Button */}
+        <TouchableOpacity
+          style={styles.contactSupportBtn}
+          onPress={() => setShowSupportModal(true)}
+          activeOpacity={0.85}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Contact SevaZo Merchant Support"
+        >
+          <Headphones size={18} color="#FFFFFF" />
+          <Text style={styles.contactSupportBtnText}>Contact Support</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Interactive Company Contact Support Modal (Matching Rider App) */}
+      <Modal
+        visible={showSupportModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSupportModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowSupportModal(false)}>
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.supportSheet}>
+                {/* Drag handle */}
+                <View style={styles.modalHandle} />
+
+                {/* Header */}
+                <View style={styles.supportHeaderRow}>
+                  <View style={styles.supportHeaderLeft}>
+                    <View style={styles.supportIconWrap}>
+                      <Headphones size={22} color="#FF6600" />
+                    </View>
+                    <View>
+                      <Text style={styles.supportModalTitle}>SevaZo Merchant Support</Text>
+                      <Text style={styles.supportModalSubTitle}>We're here to help you get your store live</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setShowSupportModal(false)}
+                    style={styles.modalCloseBtn}
+                    activeOpacity={0.7}
+                  >
+                    <X size={20} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Contact Options List */}
+                <View style={styles.contactOptionsList}>
+                  {/* Option 1: Direct Phone Call */}
+                  <TouchableOpacity
+                    style={styles.contactOptionItem}
+                    onPress={handleCallSupport}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.contactOptionIconWrap, { backgroundColor: '#FFF7ED' }]}>
+                      <Phone size={22} color="#FF6600" />
+                    </View>
+                    <View style={styles.contactOptionTextWrap}>
+                      <Text style={styles.contactOptionTitle}>Direct Helpline (Toll-Free)</Text>
+                      <Text style={styles.contactOptionDetail}>+91 98765 43210 • 1800-123-SEVAZO</Text>
+                    </View>
+                    <ExternalLink size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+
+                  {/* Option 2: WhatsApp Chat Support */}
+                  <TouchableOpacity
+                    style={styles.contactOptionItem}
+                    onPress={handleWhatsAppSupport}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.contactOptionIconWrap, { backgroundColor: '#ECFDF5' }]}>
+                      <MessageCircle size={22} color="#10B981" />
+                    </View>
+                    <View style={styles.contactOptionTextWrap}>
+                      <Text style={styles.contactOptionTitle}>WhatsApp Merchant Helpdesk</Text>
+                      <Text style={styles.contactOptionDetail}>Instant chat assistance & query updates</Text>
+                    </View>
+                    <ExternalLink size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+
+                  {/* Option 3: Official Support Email */}
+                  <TouchableOpacity
+                    style={styles.contactOptionItem}
+                    onPress={handleEmailSupport}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.contactOptionIconWrap, { backgroundColor: '#EFF6FF' }]}>
+                      <Mail size={22} color="#3B82F6" />
+                    </View>
+                    <View style={styles.contactOptionTextWrap}>
+                      <Text style={styles.contactOptionTitle}>Official Merchant Support Email</Text>
+                      <Text style={styles.contactOptionDetail}>merchant-support@sevazo.in</Text>
+                    </View>
+                    <ExternalLink size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Additional Info Box */}
+                <View style={styles.supportMetaBox}>
+                  <View style={styles.metaRow}>
+                    <Clock size={16} color="#64748B" />
+                    <Text style={styles.metaText}>
+                      <Text style={{ fontWeight: '700' }}>Operating Hours:</Text> 8:00 AM – 10:00 PM (Monday to Sunday)
+                    </Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <MapPin size={16} color="#64748B" />
+                    <Text style={styles.metaText}>
+                      <Text style={{ fontWeight: '700' }}>Merchant Hub:</Text> World Trade Park, Malviya Nagar, Jaipur, RJ
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Close Button */}
+                <TouchableOpacity
+                  style={styles.closeActionBtn}
+                  onPress={() => setShowSupportModal(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.closeActionBtnText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -238,157 +385,403 @@ export const StatusTrackerScreen: React.FC<{ navigation: any }> = ({ navigation 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  scroll: {
-    padding: Spacing.xl,
-  },
-  refreshIcon: {
-    padding: 8,
-    borderRadius: BorderRadius.md,
-  },
-  heroCard: {
-    padding: 16,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    marginBottom: 20,
-    ...Shadows.card,
-  },
-  heroHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 52 : 40,
+    paddingBottom: 14,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
-  heroLeft: {
-    flex: 1,
-  },
-  storeTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  appId: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 14,
-  },
-  statusNotice: {
+  headerLeft: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 12,
-    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    gap: 10,
   },
-  noticeTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+  headerBackBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
   },
-  noticeDesc: {
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 17,
-  },
-  sectionTitle: {
-    fontSize: 15,
+  headerTitle: {
+    color: '#0F172A',
+    fontSize: 17,
     fontWeight: '800',
+  },
+  refreshBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#FFF7ED',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  heroCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFF7ED',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
     marginBottom: 12,
   },
-  timelineCard: {
-    padding: 16,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    marginBottom: 20,
+  heroBadgeDot: {
+    color: '#EA580C',
+    fontSize: 10,
+    marginRight: 6,
   },
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  timelineIconCol: {
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  timelineDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timelineLine: {
-    width: 2,
-    height: 36,
-    marginVertical: 2,
-  },
-  timelineContent: {
-    flex: 1,
-    paddingBottom: 16,
-  },
-  timelineTitle: {
-    fontSize: 14,
+  heroBadgeText: {
+    color: '#EA580C',
+    fontSize: 12,
     fontWeight: '700',
   },
-  timelineDesc: {
-    fontSize: 12,
-    marginTop: 2,
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 6,
   },
-  checklistCard: {
-    borderRadius: BorderRadius.xl,
+  heroSubtitle: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  appIdRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 16,
+    borderColor: '#E2E8F0',
+  },
+  appIdLabel: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  appIdValue: {
+    color: '#FF6600',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginBottom: 20,
   },
-  checklistItem: {
+  progressCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  progressCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  progressCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF6600',
+  },
+  stageRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
   },
-  checklistText: {
-    fontSize: 13,
-    marginLeft: 12,
-    fontWeight: '500',
-  },
-  supportBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  supportTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  supportDesc: {
-    fontSize: 12,
-    marginTop: 2,
-    lineHeight: 17,
-  },
-  devSwitcher: {
-    padding: 14,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-  },
-  devTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  devButtonsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  devPill: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.md,
+  stageIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  devPillText: {
-    color: '#FFFFFF',
+  stageIconWrapDone: {
+    backgroundColor: '#DCFCE7',
+  },
+  stageIconWrapProg: {
+    backgroundColor: '#FEF3C7',
+  },
+  stageIconText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  stageIconTextDone: {
+    color: '#15803D',
+  },
+  stageIconTextProg: {
+    color: '#D97706',
+    fontSize: 8,
+  },
+  stageTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  stageDesc: {
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  stageStatusPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  stageStatusPillDone: {
+    backgroundColor: '#DCFCE7',
+  },
+  stageStatusPillProg: {
+    backgroundColor: '#FEF3C7',
+  },
+  stageStatusPillText: {
     fontSize: 11,
     fontWeight: '700',
   },
+  stageStatusPillTextDone: {
+    color: '#15803D',
+  },
+  stageStatusPillTextProg: {
+    color: '#B45309',
+  },
+  etaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    borderRadius: 14,
+    padding: 16,
+    gap: 12,
+  },
+  etaIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFEDD5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  etaTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#EA580C',
+    marginBottom: 2,
+  },
+  etaDesc: {
+    fontSize: 12,
+    color: '#9A3412',
+    lineHeight: 18,
+  },
+  footer: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    gap: 12,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 18,
+  },
+  backBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    gap: 6,
+  },
+  backBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  contactSupportBtn: {
+    flex: 1.3,
+    flexDirection: 'row',
+    backgroundColor: '#FF6600',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#FF6600',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  contactSupportBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  supportSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  modalHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  supportHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  supportHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  supportIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  supportModalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  supportModalSubTitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+  },
+  contactOptionsList: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  contactOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 14,
+  },
+  contactOptionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactOptionTextWrap: {
+    flex: 1,
+  },
+  contactOptionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  contactOptionDetail: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  supportMetaBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+    marginBottom: 18,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaText: {
+    fontSize: 11.5,
+    color: '#475569',
+    flex: 1,
+    lineHeight: 16,
+  },
+  closeActionBtn: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  closeActionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+  },
 });
+
+export default StatusTrackerScreen;

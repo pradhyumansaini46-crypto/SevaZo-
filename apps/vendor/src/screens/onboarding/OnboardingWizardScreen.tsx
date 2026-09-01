@@ -83,6 +83,70 @@ const POPULAR_UPI_SUFFIXES = [
   '@upi',
 ];
 
+const KNOWN_BANK_MAP: Record<string, string> = {
+  SBIN: 'State Bank of India',
+  HDFC: 'HDFC Bank',
+  ICIC: 'ICICI Bank',
+  PUNB: 'Punjab National Bank',
+  BARB: 'Bank of Baroda',
+  AXIS: 'Axis Bank',
+  UTIB: 'Axis Bank',
+  KKBK: 'Kotak Mahindra Bank',
+  YESB: 'Yes Bank',
+  INDB: 'IndusInd Bank',
+  CNRB: 'Canara Bank',
+  UBIN: 'Union Bank of India',
+  IDFB: 'IDFC FIRST Bank',
+  IOBA: 'Indian Overseas Bank',
+  BCOI: 'Bank of India',
+  MAHB: 'Bank of Maharashtra',
+  PSIB: 'Punjab & Sind Bank',
+  UCOB: 'UCO Bank',
+  CBIN: 'Central Bank of India',
+  AIRP: 'Airtel Payments Bank',
+  PYTM: 'Paytm Payments Bank',
+  IPOS: 'India Post Payments Bank',
+  FDRL: 'Federal Bank',
+  AUBL: 'AU Small Finance Bank',
+};
+
+async function fetchRealIfscData(code: string): Promise<{ bank: string; branch?: string; city?: string; state?: string } | null> {
+  const clean = code.trim().toUpperCase().replace(/\s+/g, '');
+  if (clean.length !== 11) return null;
+
+  // 1. Try public official RBI Razorpay IFSC API
+  try {
+    const res = await fetch(`https://ifsc.razorpay.com/${clean}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.BANK || data.bank)) {
+        return {
+          bank: data.BANK || data.bank,
+          branch: data.BRANCH || data.branch || 'Branch',
+          city: data.CITY || data.city,
+          state: data.STATE || data.state,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Online IFSC API error, using known bank map:', err);
+  }
+
+  // 2. Intelligent prefix map fallback
+  const prefix = clean.slice(0, 4);
+  const matchedBank = KNOWN_BANK_MAP[prefix];
+  if (matchedBank) {
+    return {
+      bank: matchedBank,
+      branch: `Branch (${clean.slice(4)})`,
+    };
+  }
+
+  return null;
+}
+
 const STEP_TITLES: Record<number, string> = {
   1: 'Business Category',
   2: 'Owner Details',
@@ -294,6 +358,8 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
   const [upiId, setUpiId] = useState(vendor?.upiId?.includes('freshmart') ? '' : vendor?.upiId || '');
   const [verifyingUpi, setVerifyingUpi] = useState(false);
   const [upiVerifiedName, setUpiVerifiedName] = useState<string | null>(null);
+  const [verifyingIfsc, setVerifyingIfsc] = useState(false);
+  const [ifscVerified, setIfscVerified] = useState(false);
 
   // STEP 8: Store Profile (Customer-Facing Store)
   const [storeDisplayName, setStoreDisplayName] = useState(isMockBusiness ? '' : vendor?.storeName || '');
@@ -332,7 +398,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
   const [temperatureHandling, setTemperatureHandling] = useState('ROOM_TEMP');
   const [isFragile, setIsFragile] = useState(false);
   // STEP 10: Vendor Consent & Legal Declarations Form
-  const [signatoryRole, setSignatoryRole] = useState<'Proprietor' | 'Director' | 'Managing Partner' | 'Authorized Signatory' | 'Store Manager'>('Proprietor');
+  const [signatoryRole, setSignatoryRole] = useState<'Proprietor' | 'Director' | 'Managing Partner' | 'Authorized Signatory' | 'Store Manager' | 'Employee'>('Proprietor');
   const [escalationContactName, setEscalationContactName] = useState('');
   const [escalationContactPhone, setEscalationContactPhone] = useState('');
   const [escalationContactEmail, setEscalationContactEmail] = useState('');
@@ -523,6 +589,41 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
     const newUpi = `${prefix || (firstName ? firstName.toLowerCase().replace(/\s+/g, '') : 'partner')}${suffix}`;
     setUpiId(newUpi);
     setUpiVerifiedName(null);
+  };
+
+  const handleVerifyIfsc = async () => {
+    const clean = (ifsc || '').trim().toUpperCase();
+    if (!clean || clean.length !== 11) {
+      Alert.alert(
+        'Invalid IFSC Code',
+        'Please enter a valid 11-character IFSC code (e.g. SBIN0031804 or HDFC0000001).'
+      );
+      return;
+    }
+
+    setVerifyingIfsc(true);
+    setIfscVerified(false);
+
+    try {
+      const details = await fetchRealIfscData(clean);
+      if (details) {
+        setBankName(details.bank);
+        if (details.branch) {
+          const fullBranch = details.city ? `${details.branch}, ${details.city}` : details.branch;
+          setBranchName(fullBranch);
+        }
+        setIfscVerified(true);
+      } else {
+        Alert.alert(
+          'IFSC Not Found',
+          'Could not verify details for this IFSC code. Please check the code printed on your cheque book or passbook.'
+        );
+      }
+    } catch (e) {
+      Alert.alert('Verification Error', 'Could not verify IFSC. Please check your connection or code.');
+    } finally {
+      setVerifyingIfsc(false);
+    }
   };
 
   const handleSaveAndContinue = async () => {
@@ -923,39 +1024,12 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               <Input label="Official Email Address *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="Enter email address" />
               <Input label="Date of Birth (DOB) *" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="DD/MM/YYYY" leftIcon={<Calendar size={18} color={colors.textSecondary} />} />
 
-              {/* Signatory Designation / Capacity */}
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 10, marginBottom: 8 }]}>
-                Signatory Designation / Capacity *
-              </Text>
-              <View style={styles.rolePillsRow}>
-                {(['Proprietor', 'Director', 'Managing Partner', 'Authorized Signatory', 'Store Manager'] as const).map((role) => {
-                  const isSel = signatoryRole === role;
-                  return (
-                    <TouchableOpacity
-                      key={role}
-                      onPress={() => setSignatoryRole(role)}
-                      style={[
-                        styles.rolePill,
-                        {
-                          backgroundColor: isSel ? colors.primaryLight : colors.surface,
-                          borderColor: isSel ? colors.primary : colors.borderLight,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.rolePillText, { color: isSel ? colors.primary : colors.textPrimary, fontWeight: isSel ? '700' : '500' }]}>
-                        {role}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Emergency Contact Details Section */}
-              <View style={{ marginTop: 18, marginBottom: 4 }}>
-                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontSize: 14, fontWeight: '800', marginBottom: 2 }]}>
+              {/* Emergency Contact Details Section (Above Signatory Designation) */}
+              <View style={{ marginTop: 20, marginBottom: 4 }}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontSize: 16, fontWeight: '800', marginBottom: 3 }]}>
                   Emergency Contact Details
                 </Text>
-                <Text style={[styles.secDesc, { color: colors.textSecondary, marginBottom: 10 }]}>
+                <Text style={[styles.secDesc, { color: colors.textSecondary, fontSize: 12.5, marginBottom: 12 }]}>
                   Primary contact for operations, emergency escalations & store queries.
                 </Text>
               </View>
@@ -981,6 +1055,33 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 autoCapitalize="none"
                 placeholder="emergency@store.com"
               />
+
+              {/* Signatory Designation */}
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginTop: 14, marginBottom: 8 }]}>
+                Signatory Designation *
+              </Text>
+              <View style={styles.rolePillsRow}>
+                {(['Proprietor', 'Director', 'Managing Partner', 'Authorized Signatory', 'Store Manager', 'Employee'] as const).map((role) => {
+                  const isSel = signatoryRole === role;
+                  return (
+                    <TouchableOpacity
+                      key={role}
+                      onPress={() => setSignatoryRole(role)}
+                      style={[
+                        styles.rolePill,
+                        {
+                          backgroundColor: isSel ? colors.primaryLight : colors.surface,
+                          borderColor: isSel ? colors.primary : colors.borderLight,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.rolePillText, { color: isSel ? colors.primary : colors.textPrimary, fontWeight: isSel ? '700' : '500' }]}>
+                        {role}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           )}
 
@@ -1173,10 +1274,6 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   <Text style={[styles.locAddressSub, { color: colors.textSecondary }]}>
                     {[line1, area, city, pincode, country].filter(Boolean).join(', ') || 'Address not filled yet in previous step'}
                   </Text>
-                  <View style={styles.locBadgesRow}>
-                    <Badge label="Rider Pickup Hub" variant="success" size="sm" />
-                    <Badge label="Instant 15-Min Delivery Hub" variant="info" size="sm" />
-                  </View>
                 </View>
               </View>
 
@@ -1513,12 +1610,72 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               ) : (
                 /* ================= DIRECT BANK TRANSFER FORM ================= */
                 <View>
-                  <Input label="Account Holder Name *" value={accountHolder} onChangeText={setAccountHolder} placeholder="Enter account holder name" />
-                  <Input label="Bank Name *" value={bankName} onChangeText={setBankName} leftIcon={<Landmark size={18} color={colors.textSecondary} />} placeholder="Enter bank name" />
-                  <Input label="Bank Account Number *" value={accountNumber} onChangeText={setAccountNumber} keyboardType="number-pad" placeholder="Enter bank account number" />
-                  <Input label="Confirm Bank Account Number *" value={confirmAccountNumber} onChangeText={setConfirmAccountNumber} keyboardType="number-pad" placeholder="Re-enter bank account number" />
-                  <Input label="IFSC Code *" value={ifsc} onChangeText={setIfsc} autoCapitalize="characters" placeholder="e.g. HDFC0001234" />
-                  <Input label="Branch Name" value={branchName} onChangeText={setBranchName} placeholder="Enter branch name" />
+                  <Input
+                    label="Bank IFSC Code *"
+                    value={ifsc}
+                    onChangeText={(txt) => {
+                      setIfsc(txt.toUpperCase());
+                      setIfscVerified(false);
+                    }}
+                    autoCapitalize="characters"
+                    maxLength={11}
+                    placeholder="e.g. SBIN0031804 or HDFC0001234"
+                    rightIcon={
+                      verifyingIfsc ? (
+                        <ActivityIndicator size="small" color={colors.primary} />
+                      ) : ifscVerified ? (
+                        <CheckCircle2 size={18} color={colors.success} />
+                      ) : (
+                        <TouchableOpacity onPress={handleVerifyIfsc}>
+                          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Verify</Text>
+                        </TouchableOpacity>
+                      )
+                    }
+                  />
+
+                  {/* Bank Verified Status Badge */}
+                  {ifscVerified && (
+                    <View style={[styles.verifiedUpiBadge, { backgroundColor: isDark ? '#064E3B' : '#ECFDF5', borderColor: isDark ? '#059669' : '#A7F3D0', marginBottom: 12 }]}>
+                      <CheckCircle2 size={14} color="#10B981" />
+                      <Text style={[styles.verifiedUpiText, { color: isDark ? '#6EE7B7' : '#065F46' }]}>
+                        Bank Verified • {bankName} {branchName ? `(${branchName})` : ''}
+                      </Text>
+                    </View>
+                  )}
+
+                  <Input
+                    label="Bank Name *"
+                    value={bankName}
+                    onChangeText={setBankName}
+                    leftIcon={<Landmark size={18} color={colors.textSecondary} />}
+                    placeholder="Bank name auto-filled on verify"
+                  />
+                  <Input
+                    label="Branch Name"
+                    value={branchName}
+                    onChangeText={setBranchName}
+                    placeholder="Branch name auto-filled on verify"
+                  />
+                  <Input
+                    label="Account Holder Name *"
+                    value={accountHolder}
+                    onChangeText={setAccountHolder}
+                    placeholder="As per bank passbook / statement"
+                  />
+                  <Input
+                    label="Bank Account Number *"
+                    value={accountNumber}
+                    onChangeText={setAccountNumber}
+                    keyboardType="number-pad"
+                    placeholder="Enter bank account number"
+                  />
+                  <Input
+                    label="Confirm Bank Account Number *"
+                    value={confirmAccountNumber}
+                    onChangeText={setConfirmAccountNumber}
+                    keyboardType="number-pad"
+                    placeholder="Re-enter bank account number"
+                  />
                 </View>
               )}
 
