@@ -18,8 +18,8 @@
     "build:api": "npm run build --workspace=apps/api",
     "test:api": "npm run test --workspace=apps/api",
     "lint:admin": "npm run lint --workspace=apps/admin",
-    "postinstall": "prisma generate --schema=apps/api/prisma/schema.prisma",
-    "prisma:generate": "prisma generate --schema=apps/api/prisma/schema.prisma",
+    "postinstall": "npx --yes prisma generate --schema=apps/api/prisma/schema.prisma || true",
+    "prisma:generate": "npx --yes prisma generate --schema=apps/api/prisma/schema.prisma",
     "prisma:migrate": "npm run prisma:migrate --workspace=packages/database",
     "db:start": "node scripts/postgres-server.js",
     "db:push": "npx prisma db push --schema=apps/api/prisma/schema.prisma",
@@ -27,6 +27,8 @@
     "db:verify": "npm run db:verify --workspace=apps/api"
   },
   "devDependencies": {
+    "prisma": "6.19.3",
+    "@prisma/client": "6.19.3",
     "typescript": "^5.7.3"
   },
   "overrides": {
