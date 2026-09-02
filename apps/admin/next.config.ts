@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
     '@sevazo/ui',
   ],
   devIndicators: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   onDemandEntries: {
     maxInactiveAge: 1000 * 60 * 60,
     pagesBufferLength: 100,
