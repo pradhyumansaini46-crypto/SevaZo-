@@ -44,5 +44,632 @@
       }
     }
   ],
-  "vendors": []
+  "vendors": [
+    {
+      "id": "7a19d08a-dfd4-43f6-b6ee-617632041a75",
+      "storeName": "LOWCARS",
+      "ownerName": "Edvah Zzhv",
+      "email": "zhshzhs@gmail.com",
+      "phone": "7232092927",
+      "logo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/AAFCF674-4AA0-4040-9716-C47460DE7220.png",
+      "banner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/2D0857B5-0C2E-40D7-81D7-8829D5FB19DA.jpg",
+      "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/A451FA90-4244-419D-A0D2-39E58153294C.png",
+      "status": "pending",
+      "approvalStatus": "pending",
+      "category": "General Store",
+      "businessType": "GROCERY_STORE",
+      "legalEntityType": "PROPRIETORSHIP",
+      "panNumber": "KIUOS8236B",
+      "gstin": "SVSHJSB26263HSH",
+      "fssaiNumber": "",
+      "address": {
+        "line1": "Adarsh Colony",
+        "area": "Adarsh Colony",
+        "city": "Chirawa",
+        "state": "Rajasthan",
+        "pincode": "333026",
+        "latitude": 28.240032043896434,
+        "longitude": 75.66246898206288
+      },
+      "shopPhotos": [],
+      "productsCount": 0,
+      "ordersCount": 0,
+      "rating": 5,
+      "commissionRate": 10,
+      "totalRevenue": 0,
+      "documents": [
+        {
+          "id": "doc-1788281351262-pan",
+          "type": "pan",
+          "number": "KIUOS8236B",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/6E43C207-F921-47C7-BB50-1EA2AD640B56.pdf",
+          "verified": true
+        },
+        {
+          "id": "doc-1788281351262-gst",
+          "type": "gst",
+          "number": "SVSHJSB26263HSH",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/A8760317-DF8B-4407-8D6A-3FFDA9EBDA9C.pdf",
+          "verified": true
+        },
+        {
+          "id": "doc-1788281351262-fssai",
+          "type": "fssai",
+          "number": "SUBMITTED",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/D004692E-86B5-4E4D-AB11-EC93DA4836A2.jpg",
+          "verified": true
+        },
+        {
+          "id": "doc-1788281351262-cheque",
+          "type": "cheque",
+          "number": "ACC-2505",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/D0EBE230-C641-477F-8416-36EDA2CF1304.pdf",
+          "verified": true
+        }
+      ],
+      "schedules": [
+        {
+          "dayOfWeek": "MONDAY",
+          "label": "Monday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "TUESDAY",
+          "label": "Tuesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "WEDNESDAY",
+          "label": "Wednesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "THURSDAY",
+          "label": "Thursday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "FRIDAY",
+          "label": "Friday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SATURDAY",
+          "label": "Saturday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SUNDAY",
+          "label": "Sunday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        }
+      ],
+      "banking": {
+        "payoutPreference": "BANK_ACCOUNT",
+        "bankName": "BOB",
+        "branchName": "Chirawa",
+        "accountNumber": "10270100032505",
+        "maskedAccountNumber": "XXXX XXXX 2505",
+        "ifsc": "BARB0CHIRWA",
+        "accountHolder": "LOWCARSPVT LTD",
+        "accountType": "CURRENT",
+        "upiId": "",
+        "upiVerifiedName": null
+      },
+      "consent": {
+        "signatoryRole": "Proprietor",
+        "signatoryName": "Edvah Zzhv",
+        "escalationContactName": "Shshsh",
+        "escalationContactPhone": "7875454578",
+        "escalationContactEmail": "shzhzhzb@gmail.com",
+        "taxComplianceType": "Regular GST Registered",
+        "agreeAccurateInfo": true,
+        "agreeVendorTerms": true,
+        "agreePrivacyPolicy": true,
+        "agreeSupplyAgreement": true,
+        "agreeVerifyAuth": true,
+        "consentedAt": "2026-09-01T16:49:11.263Z",
+        "agreementVersion": "v2.4"
+      },
+      "submittedAt": "2026-09-01T16:49:10.613Z",
+      "updatedAt": "2026-09-01T16:49:10.613Z",
+      "draftData": {
+        "vendorId": "vnd-092927",
+        "businessType": "GROCERY_STORE",
+        "businessCategory": "",
+        "firstName": "Edvah",
+        "lastName": "Zzhv",
+        "ownerName": "Edvah Zzhv",
+        "email": "zhshzhs@gmail.com",
+        "phone": "7232092927",
+        "dateOfBirth": "09-09-2000",
+        "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/A451FA90-4244-419D-A0D2-39E58153294C.png",
+        "businessName": "LOWCARS PVT LTD",
+        "legalEntityType": "PROPRIETORSHIP",
+        "panNumber": "KIUOS8236B",
+        "gstin": "SVSHJSB26263HSH",
+        "fssaiNumber": "",
+        "address": {
+          "line1": "Adarsh Colony",
+          "area": "Adarsh Colony",
+          "city": "Chirawa",
+          "state": "Rajasthan",
+          "pincode": "333026",
+          "latitude": 28.240032043896434,
+          "longitude": 75.66246898206288
+        },
+        "shopPhotos": [],
+        "documentsList": [
+          {
+            "id": "doc-1788281351262-pan",
+            "type": "pan",
+            "name": "OBC-Certificate.pdf",
+            "documentNumber": "KIUOS8236B",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/6E43C207-F921-47C7-BB50-1EA2AD640B56.pdf",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788281351262-gst",
+            "type": "gst",
+            "name": "OBC-Certificate.pdf",
+            "documentNumber": "SVSHJSB26263HSH",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/A8760317-DF8B-4407-8D6A-3FFDA9EBDA9C.pdf",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788281351262-fssai",
+            "type": "fssai",
+            "name": "7316.jpg",
+            "documentNumber": "SUBMITTED",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/D004692E-86B5-4E4D-AB11-EC93DA4836A2.jpg",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788281351262-cheque",
+            "type": "cheque",
+            "name": "OBC-Certificate.pdf",
+            "documentNumber": "ACC-2505",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/D0EBE230-C641-477F-8416-36EDA2CF1304.pdf",
+            "status": "UPLOADED",
+            "verified": true
+          }
+        ],
+        "storeDisplayName": "LOWCARS",
+        "storeDesc": "Self driving rental car",
+        "storePhone": "7232092927",
+        "storeEmail": "zhshzhs@gmail.com",
+        "storeBanner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/2D0857B5-0C2E-40D7-81D7-8829D5FB19DA.jpg",
+        "storeLogo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/AAFCF674-4AA0-4040-9716-C47460DE7220.png",
+        "schedules": [
+          {
+            "dayOfWeek": "MONDAY",
+            "label": "Monday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "TUESDAY",
+            "label": "Tuesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "WEDNESDAY",
+            "label": "Wednesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "THURSDAY",
+            "label": "Thursday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "FRIDAY",
+            "label": "Friday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SATURDAY",
+            "label": "Saturday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SUNDAY",
+            "label": "Sunday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          }
+        ],
+        "banking": {
+          "payoutPreference": "BANK_ACCOUNT",
+          "bankName": "BOB",
+          "branchName": "Chirawa",
+          "accountNumber": "10270100032505",
+          "maskedAccountNumber": "XXXX XXXX 2505",
+          "ifsc": "BARB0CHIRWA",
+          "accountHolder": "LOWCARSPVT LTD",
+          "accountType": "CURRENT",
+          "upiId": "",
+          "upiVerifiedName": null
+        },
+        "consent": {
+          "signatoryRole": "Proprietor",
+          "signatoryName": "Edvah Zzhv",
+          "escalationContactName": "Shshsh",
+          "escalationContactPhone": "7875454578",
+          "escalationContactEmail": "shzhzhzb@gmail.com",
+          "taxComplianceType": "Regular GST Registered",
+          "agreeAccurateInfo": true,
+          "agreeVendorTerms": true,
+          "agreePrivacyPolicy": true,
+          "agreeSupplyAgreement": true,
+          "agreeVerifyAuth": true,
+          "consentedAt": "2026-09-01T16:49:11.263Z",
+          "agreementVersion": "v2.4"
+        },
+        "agreementVersion": "v2.4",
+        "finalSubmittedAt": "2026-09-01T16:49:11.263Z"
+      }
+    },
+    {
+      "id": "3b386a5f-2520-4498-9c08-0d93188efcc2",
+      "storeName": "Rajshree grocery",
+      "ownerName": "Zvzjjz Sbzj",
+      "email": "xhxhsjhs@gmail.com",
+      "phone": "8678484546",
+      "logo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/5F6F21E3-5309-4BC1-94A4-5468E5B3FF81.png",
+      "banner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/D3D57467-1D42-4CC4-826D-B342E69C5E1B.png",
+      "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/B0DD34EB-B7C4-4E5B-ABD9-F333C32C40E7.png",
+      "status": "pending",
+      "approvalStatus": "pending",
+      "category": "Grocery Store",
+      "businessType": "GROCERY_STORE",
+      "legalEntityType": "PROPRIETORSHIP",
+      "panNumber": "KIUPS8236N",
+      "gstin": "26273SHSHDVSJ",
+      "fssaiNumber": "",
+      "address": {
+        "line1": "Adarsh Colony",
+        "area": "Adarsh Colony",
+        "city": "Chirawa",
+        "state": "Rajasthan",
+        "pincode": "333026",
+        "latitude": 28.24004748222596,
+        "longitude": 75.66247564148617
+      },
+      "shopPhotos": [
+        "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/A03C6C5A-89A2-4AF2-B3EA-447D7500D1F4.png",
+        "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/91E71CB7-EB00-497C-8CE8-5F033A55CB96.png",
+        "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/24275ADF-286D-422C-98BB-2F97574C84C8.jpg",
+        "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/6365B960-5DBA-4CD1-87CD-8D9B1CF12A54.png"
+      ],
+      "productsCount": 0,
+      "ordersCount": 0,
+      "rating": 5,
+      "commissionRate": 10,
+      "totalRevenue": 0,
+      "documents": [
+        {
+          "id": "doc-1788279764010-pan",
+          "type": "pan",
+          "number": "KIUPS8236N",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/707024FE-46FC-4A82-8C02-209FEB2B8FD4.jpg",
+          "verified": true
+        },
+        {
+          "id": "doc-1788279764010-gst",
+          "type": "gst",
+          "number": "26273SHSHDVSJ",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/541D7485-9709-495C-9881-5C2AF7CA6BB6.pdf",
+          "verified": true
+        },
+        {
+          "id": "doc-1788279764010-fssai",
+          "type": "fssai",
+          "number": "SUBMITTED",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/D6283E4E-8267-4285-8F1F-2717506BCFBA.png",
+          "verified": true
+        },
+        {
+          "id": "doc-1788279764010-cheque",
+          "type": "cheque",
+          "number": "ACC-2505",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/E1FB431E-E7B6-4A2F-AA28-1388E78B0C94.pdf",
+          "verified": true
+        }
+      ],
+      "schedules": [
+        {
+          "dayOfWeek": "MONDAY",
+          "label": "Monday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "TUESDAY",
+          "label": "Tuesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "WEDNESDAY",
+          "label": "Wednesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "THURSDAY",
+          "label": "Thursday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "FRIDAY",
+          "label": "Friday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SATURDAY",
+          "label": "Saturday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SUNDAY",
+          "label": "Sunday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        }
+      ],
+      "banking": {
+        "payoutPreference": "BANK_ACCOUNT",
+        "bankName": "Bob",
+        "branchName": "Chirawa",
+        "accountNumber": "10270100032505",
+        "maskedAccountNumber": "XXXX XXXX 2505",
+        "ifsc": "BARB0CHIRWA",
+        "accountHolder": "Svshs",
+        "accountType": "CURRENT",
+        "upiId": "",
+        "upiVerifiedName": null
+      },
+      "consent": {
+        "signatoryRole": "Proprietor",
+        "signatoryName": "Zvzjjz Sbzj",
+        "escalationContactName": "Chj",
+        "escalationContactPhone": "7048545484",
+        "escalationContactEmail": "zgzhz@gmail.com",
+        "taxComplianceType": "Regular GST Registered",
+        "agreeAccurateInfo": true,
+        "agreeVendorTerms": true,
+        "agreePrivacyPolicy": true,
+        "agreeSupplyAgreement": true,
+        "agreeVerifyAuth": true,
+        "consentedAt": "2026-09-01T16:22:44.010Z",
+        "agreementVersion": "v2.4"
+      },
+      "submittedAt": "2026-09-01T16:22:48.943Z",
+      "updatedAt": "2026-09-01T16:22:48.943Z",
+      "draftData": {
+        "vendorId": "vnd-484546",
+        "businessType": "GROCERY_STORE",
+        "businessCategory": "Grocery Store",
+        "firstName": "Zvzjjz",
+        "lastName": "Sbzj",
+        "ownerName": "Zvzjjz Sbzj",
+        "email": "xhxhsjhs@gmail.com",
+        "phone": "8678484546",
+        "dateOfBirth": "03042000",
+        "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/B0DD34EB-B7C4-4E5B-ABD9-F333C32C40E7.png",
+        "businessName": "Rajshreee pvt ltd",
+        "legalEntityType": "PROPRIETORSHIP",
+        "panNumber": "KIUPS8236N",
+        "gstin": "26273SHSHDVSJ",
+        "fssaiNumber": "",
+        "address": {
+          "line1": "Adarsh Colony",
+          "area": "Adarsh Colony",
+          "city": "Chirawa",
+          "state": "Rajasthan",
+          "pincode": "333026",
+          "latitude": 28.24004748222596,
+          "longitude": 75.66247564148617
+        },
+        "shopPhotos": [
+          "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/A03C6C5A-89A2-4AF2-B3EA-447D7500D1F4.png",
+          "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/91E71CB7-EB00-497C-8CE8-5F033A55CB96.png",
+          "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/24275ADF-286D-422C-98BB-2F97574C84C8.jpg",
+          "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/6365B960-5DBA-4CD1-87CD-8D9B1CF12A54.png"
+        ],
+        "documentsList": [
+          {
+            "id": "doc-1788279764010-pan",
+            "type": "pan",
+            "name": "7316.jpg",
+            "documentNumber": "KIUPS8236N",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/707024FE-46FC-4A82-8C02-209FEB2B8FD4.jpg",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788279764010-gst",
+            "type": "gst",
+            "name": "OBC-Certificate.pdf",
+            "documentNumber": "26273SHSHDVSJ",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/541D7485-9709-495C-9881-5C2AF7CA6BB6.pdf",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788279764010-fssai",
+            "type": "fssai",
+            "name": "IMG_9285.png",
+            "documentNumber": "SUBMITTED",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/D6283E4E-8267-4285-8F1F-2717506BCFBA.png",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788279764010-cheque",
+            "type": "cheque",
+            "name": "OBC-Certificate.pdf",
+            "documentNumber": "ACC-2505",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/E1FB431E-E7B6-4A2F-AA28-1388E78B0C94.pdf",
+            "status": "UPLOADED",
+            "verified": true
+          }
+        ],
+        "storeDisplayName": "Rajshree grocery",
+        "storeDesc": "Shshsh",
+        "storePhone": "8678484546",
+        "storeEmail": "xhxhsjhs@gmail.com",
+        "storeBanner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/D3D57467-1D42-4CC4-826D-B342E69C5E1B.png",
+        "storeLogo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/5F6F21E3-5309-4BC1-94A4-5468E5B3FF81.png",
+        "schedules": [
+          {
+            "dayOfWeek": "MONDAY",
+            "label": "Monday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "TUESDAY",
+            "label": "Tuesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "WEDNESDAY",
+            "label": "Wednesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "THURSDAY",
+            "label": "Thursday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "FRIDAY",
+            "label": "Friday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SATURDAY",
+            "label": "Saturday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SUNDAY",
+            "label": "Sunday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          }
+        ],
+        "banking": {
+          "payoutPreference": "BANK_ACCOUNT",
+          "bankName": "Bob",
+          "branchName": "Chirawa",
+          "accountNumber": "10270100032505",
+          "maskedAccountNumber": "XXXX XXXX 2505",
+          "ifsc": "BARB0CHIRWA",
+          "accountHolder": "Svshs",
+          "accountType": "CURRENT",
+          "upiId": "",
+          "upiVerifiedName": null
+        },
+        "consent": {
+          "signatoryRole": "Proprietor",
+          "signatoryName": "Zvzjjz Sbzj",
+          "escalationContactName": "Chj",
+          "escalationContactPhone": "7048545484",
+          "escalationContactEmail": "zgzhz@gmail.com",
+          "taxComplianceType": "Regular GST Registered",
+          "agreeAccurateInfo": true,
+          "agreeVendorTerms": true,
+          "agreePrivacyPolicy": true,
+          "agreeSupplyAgreement": true,
+          "agreeVerifyAuth": true,
+          "consentedAt": "2026-09-01T16:22:44.010Z",
+          "agreementVersion": "v2.4"
+        },
+        "agreementVersion": "v2.4",
+        "finalSubmittedAt": "2026-09-01T16:22:44.010Z"
+      }
+    }
+  ]
 }
