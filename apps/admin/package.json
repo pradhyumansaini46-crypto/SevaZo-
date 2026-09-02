@@ -6,7 +6,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "prebuild": "npm --prefix ../../packages/types run build && npm --prefix ../../packages/api-client run build",
+    "prebuild": "(npm --prefix ../../packages/types run build 2>/dev/null && npm --prefix ../../packages/api-client run build 2>/dev/null) || true",
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",

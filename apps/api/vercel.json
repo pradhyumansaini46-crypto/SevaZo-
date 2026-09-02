@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "prisma generate && nest build",
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/src/main.js"
+    }
+  ]
+}

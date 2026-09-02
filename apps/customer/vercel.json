@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "installCommand": "npm install --legacy-peer-deps --no-workspaces",
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
