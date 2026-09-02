@@ -120,12 +120,12 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
       let response: any;
       if (isRegister && email) {
         response = await VendorApi.verifyRegisterOtp({
-          phone,
+          phone: phone || '9876543210',
           email,
           otp: enteredOtp,
         });
       } else {
-        response = await VendorApi.verifyOtp(phone, enteredOtp);
+        response = await VendorApi.verifyOtp(email || phone, enteredOtp);
       }
 
       const accessToken = response.accessToken || response.token;

@@ -46,6 +46,318 @@
   ],
   "vendors": [
     {
+      "id": "68587a41-cf78-4714-a121-6c17342bdd39",
+      "storeName": "Hshzvv",
+      "ownerName": "Nsjzvzb Bdnd",
+      "email": "bsjsjzb@gmail.com",
+      "phone": "8787879797",
+      "logo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/27242289-E91B-4476-866F-551E810246D9.jpg",
+      "banner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/BA47CB62-4732-49FE-A6A8-A71BDFECA3AF.png",
+      "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/B9D96B04-7F38-440A-BB91-76CF5E5FBC56.png",
+      "status": "pending",
+      "approvalStatus": "pending",
+      "category": "Pharmacy",
+      "businessType": "PHARMACY",
+      "legalEntityType": "PROPRIETORSHIP",
+      "panNumber": "KIUOS7362A",
+      "gstin": "",
+      "fssaiNumber": "",
+      "address": {
+        "line1": "Adarsh Colony",
+        "area": "Adarsh Colony",
+        "city": "Chirawa",
+        "state": "Rajasthan",
+        "pincode": "333026",
+        "latitude": 28.240038093879882,
+        "longitude": 75.66247166387993
+      },
+      "shopPhotos": [],
+      "productsCount": 0,
+      "ordersCount": 0,
+      "rating": 5,
+      "commissionRate": 10,
+      "totalRevenue": 0,
+      "documents": [
+        {
+          "id": "doc-1788366843038-pan",
+          "type": "pan",
+          "number": "KIUOS7362A",
+          "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/B77BFD9D-8F02-4533-9CEA-05BFF910280F.jpg",
+          "verified": true
+        },
+        {
+          "id": "doc-1788366843038-gst",
+          "type": "gst",
+          "number": "SUBMITTED",
+          "fileUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=900",
+          "verified": false
+        },
+        {
+          "id": "doc-1788366843038-fssai",
+          "type": "fssai",
+          "number": "SUBMITTED",
+          "fileUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=900",
+          "verified": false
+        },
+        {
+          "id": "doc-1788366843038-cheque",
+          "type": "cheque",
+          "number": "ACC-2505",
+          "fileUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=900",
+          "verified": false
+        }
+      ],
+      "schedules": [
+        {
+          "dayOfWeek": "MONDAY",
+          "label": "Monday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "TUESDAY",
+          "label": "Tuesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "WEDNESDAY",
+          "label": "Wednesday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "THURSDAY",
+          "label": "Thursday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "FRIDAY",
+          "label": "Friday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SATURDAY",
+          "label": "Saturday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        },
+        {
+          "dayOfWeek": "SUNDAY",
+          "label": "Sunday",
+          "isOpen": true,
+          "is24Hours": false,
+          "openTime": "09:00",
+          "closeTime": "22:00"
+        }
+      ],
+      "banking": {
+        "payoutPreference": "BANK_ACCOUNT",
+        "bankName": "Bank of Baroda",
+        "branchName": "CHIRAWA, DIST JHUNJHUNU, JHUNJHUNU",
+        "accountNumber": "10270100032505",
+        "maskedAccountNumber": "XXXX XXXX 2505",
+        "ifsc": "BARB0CHIRWA",
+        "accountHolder": "Bsbzvb",
+        "accountType": "CURRENT",
+        "upiId": "",
+        "upiVerifiedName": null
+      },
+      "consent": {
+        "signatoryRole": "Proprietor",
+        "signatoryName": "Nsjzvzb Bdnd",
+        "escalationContactName": "Hdjsjb",
+        "escalationContactPhone": "8707079797",
+        "escalationContactEmail": "hzjxbx@gmail.com",
+        "taxComplianceType": "Regular GST Registered",
+        "agreeAccurateInfo": true,
+        "agreeVendorTerms": true,
+        "agreePrivacyPolicy": true,
+        "agreeSupplyAgreement": true,
+        "agreeVerifyAuth": true,
+        "consentedAt": "2026-09-02T16:34:03.038Z",
+        "agreementVersion": "v2.4"
+      },
+      "submittedAt": "2026-09-02T16:34:11.135Z",
+      "updatedAt": "2026-09-02T16:34:11.135Z",
+      "draftData": {
+        "applicationId": "SVZ-VND-462009",
+        "vendorId": "vnd-879797",
+        "businessType": "PHARMACY",
+        "businessCategory": "Pharmacy",
+        "firstName": "Nsjzvzb",
+        "lastName": "Bdnd",
+        "ownerName": "Nsjzvzb Bdnd",
+        "email": "bsjsjzb@gmail.com",
+        "phone": "8787879797",
+        "dateOfBirth": "04042000",
+        "profilePhoto": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/B9D96B04-7F38-440A-BB91-76CF5E5FBC56.png",
+        "businessName": "Hzvahab",
+        "legalEntityType": "PROPRIETORSHIP",
+        "panNumber": "KIUOS7362A",
+        "gstin": "",
+        "fssaiNumber": "",
+        "address": {
+          "line1": "Adarsh Colony",
+          "area": "Adarsh Colony",
+          "city": "Chirawa",
+          "state": "Rajasthan",
+          "pincode": "333026",
+          "latitude": 28.240038093879882,
+          "longitude": 75.66247166387993
+        },
+        "shopPhotos": [],
+        "documentsList": [
+          {
+            "id": "doc-1788366843038-pan",
+            "type": "pan",
+            "name": "7316.jpg",
+            "documentNumber": "KIUOS7362A",
+            "fileUrl": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/DocumentPicker/B77BFD9D-8F02-4533-9CEA-05BFF910280F.jpg",
+            "status": "UPLOADED",
+            "verified": true
+          },
+          {
+            "id": "doc-1788366843038-gst",
+            "type": "gst",
+            "name": "gst_doc.pdf",
+            "documentNumber": "SUBMITTED",
+            "fileUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=900",
+            "status": "PENDING",
+            "verified": false
+          },
+          {
+            "id": "doc-1788366843038-fssai",
+            "type": "fssai",
+            "name": "fssai_doc.pdf",
+            "documentNumber": "SUBMITTED",
+            "fileUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=900",
+            "status": "PENDING",
+            "verified": false
+          },
+          {
+            "id": "doc-1788366843038-cheque",
+            "type": "cheque",
+            "name": "cheque_doc.pdf",
+            "documentNumber": "ACC-2505",
+            "fileUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=900",
+            "status": "PENDING",
+            "verified": false
+          }
+        ],
+        "storeDisplayName": "Hshzvv",
+        "storeDesc": "Hsbsbsb shzishsjs shsjsjbs",
+        "storePhone": "8787879797",
+        "storeEmail": "bsjsjzb@gmail.com",
+        "storeBanner": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/BA47CB62-4732-49FE-A6A8-A71BDFECA3AF.png",
+        "storeLogo": "file:///var/mobile/Containers/Data/Application/F72F3897-9D98-41E9-97D1-63BA47B469D0/Library/Caches/ExponentExperienceData/@anonymous/sevazo-vendor-8546a5e7-e6f9-4a6c-be9c-55e857ec2da1/ImagePicker/27242289-E91B-4476-866F-551E810246D9.jpg",
+        "schedules": [
+          {
+            "dayOfWeek": "MONDAY",
+            "label": "Monday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "TUESDAY",
+            "label": "Tuesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "WEDNESDAY",
+            "label": "Wednesday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "THURSDAY",
+            "label": "Thursday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "FRIDAY",
+            "label": "Friday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SATURDAY",
+            "label": "Saturday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          },
+          {
+            "dayOfWeek": "SUNDAY",
+            "label": "Sunday",
+            "isOpen": true,
+            "is24Hours": false,
+            "openTime": "09:00",
+            "closeTime": "22:00"
+          }
+        ],
+        "banking": {
+          "payoutPreference": "BANK_ACCOUNT",
+          "bankName": "Bank of Baroda",
+          "branchName": "CHIRAWA, DIST JHUNJHUNU, JHUNJHUNU",
+          "accountNumber": "10270100032505",
+          "maskedAccountNumber": "XXXX XXXX 2505",
+          "ifsc": "BARB0CHIRWA",
+          "accountHolder": "Bsbzvb",
+          "accountType": "CURRENT",
+          "upiId": "",
+          "upiVerifiedName": null
+        },
+        "consent": {
+          "signatoryRole": "Proprietor",
+          "signatoryName": "Nsjzvzb Bdnd",
+          "escalationContactName": "Hdjsjb",
+          "escalationContactPhone": "8707079797",
+          "escalationContactEmail": "hzjxbx@gmail.com",
+          "taxComplianceType": "Regular GST Registered",
+          "agreeAccurateInfo": true,
+          "agreeVendorTerms": true,
+          "agreePrivacyPolicy": true,
+          "agreeSupplyAgreement": true,
+          "agreeVerifyAuth": true,
+          "consentedAt": "2026-09-02T16:34:03.038Z",
+          "agreementVersion": "v2.4"
+        },
+        "status": "pending_admin_approval",
+        "approvalStatus": "pending",
+        "isEmailVerified": true,
+        "agreementVersion": "v2.4",
+        "finalSubmittedAt": "2026-09-02T16:34:03.038Z"
+      }
+    },
+    {
       "id": "7a19d08a-dfd4-43f6-b6ee-617632041a75",
       "storeName": "LOWCARS",
       "ownerName": "Edvah Zzhv",

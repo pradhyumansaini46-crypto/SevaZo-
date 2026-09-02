@@ -114,7 +114,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
             <View style={styles.valueTextContainer}>
               <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>EASY PAYOUT</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
-                Next-day direct bank transfers & automated settlements.
+                Experience hassle-free settlements and secure bank transfers.
               </Text>
             </View>
           </View>

@@ -273,6 +273,19 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
     setShopPhotos((prev) => prev.filter((_, idx) => idx !== index));
   };
 
+  const handleDobChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (digits.length <= 2) {
+      formatted = digits;
+    } else if (digits.length <= 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    } else {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+    }
+    setDateOfBirth(formatted);
+  };
+
   // STEP 3: Dynamic Business Information
   const [businessName, setBusinessName] = useState(isMockBusiness ? '' : vendor?.businessName || '');
   const [displayName, setDisplayName] = useState(isMockBusiness ? '' : vendor?.displayName || '');
@@ -1084,7 +1097,16 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               </View>
               <Input label="Registered Mobile Number *" value={vendor?.phone || ''} editable={false} leftIcon={<Badge label="Verified Mobile" variant="success" size="sm" />} placeholder="Enter mobile number" />
               <Input label="Official Email Address *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="Enter email address" />
-              <Input label="Date of Birth (DOB) *" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="DD/MM/YYYY" leftIcon={<Calendar size={18} color={colors.textSecondary} />} />
+              <Input
+                label="Date of Birth (DOB) *"
+                value={dateOfBirth}
+                onChangeText={handleDobChange}
+                placeholder="DD / MM / YYYY"
+                keyboardType="number-pad"
+                maxLength={10}
+                helperText="Format: DD/MM/YYYY (e.g. 15/08/1990)"
+                leftIcon={<Calendar size={18} color={colors.textSecondary} />}
+              />
 
               {/* Emergency Contact Details Section (Above Signatory Designation) */}
               <View style={{ marginTop: 20, marginBottom: 4 }}>
@@ -1244,7 +1266,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               </View>
               <View style={styles.twoColRow}>
                 <View style={{ flex: 1, marginRight: 8 }}><Input label="State *" value={state} onChangeText={setState} placeholder="Enter your state" /></View>
-                <View style={{ flex: 1, marginLeft: 8 }}><Input label="Country *" value="India" editable={false} /></View>
+                <View style={{ flex: 1, marginLeft: 8 }}><Input label="Country *" value="🇮🇳 India" editable={false} helperText="Operations in India" /></View>
               </View>
             </View>
           )}
@@ -2065,12 +2087,12 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                         Action Required: Verify your SevaZo Vendor Application
                       </Text>
                       <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                        Hi {firstName || 'Merchant'}, click below to verify your email and forward your application directly to the SevaZo Admin verification desk.
+                        Hi {firstName || 'Merchant'}, click below to verify your registered email ({email || vendor?.email || 'your email'}) and receive your official SevaZo Application ID.
                       </Text>
                     </View>
 
                     <Button
-                      title="Verify Email Now"
+                      title="Verify Email & Get Application ID"
                       variant="primary"
                       size="md"
                       fullWidth

@@ -37,13 +37,15 @@ export const VendorApi = {
     }
   },
 
-  async verifyOtp(phone: string, otp: string): Promise<{ accessToken: string; refreshToken?: string; vendor: VendorUser; status?: string; nextAction?: string }> {
+  async verifyOtp(target: string, otp: string): Promise<{ accessToken: string; refreshToken?: string; vendor: VendorUser; status?: string; nextAction?: string }> {
     try {
-      const res: any = await apiClient.post('/vendor/auth/verify-otp', { phone, otp });
+      const isEmail = target.includes('@');
+      const res: any = await apiClient.post('/vendor/auth/verify-otp', isEmail ? { email: target, otp } : { phone: target, otp });
       return res;
     } catch {
       let fallbackVendor: any = null;
-      const clean10 = phone.replace(/\D/g, '').slice(-10);
+      const isEmail = target.includes('@');
+      const clean10 = target.replace(/\D/g, '').slice(-10);
 
       // Query Admin live sync on multiple host candidates
       const adminHosts = [
@@ -58,7 +60,9 @@ export const VendorApi = {
           const adminJson = await adminRes.json();
           if (adminJson?.data && Array.isArray(adminJson.data)) {
             const match = adminJson.data.find(
-              (v: any) => (v.phone || '').replace(/\D/g, '').slice(-10) === clean10,
+              (v: any) =>
+                (isEmail && v.email && v.email.toLowerCase().trim() === target.toLowerCase().trim()) ||
+                (!isEmail && (v.phone || '').replace(/\D/g, '').slice(-10) === clean10),
             );
             if (match) {
               fallbackVendor = match;
@@ -85,7 +89,8 @@ export const VendorApi = {
       const resolvedVendor = {
         ...localVendor,
         ...(fallbackVendor || {}),
-        phone: fallbackVendor?.phone || phone,
+        phone: fallbackVendor?.phone || (!isEmail ? target : localVendor.phone || '9876543210'),
+        email: fallbackVendor?.email || (isEmail ? target : localVendor.email || ''),
         status: status as any,
         approvalStatus: isApproved ? 'APPROVED' : isSubmitted ? 'PENDING' : 'PENDING',
       };
@@ -105,7 +110,7 @@ export const VendorApi = {
     try {
       return await apiClient.post('/vendor/auth/register-otp', payload);
     } catch {
-      return { success: true, message: `Registration OTP 123456 sent to ${payload.phone}` };
+      return { success: true, message: `Registration OTP 123456 sent to ${payload.email || payload.phone}` };
     }
   },
 
@@ -114,13 +119,29 @@ export const VendorApi = {
       const res: any = await apiClient.post('/vendor/auth/verify-register-otp', payload);
       return res;
     } catch {
-      localVendor = { ...localVendor, phone: payload.phone, email: payload.email, status: 'DRAFT' };
+      const clean10 = payload.phone.replace(/\D/g, '').slice(-10);
+      const isApproved = false;
+      const isSubmitted = false;
+
+      const status = 'DRAFT';
+      const nextAction = 'CONTINUE_ONBOARDING';
+
+      const resolvedVendor = {
+        ...localVendor,
+        phone: payload.phone,
+        email: payload.email,
+        status: status as any,
+        approvalStatus: 'PENDING' as any,
+        currentOnboardingStep: 1,
+      };
+      localVendor = resolvedVendor;
+
       return {
-        accessToken: 'mock-jwt-token-vnd-001',
-        refreshToken: 'mock-refresh-token-vnd-001',
-        vendor: localVendor,
-        status: 'DRAFT',
-        nextAction: 'CONTINUE_ONBOARDING',
+        accessToken: 'mock-jwt-token-vnd-' + (clean10 || 'new'),
+        refreshToken: 'mock-refresh-token-vnd-' + (clean10 || 'new'),
+        vendor: resolvedVendor,
+        status,
+        nextAction,
       };
     }
   },
