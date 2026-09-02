@@ -112,7 +112,7 @@ export const WelcomeScreen = ({ navigation }: any) => {
               <Clock size={20} color="#10B981" />
             </View>
             <View style={styles.valueTextContainer}>
-              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>Daily automated payouts.</Text>
+              <Text style={[styles.valueTitle, { color: colors.textPrimary }]}>EASY PAYOUT</Text>
               <Text style={[styles.valueDesc, { color: colors.textSecondary }]}>
                 Next-day direct bank transfers & automated settlements.
               </Text>

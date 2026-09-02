@@ -202,10 +202,12 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
             <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED', borderColor: '#FF6600' }]}>
               <ShieldCheck size={32} color="#FF6600" />
             </View>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Verify OTP</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Gmail OTP</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Enter the 6-digit code sent to{' '}
-              <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{formatPhone(phone)}</Text>
+              Enter the 6-digit code sent from Support@sevazo.in to{' '}
+              <Text style={{ fontWeight: '700', color: colors.textPrimary }}>
+                {email ? email : formatPhone(phone)}
+              </Text>
             </Text>
           </View>
 

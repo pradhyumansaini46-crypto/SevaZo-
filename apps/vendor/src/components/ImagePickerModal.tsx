@@ -177,7 +177,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
   const doLaunchDocumentPicker = async () => {
     if (Platform.OS === 'web') {
-      triggerWebFileInput('application/pdf,image/*,.pdf,.jpg,.jpeg,.png');
+      triggerWebFileInput('application/pdf,image/jpeg,image/jpg,image/png,.pdf,.jpg,.jpeg,.png');
       return;
     }
 
@@ -185,7 +185,7 @@ export const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
       const DocumentPicker = await import('expo-document-picker').catch(() => null);
       if (DocumentPicker && DocumentPicker.getDocumentAsync) {
         const result = await DocumentPicker.getDocumentAsync({
-          type: ['application/pdf', 'image/*'],
+          type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'],
           copyToCacheDirectory: true,
         });
 

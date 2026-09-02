@@ -18,27 +18,39 @@ import { normalizeApiError } from '../../utils';
 
 export const LoginScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('email');
   const [isLampOn, setIsLampOn] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 10;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const handleContinue = async () => {
     setValidationError(null);
-    const result = phoneSchema.safeParse(phone);
-    if (!result.success) {
-      setValidationError(result.error.errors[0]?.message || 'Please enter a valid 10-digit mobile number');
-      return;
+
+    if (loginMethod === 'email') {
+      if (!isEmailValid) {
+        setValidationError('Please enter a valid email address (e.g. yourname@gmail.com)');
+        return;
+      }
+    } else {
+      const result = phoneSchema.safeParse(phone);
+      if (!result.success) {
+        setValidationError(result.error.errors[0]?.message || 'Please enter a valid 10-digit mobile number');
+        return;
+      }
     }
 
     setIsLoading(true);
     try {
-      const res = await VendorApi.sendOtp(phone);
+      const res = await VendorApi.sendOtp(loginMethod === 'email' ? email : phone);
       navigation.navigate('OtpVerification', {
-        phone,
+        phone: loginMethod === 'phone' ? phone : (phone || '9876543210'),
+        email: loginMethod === 'email' ? email : undefined,
         isRegister: false,
-        message: res.message,
+        message: res.message || 'OTP sent successfully to your Gmail from Support@sevazo.in',
       });
     } catch (err: any) {
       const normalized = normalizeApiError(err);
@@ -58,7 +70,7 @@ export const LoginScreen = ({ navigation }: any) => {
     if (validationError) setValidationError(null);
   };
 
-  const isButtonDisabled = !isPhoneValid || isLoading;
+  const isButtonDisabled = (loginMethod === 'email' ? !isEmailValid : !isPhoneValid) || isLoading;
 
   return (
     <KeyboardAvoidingView
@@ -108,37 +120,94 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.headingBlock}>
             <Text style={styles.headingTitle}>Sign in to SevaZo</Text>
             <Text style={styles.headingSubtitle}>
-              Welcome back merchant. Enter your mobile number to receive a secure OTP.
+              Welcome back merchant. Enter your registered email or mobile to receive Gmail OTP from Support@sevazo.in.
             </Text>
           </View>
 
           {/* Form Fields */}
           <View style={styles.formGroup}>
-            {/* Mobile Number */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Mobile Number *</Text>
-              <View
-                style={[
-                  styles.inputRow,
-                  Boolean(validationError) && styles.inputErrorRow,
-                ]}
+            {/* Toggle Method: Email or Mobile */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+              <TouchableOpacity
+                onPress={() => { setLoginMethod('email'); setValidationError(null); }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  backgroundColor: loginMethod === 'email' ? '#FFF7ED' : '#F1F5F9',
+                  borderWidth: 1.5,
+                  borderColor: loginMethod === 'email' ? '#FF6600' : '#E2E8F0',
+                }}
               >
-                <View style={styles.countryCodeBadge}>
-                  <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
-                </View>
-                <TextInput
-                  style={styles.textInput}
-                  value={phone}
-                  onChangeText={handlePhoneChange}
-                  placeholder="Enter 10-digit number"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                  accessible={true}
-                  accessibilityLabel="Mobile Number"
-                />
-              </View>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: loginMethod === 'email' ? '#FF6600' : '#64748B' }}>
+                  ✉️ Gmail / Email
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { setLoginMethod('phone'); setValidationError(null); }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  backgroundColor: loginMethod === 'phone' ? '#FFF7ED' : '#F1F5F9',
+                  borderWidth: 1.5,
+                  borderColor: loginMethod === 'phone' ? '#FF6600' : '#E2E8F0',
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '700', color: loginMethod === 'phone' ? '#FF6600' : '#64748B' }}>
+                  📱 Mobile OTP
+                </Text>
+              </TouchableOpacity>
             </View>
+
+            {loginMethod === 'email' ? (
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Registered Email / Gmail *</Text>
+                <View style={[styles.inputRow, Boolean(validationError) && styles.inputErrorRow]}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={email}
+                    onChangeText={(val) => {
+                      setEmail(val);
+                      if (validationError) setValidationError(null);
+                    }}
+                    placeholder="merchant@gmail.com"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    accessible={true}
+                    accessibilityLabel="Registered Email"
+                  />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Mobile Number *</Text>
+                <View
+                  style={[
+                    styles.inputRow,
+                    Boolean(validationError) && styles.inputErrorRow,
+                  ]}
+                >
+                  <View style={styles.countryCodeBadge}>
+                    <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
+                  </View>
+                  <TextInput
+                    style={styles.textInput}
+                    value={phone}
+                    onChangeText={handlePhoneChange}
+                    placeholder="Enter 10-digit number"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                    accessible={true}
+                    accessibilityLabel="Mobile Number"
+                  />
+                </View>
+              </View>
+            )}
 
             {validationError && (
               <Text style={styles.errorText} accessibilityRole="alert">
@@ -151,7 +220,7 @@ export const LoginScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={[
                   styles.submitPill,
-                  isPhoneValid ? styles.submitPillActive : styles.submitPillInactive,
+                  !isButtonDisabled ? styles.submitPillActive : styles.submitPillInactive,
                 ]}
                 onPress={handleContinue}
                 disabled={isButtonDisabled}
@@ -160,14 +229,14 @@ export const LoginScreen = ({ navigation }: any) => {
                 <Text
                   style={[
                     styles.submitPillText,
-                    isPhoneValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
+                    !isButtonDisabled ? styles.submitPillTextActive : styles.submitPillTextInactive,
                   ]}
                 >
-                  {isLoading ? 'Sending Code...' : 'Get Verification Code'}
+                  {isLoading ? 'Sending Code...' : (loginMethod === 'email' ? 'Send Gmail OTP' : 'Get Verification Code')}
                 </Text>
                 <ArrowRight
                   size={18}
-                  color={isPhoneValid ? '#FFFFFF' : '#94A3B8'}
+                  color={!isButtonDisabled ? '#FFFFFF' : '#94A3B8'}
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>

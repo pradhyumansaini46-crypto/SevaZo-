@@ -120,7 +120,7 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.headingBlock}>
             <Text style={styles.headingTitle}>Register Your Business</Text>
             <Text style={styles.headingSubtitle}>
-              Join SevaZo as a verified merchant partner and scale your orders.
+              Join SevaZo as a verified merchant. We verify your business account via a 6-digit Gmail OTP from Support@sevazo.in.
             </Text>
           </View>
 

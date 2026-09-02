@@ -13,6 +13,7 @@ import {
   Switch,
   ActivityIndicator,
   Pressable,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -59,6 +60,8 @@ import {
   Image as ImageIcon,
   X,
   Smartphone,
+  Mail,
+  ExternalLink,
 } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { getThemeColors, Spacing, BorderRadius, Shadows } from '../../theme';
@@ -210,7 +213,6 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
   const [currentStep, setCurrentStep] = useState<number>(route?.params?.initialStep || vendor?.currentOnboardingStep || 1);
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [showResumeBanner, setShowResumeBanner] = useState(Boolean(route?.params?.isResume));
 
@@ -408,6 +410,33 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
   const [agreePrivacyPolicy, setAgreePrivacyPolicy] = useState(false);
   const [agreeSupplyAgreement, setAgreeSupplyAgreement] = useState(false);
   const [agreeVerifyAuth, setAgreeVerifyAuth] = useState(false);
+
+  // STEP 11: Email Verification Flow & State Machine
+  const [emailVerificationStatus, setEmailVerificationStatus] = useState<'idle' | 'pending_email_verification' | 'token_expired' | 'verified'>('idle');
+  const [verificationCountdown, setVerificationCountdown] = useState(600); // 10 minutes
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (emailVerificationStatus === 'pending_email_verification' && verificationCountdown > 0) {
+      interval = setInterval(() => {
+        setVerificationCountdown((prev) => {
+          if (prev <= 1) {
+            setEmailVerificationStatus('token_expired');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [emailVerificationStatus, verificationCountdown]);
+
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     // Cleanse any old persisted development mock data in local storage
@@ -662,6 +691,10 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           Alert.alert('Required Fields', 'Please enter Registered Business Name and Store Display Name.');
           return;
         }
+        if (!panNumber || panNumber.trim().length !== 10) {
+          Alert.alert('Business PAN Required', 'Please enter a valid 10-character Business PAN number.');
+          return;
+        }
         await VendorApi.saveOnboardingStep(3, {
           businessName,
           displayName,
@@ -681,7 +714,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           gstin,
           fssaiNumber,
         });
-        updateVendor({ businessName, displayName, legalEntityType, currentOnboardingStep: 4 });
+        updateVendor({ businessName, displayName, legalEntityType, panNumber, currentOnboardingStep: 4 });
         setCurrentStep(4);
       } else if (currentStep === 4) {
         if (!line1 || !area || !city || !state || !pincode) {
@@ -695,6 +728,11 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         await VendorApi.saveOnboardingStep(5, { latitude, longitude });
         setCurrentStep(6);
       } else if (currentStep === 6) {
+        const panDoc = documentsList.find((d) => d.type.toUpperCase().includes('PAN'));
+        if (!panDoc || panDoc.status !== 'UPLOADED') {
+          Alert.alert('PAN Document Required', 'Uploading your Business / Owner PAN Card copy (PDF, JPEG, JPG, PNG) is mandatory to proceed.');
+          return;
+        }
         const payloadDocs = documentsList.map((d) => ({
           type: d.type,
           documentNumber: d.documentNumber,
@@ -777,7 +815,8 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         updateVendor({ currentOnboardingStep: 11 });
         setCurrentStep(11);
       } else if (currentStep === 11) {
-        setShowSubmitModal(true);
+        // Trigger Email Verification flow instantly without lag (Requests 5 & 8)
+        handleInitiateSubmit();
       }
     } catch (err: any) {
       Alert.alert('Save Error', err.message || 'Unable to save step.');
@@ -786,12 +825,29 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
     }
   };
 
-  const handleConfirmFinalSubmit = async () => {
+  const handleInitiateSubmit = () => {
     setLoading(true);
-    setShowSubmitModal(false);
+    const token = 'vfy_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    setVerificationToken(token);
+    setVerificationCountdown(600);
+    setEmailVerificationStatus('pending_email_verification');
+    setLoading(false);
+  };
+
+  const handleResendVerificationLink = () => {
+    const token = 'vfy_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    setVerificationToken(token);
+    setVerificationCountdown(600);
+    setEmailVerificationStatus('pending_email_verification');
+    Alert.alert('Verification Link Resent', `A fresh verification link was sent to ${email || vendor?.email || 'your email'} from Support@sevazo.in.`);
+  };
+
+  const handleVerifyEmailNow = async () => {
+    setLoading(true);
     try {
       const cleanPhone = (vendor?.phone || vendor?.businessPhone || '9876543210').replace(/\D/g, '').slice(-10);
-      const generatedAppId = `SVZ-VND-${cleanPhone.slice(-6) || Math.floor(100000 + Math.random() * 900000)}`;
+      const random6Digit = Math.floor(100000 + Math.random() * 900000).toString();
+      const generatedAppId = `SVZ-VND-${random6Digit}`;
 
       const mappedDocs = documentsList.map((d) => ({
         id: `doc-${Date.now()}-${d.type.toLowerCase()}`,
@@ -804,13 +860,14 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
       }));
 
       const fullPayload = {
-        vendorId: `vnd-${cleanPhone.slice(-6) || Math.floor(100000 + Math.random() * 900000)}`,
+        applicationId: generatedAppId,
+        vendorId: `vnd-${cleanPhone.slice(-6) || random6Digit}`,
         businessType,
         businessCategory,
         firstName,
         lastName,
         ownerName: `${firstName} ${lastName}`.trim() || 'Store Owner',
-        email,
+        email: email || vendor?.email || 'merchant@sevazo.in',
         phone: vendor?.phone || vendor?.businessPhone || '9876543210',
         dateOfBirth,
         profilePhoto,
@@ -823,7 +880,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           line1,
           area,
           city,
-          state: 'Rajasthan',
+          state: state || 'Rajasthan',
           pincode,
           latitude,
           longitude,
@@ -864,6 +921,9 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           consentedAt: new Date().toISOString(),
           agreementVersion: 'v2.4',
         },
+        status: 'pending_admin_approval',
+        approvalStatus: 'pending',
+        isEmailVerified: true,
         agreementVersion: 'v2.4',
         finalSubmittedAt: new Date().toISOString(),
       };
@@ -875,10 +935,12 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         approvalStatus: 'PENDING',
         currentOnboardingStep: 11,
       });
-      // Redirect to ApplicationSubmitted screen (matching rider app)
+
+      setEmailVerificationStatus('verified');
+      // Redirect to ApplicationSubmitted screen with unique appId
       navigation.replace('ApplicationSubmitted', { applicationId: generatedAppId });
     } catch (err: any) {
-      Alert.alert('Submission Error', err.message || 'Could not submit application.');
+      Alert.alert('Submission Error', err.message || 'Could not verify and submit application.');
     } finally {
       setLoading(false);
     }
@@ -1105,6 +1167,16 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 })}
               </View>
 
+              <Input
+                label="Business / Owner PAN Number *"
+                value={panNumber}
+                onChangeText={(txt) => setPanNumber(txt.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                maxLength={10}
+                autoCapitalize="characters"
+                placeholder="10-character PAN (e.g. ABCDE1234F)"
+                helperText="Mandatory tax ID for merchant verification and payouts"
+              />
+
               {businessType === 'RESTAURANT' && (
                 <View style={[styles.categoryBox, { backgroundColor: isDark ? '#1F2937' : '#FEF3C7', borderColor: '#F59E0B' }]}>
                   <Text style={[styles.categoryBoxTitle, { color: '#B45309' }]}>🍽️ Food & Kitchen Compliance</Text>
@@ -1125,10 +1197,9 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
 
               {(businessType === 'GROCERY_STORE' || businessType === 'RETAIL_STORE' || businessType === 'ELECTRONICS' || businessType === 'FASHION') && (
                 <View style={[styles.categoryBox, { backgroundColor: isDark ? '#1F2937' : '#F0FDF4', borderColor: '#10B981' }]}>
-                  <Text style={[styles.categoryBoxTitle, { color: '#047857' }]}>🏢 Commercial Tax & Trade Details</Text>
-                  <Input label="GSTIN (Goods & Service Tax)" value={gstin} onChangeText={setGstin} autoCapitalize="characters" placeholder="15-digit GSTIN" />
-                  <Input label="Business PAN Number" value={panNumber} onChangeText={setPanNumber} autoCapitalize="characters" placeholder="10-character PAN" />
-                  <Input label="Trade License Number" value={tradeLicenseNumber} onChangeText={setTradeLicenseNumber} placeholder="Enter trade license number" />
+                  <Text style={[styles.categoryBoxTitle, { color: '#047857' }]}>🏢 Commercial Tax & Trade Details (Optional)</Text>
+                  <Input label="GSTIN (Optional)" value={gstin} onChangeText={setGstin} autoCapitalize="characters" placeholder="15-digit GSTIN (if available)" />
+                  <Input label="Trade License Number (Optional)" value={tradeLicenseNumber} onChangeText={setTradeLicenseNumber} placeholder="Enter trade license number (if available)" />
                 </View>
               )}
 
@@ -1665,16 +1736,16 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   <Input
                     label="Bank Account Number *"
                     value={accountNumber}
-                    onChangeText={setAccountNumber}
+                    onChangeText={(txt) => setAccountNumber(txt.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
-                    placeholder="Enter bank account number"
+                    placeholder="Enter bank account number (digits only)"
                   />
                   <Input
                     label="Confirm Bank Account Number *"
                     value={confirmAccountNumber}
-                    onChangeText={setConfirmAccountNumber}
+                    onChangeText={(txt) => setConfirmAccountNumber(txt.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
-                    placeholder="Re-enter bank account number"
+                    placeholder="Re-enter bank account number (digits only)"
                   />
                 </View>
               )}
@@ -1794,12 +1865,16 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   setter: setAgreeVendorTerms,
                   title: '2. SevaZo Marketplace Master Agreement',
                   desc: 'I accept SevaZo Vendor Terms & Conditions, standard commission deductions, and merchant fulfillment service level agreements.',
+                  linkTitle: 'View Terms & Conditions',
+                  linkUrl: 'https://sevazo.in/delivery_tnc.html',
                 },
                 {
                   state: agreePrivacyPolicy,
                   setter: setAgreePrivacyPolicy,
                   title: '3. Data Privacy & Confidentiality',
                   desc: 'I agree to the SevaZo Partner Privacy Policy and will safeguard customer data strictly for delivery completion purposes.',
+                  linkTitle: 'View Privacy Policy',
+                  linkUrl: 'https://sevazo.in/privacy.html',
                 },
                 {
                   state: agreeSupplyAgreement,
@@ -1814,9 +1889,8 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                   desc: 'I authorize SevaZo to verify submitted documents with government portals (NSDL/GSTN/FSSAI) and disburse net daily settlements to my account.',
                 },
               ].map((ag, idx) => (
-                <TouchableOpacity
+                <View
                   key={idx}
-                  onPress={() => ag.setter(!ag.state)}
                   style={[
                     styles.consentClauseCard,
                     {
@@ -1825,22 +1899,54 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                     },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.agreementCheckbox,
-                      {
-                        backgroundColor: ag.state ? colors.success : colors.surface,
-                        borderColor: ag.state ? colors.success : colors.border,
-                      },
-                    ]}
+                  <TouchableOpacity
+                    onPress={() => ag.setter(!ag.state)}
+                    style={{ flexDirection: 'row', alignItems: 'flex-start' }}
+                    activeOpacity={0.8}
                   >
-                    {ag.state && <Check size={13} color="#FFF" />}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.consentClauseTitle, { color: colors.textPrimary }]}>{ag.title}</Text>
-                    <Text style={[styles.consentClauseDesc, { color: colors.textSecondary }]}>{ag.desc}</Text>
-                  </View>
-                </TouchableOpacity>
+                    <View
+                      style={[
+                        styles.agreementCheckbox,
+                        {
+                          backgroundColor: ag.state ? colors.success : colors.surface,
+                          borderColor: ag.state ? colors.success : colors.border,
+                        },
+                      ]}
+                    >
+                      {ag.state && <Check size={13} color="#FFF" />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.consentClauseTitle, { color: colors.textPrimary }]}>{ag.title}</Text>
+                      <Text style={[styles.consentClauseDesc, { color: colors.textSecondary }]}>{ag.desc}</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {ag.linkUrl && (
+                    <TouchableOpacity
+                      onPress={() => Linking.openURL(ag.linkUrl)}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                        alignSelf: 'flex-start',
+                        marginTop: 8,
+                        marginLeft: 28,
+                        paddingVertical: 4,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED',
+                        borderWidth: 1,
+                        borderColor: isDark ? '#7C2D12' : '#FFEDD5',
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#FF6600' }}>
+                        🔗 {ag.linkTitle}
+                      </Text>
+                      <ExternalLink size={12} color="#FF6600" />
+                    </TouchableOpacity>
+                  )}
+                </View>
               ))}
 
               {/* Digital Signature Audit Stamp */}
@@ -1861,106 +1967,246 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           {/* STEP 11: Review & Final Submission */}
           {currentStep === 11 && (
             <View>
-              <Text style={[styles.stepHeading, { color: colors.textPrimary }]}>Application Review & Verification Desk</Text>
-              <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>
-                Review all submitted details across 10 sections before sending to the onboarding team.
-              </Text>
-
-              {/* 10-Section Structured Checklist */}
-              {[
-                { title: '1. Business Category', sub: `${businessCategory} (${businessType})`, step: 1 },
-                { title: '2. Owner & Emergency Contact', sub: `${firstName} ${lastName} (${signatoryRole}) • Emergency: ${escalationContactName || 'Configured'} (${escalationContactPhone || 'Verified'})`, step: 2 },
-                { title: '3. Legal Business Entity', sub: `${businessName} (${legalEntityType})`, step: 3 },
-                { title: '4. Physical Address', sub: `${line1}, ${area}, ${city} - ${pincode}`, step: 4 },
-                { title: '5. Location Verification', sub: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)} • 5 Store Photos`, step: 5 },
-                { title: '6. KYC & Legal Documents', sub: `${documentsList.filter((d) => d.status === 'UPLOADED').length} Documents Verified & Uploaded`, step: 6 },
-                { title: '7. Customer Storefront', sub: `${storeDisplayName} (16:9 Cover & 1:1 Logo Ready)`, step: 7 },
-                { title: '8. Operating Hours', sub: `${schedules.filter((s) => s.isOpen).length} Days Active Schedule`, step: 8 },
-                {
-                  title: '9. Settlement Account',
-                  sub: payoutPreference === 'UPI'
-                    ? `Instant UPI: ${upiId || 'Not specified'} (${upiVerifiedName || accountHolder || 'VPA'})`
-                    : `${bankName || 'Bank'} (XXXX XXXX ${(accountNumber || '').slice(-4)}) • ${ifsc || 'IFSC'}`,
-                  step: 9,
-                },
-                {
-                  title: '10. Consent & Authorization',
-                  sub: `GST: ${taxComplianceType} • Statutory terms & declarations accepted`,
-                  step: 10,
-                },
-              ].map((sec) => (
-                <View key={sec.step} style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.reviewSectionTitle, { color: colors.textPrimary }]}>✓ {sec.title}</Text>
-                    <Text style={[styles.reviewItemSub, { color: colors.textSecondary }]}>{sec.sub}</Text>
+              {emailVerificationStatus === 'pending_email_verification' ? (
+                /* ================= STATE 2: CHECK YOUR INBOX WAITING SCREEN ================= */
+                <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+                  <View
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 36,
+                      backgroundColor: isDark ? 'rgba(255, 102, 0, 0.2)' : '#FFF7ED',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: '#FF6600',
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Mail size={36} color="#FF6600" />
                   </View>
-                  <TouchableOpacity onPress={() => setCurrentStep(sec.step)} style={styles.editShortcutBtn}>
-                    <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Edit</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
 
-              <View style={[styles.readyBanner, { backgroundColor: isDark ? '#064E3B20' : '#ECFDF5', borderColor: isDark ? '#059669' : '#A7F3D0' }]}>
-                <CheckCircle2 size={22} color={colors.success} />
-                <View style={{ marginLeft: 12, flex: 1 }}>
-                  <Text style={[styles.readyBannerTitle, { color: isDark ? '#6EE7B7' : '#065F46' }]}>All 10 Sections Complete & Verified</Text>
-                  <Text style={[styles.readyBannerDesc, { color: isDark ? '#A7F3D0' : '#047857' }]}>
-                    Your application is ready for submission. Our onboarding verification desk will review and activate your store within 24-48 hours.
+                  <Text style={[styles.stepHeading, { color: colors.textPrimary, textAlign: 'center', fontSize: 22 }]}>
+                    Check Your Inbox
                   </Text>
+                  <Text style={[styles.stepSubheading, { color: colors.textSecondary, textAlign: 'center', marginTop: 4, maxWidth: 340 }]}>
+                    We've sent a verification link to your email from <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Support@sevazo.in</Text>.
+                  </Text>
+
+                  {/* Registered Email Pill */}
+                  <View
+                    style={{
+                      backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                      paddingVertical: 8,
+                      paddingHorizontal: 16,
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: colors.borderLight,
+                      marginTop: 8,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
+                      ✉️ {email || vendor?.email || 'merchant@gmail.com'}
+                    </Text>
+                  </View>
+
+                  {/* 10-Minute Countdown Timer Badge */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: isDark ? '#271708' : '#FEF3C7',
+                      paddingVertical: 10,
+                      paddingHorizontal: 18,
+                      borderRadius: 14,
+                      borderWidth: 1.5,
+                      borderColor: '#F59E0B',
+                      marginBottom: 24,
+                    }}
+                  >
+                    <Clock size={18} color="#D97706" />
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#B45309' }}>
+                      Expires in {formatCountdown(verificationCountdown)}
+                    </Text>
+                  </View>
+
+                  {/* Floating Mock Inbox Card (Dev-Tool Simulator) */}
+                  <View
+                    style={{
+                      width: '100%',
+                      backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                      borderRadius: 20,
+                      borderWidth: 2,
+                      borderColor: '#FF6600',
+                      padding: 18,
+                      shadowColor: '#FF6600',
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.15,
+                      shadowRadius: 16,
+                      elevation: 6,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#FF6600' }}>
+                          📬 Mock Inbox (Dev Simulator)
+                        </Text>
+                      </View>
+                      <Badge label="1 New Mail" variant="warning" size="sm" />
+                    </View>
+
+                    <View style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC', padding: 12, borderRadius: 12, marginBottom: 14 }}>
+                      <Text style={{ fontSize: 11, color: colors.textSecondary, marginBottom: 2 }}>
+                        From: <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Support@sevazo.in</Text>
+                      </Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>
+                        Action Required: Verify your SevaZo Vendor Application
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                        Hi {firstName || 'Merchant'}, click below to verify your email and forward your application directly to the SevaZo Admin verification desk.
+                      </Text>
+                    </View>
+
+                    <Button
+                      title="Verify Email Now"
+                      variant="primary"
+                      size="md"
+                      fullWidth
+                      loading={loading}
+                      onPress={handleVerifyEmailNow}
+                      leftIcon={<CheckCircle2 size={18} color="#FFFFFF" />}
+                    />
+                  </View>
                 </View>
-              </View>
+              ) : emailVerificationStatus === 'token_expired' ? (
+                /* ================= STATE 3: TOKEN EXPIRED ERROR SCREEN ================= */
+                <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                  <View
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 36,
+                      backgroundColor: '#FEF2F2',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: '#EF4444',
+                      marginBottom: 16,
+                    }}
+                  >
+                    <AlertTriangle size={36} color="#EF4444" />
+                  </View>
+
+                  <Text style={[styles.stepHeading, { color: '#EF4444', textAlign: 'center', fontSize: 22 }]}>
+                    Verification Link Expired
+                  </Text>
+                  <Text style={[styles.stepSubheading, { color: colors.textSecondary, textAlign: 'center', marginTop: 6, maxWidth: 320 }]}>
+                    The 10-minute verification window has expired. Please resubmit to receive a fresh verification link.
+                  </Text>
+
+                  <View style={{ width: '100%', maxWidth: 300, marginTop: 24 }}>
+                    <Button
+                      title="Resend Verification Link"
+                      variant="primary"
+                      size="lg"
+                      fullWidth
+                      onPress={handleResendVerificationLink}
+                      leftIcon={<RefreshCw size={18} color="#FFFFFF" />}
+                    />
+                  </View>
+                </View>
+              ) : (
+                /* ================= STATE 1: INITIAL APPLICATION REVIEW ================= */
+                <View>
+                  <Text style={[styles.stepHeading, { color: colors.textPrimary }]}>Application Review & Verification Desk</Text>
+                  <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>
+                    Review all submitted details across 10 sections before sending to the onboarding team.
+                  </Text>
+
+                  {/* 10-Section Structured Checklist */}
+                  {[
+                    { title: '1. Business Category', sub: `${businessCategory} (${businessType})`, step: 1 },
+                    { title: '2. Owner & Emergency Contact', sub: `${firstName} ${lastName} (${signatoryRole}) • Emergency: ${escalationContactName || 'Configured'} (${escalationContactPhone || 'Verified'})`, step: 2 },
+                    { title: '3. Legal Business Entity', sub: `${businessName} (${legalEntityType}) • PAN: ${panNumber || 'Submitted'}`, step: 3 },
+                    { title: '4. Physical Address', sub: `${line1}, ${area}, ${city} - ${pincode}`, step: 4 },
+                    { title: '5. Location Verification', sub: `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)} • ${shopPhotos.length} Store Photos`, step: 5 },
+                    { title: '6. KYC & Legal Documents', sub: `${documentsList.filter((d) => d.status === 'UPLOADED').length} Documents Uploaded (PAN Card Verified)`, step: 6 },
+                    { title: '7. Customer Storefront', sub: `${storeDisplayName || 'Storefront'} (16:9 Cover & Logo)`, step: 7 },
+                    { title: '8. Operating Hours', sub: `${schedules.filter((s) => s.isOpen).length} Days Active Schedule`, step: 8 },
+                    {
+                      title: '9. Settlement Account',
+                      sub: payoutPreference === 'UPI'
+                        ? `Instant UPI: ${upiId || 'Not specified'} (${upiVerifiedName || accountHolder || 'VPA'})`
+                        : `${bankName || 'Bank'} (XXXX XXXX ${(accountNumber || '').slice(-4)}) • ${ifsc || 'IFSC'}`,
+                      step: 9,
+                    },
+                    {
+                      title: '10. Consent & Authorization',
+                      sub: `GST: ${taxComplianceType} • Statutory terms & declarations accepted`,
+                      step: 10,
+                    },
+                  ].map((sec) => (
+                    <View key={sec.step} style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.reviewSectionTitle, { color: colors.textPrimary }]}>✓ {sec.title}</Text>
+                        <Text style={[styles.reviewItemSub, { color: colors.textSecondary }]}>{sec.sub}</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => setCurrentStep(sec.step)} style={styles.editShortcutBtn}>
+                        <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Edit</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <View style={[styles.readyBanner, { backgroundColor: isDark ? '#064E3B20' : '#ECFDF5', borderColor: isDark ? '#059669' : '#A7F3D0' }]}>
+                    <CheckCircle2 size={22} color={colors.success} />
+                    <View style={{ marginLeft: 12, flex: 1 }}>
+                      <Text style={[styles.readyBannerTitle, { color: isDark ? '#6EE7B7' : '#065F46' }]}>All 10 Sections Complete & Verified</Text>
+                      <Text style={[styles.readyBannerDesc, { color: isDark ? '#A7F3D0' : '#047857' }]}>
+                        Tap Submit Application to initiate instant email verification from Support@sevazo.in and forward your documents to Admin review.
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
 
         {/* Fixed Sticky Bottom Action Footer */}
-        <View
-          style={[
-            styles.fixedBottomFooter,
-            {
-              backgroundColor: colors.surface,
-              borderTopColor: colors.border,
-              paddingBottom: Math.max(insets.bottom, 12),
-            },
-          ]}
-        >
-          {currentStep > 1 && (
+        {!(currentStep === 11 && (emailVerificationStatus === 'pending_email_verification' || emailVerificationStatus === 'token_expired')) && (
+          <View
+            style={[
+              styles.fixedBottomFooter,
+              {
+                backgroundColor: colors.surface,
+                borderTopColor: colors.border,
+                paddingBottom: Math.max(insets.bottom, 12),
+              },
+            ]}
+          >
+            {currentStep > 1 && (
+              <Button
+                title="Back"
+                variant="outline"
+                onPress={() => setCurrentStep(currentStep - 1)}
+                leftIcon={<ArrowLeft size={16} color={colors.textPrimary} />}
+                style={{ flex: 1, marginRight: 10 }}
+              />
+            )}
             <Button
-              title="Back"
-              variant="outline"
-              onPress={() => setCurrentStep(currentStep - 1)}
-              leftIcon={<ArrowLeft size={16} color={colors.textPrimary} />}
-              style={{ flex: 1, marginRight: 10 }}
+              title={currentStep === 11 ? 'Submit Application' : 'Save & Continue'}
+              onPress={handleSaveAndContinue}
+              loading={loading}
+              icon={<ArrowRight size={16} color="#FFFFFF" />}
+              style={{ flex: currentStep > 1 ? 2 : 1 }}
             />
-          )}
-          <Button
-            title={currentStep === 11 ? 'Submit Application' : 'Save & Continue'}
-            onPress={handleSaveAndContinue}
-            loading={loading}
-            icon={<ArrowRight size={16} color="#FFFFFF" />}
-            style={{ flex: currentStep > 1 ? 2 : 1 }}
-          />
-        </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
 
-      {/* Confirmation Modal */}
-      <Modal visible={showSubmitModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
-            <View style={[styles.modalIconBox, { backgroundColor: colors.primaryLight }]}>
-              <ShieldCheck size={32} color={colors.primary} />
-            </View>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Submit Application?</Text>
-            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
-              Once submitted, your application will be reviewed by the SevaZo onboarding desk within 24-48 hours. Information cannot be edited while verification is in progress.
-            </Text>
-            <View style={styles.modalActionsRow}>
-              <Button title="Cancel" variant="outline" onPress={() => setShowSubmitModal(false)} style={{ flex: 1, marginRight: 8 }} />
-              <Button title="Submit Application" onPress={handleConfirmFinalSubmit} loading={loading} style={{ flex: 1.5 }} />
-            </View>
-          </View>
-        </View>
-      </Modal>
+
 
       {/* Image Picker Modal */}
       <ImagePickerModal

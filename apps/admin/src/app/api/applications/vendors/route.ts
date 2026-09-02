@@ -127,7 +127,12 @@ export async function GET() {
     };
     const sorted = allVendors.sort((a, b) => getTime(b) - getTime(a));
 
-    return NextResponse.json({ success: true, data: sorted, total: sorted.length });
+    // Filter out applications still pending email verification (Phase 3 requirement)
+    const activeVendors = sorted.filter(
+      (v: any) => v.status !== 'pending_email_verification' && v.approvalStatus !== 'pending_email_verification'
+    );
+
+    return NextResponse.json({ success: true, data: activeVendors, total: activeVendors.length });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
