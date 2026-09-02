@@ -27,6 +27,9 @@
     "db:verify": "npm run db:verify --workspace=apps/api"
   },
   "devDependencies": {
+    "next": "16.3.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "prisma": "6.19.3",
     "@prisma/client": "6.19.3",
     "typescript": "^5.7.3"

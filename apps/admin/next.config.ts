@@ -8,9 +8,6 @@ const nextConfig: NextConfig = {
     '@sevazo/ui',
   ],
   devIndicators: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
