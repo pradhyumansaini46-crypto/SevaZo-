@@ -1094,6 +1094,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               <View style={styles.twoColRow}>
                 <View style={{ flex: 1, marginRight: 8 }}><Input label="First Name *" value={firstName} onChangeText={setFirstName} placeholder="Enter first name" /></View>
                 <View style={{ flex: 1, marginLeft: 8 }}><Input label="Last Name *" value={lastName} onChangeText={setLastName} placeholder="Enter last name" /></View>
+              </View>
               <Input
                 label="Registered Business Email *"
                 value={email || vendor?.email || ''}
