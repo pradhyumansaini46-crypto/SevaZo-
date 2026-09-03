@@ -1094,9 +1094,19 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               <View style={styles.twoColRow}>
                 <View style={{ flex: 1, marginRight: 8 }}><Input label="First Name *" value={firstName} onChangeText={setFirstName} placeholder="Enter first name" /></View>
                 <View style={{ flex: 1, marginLeft: 8 }}><Input label="Last Name *" value={lastName} onChangeText={setLastName} placeholder="Enter last name" /></View>
-              </View>
-              <Input label="Registered Mobile Number *" value={vendor?.phone || ''} editable={false} leftIcon={<Badge label="Verified Mobile" variant="success" size="sm" />} placeholder="Enter mobile number" />
-              <Input label="Official Email Address *" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="Enter email address" />
+              <Input
+                label="Registered Business Email *"
+                value={email || vendor?.email || ''}
+                editable={false}
+                leftIcon={<Badge label="Email verified successfully" variant="success" size="sm" />}
+                placeholder="Enter email address"
+              />
+              <Input
+                label="Primary Contact Mobile Number *"
+                value={vendor?.phone || ''}
+                editable={false}
+                placeholder="Enter mobile number"
+              />
               <Input
                 label="Date of Birth (DOB) *"
                 value={dateOfBirth}

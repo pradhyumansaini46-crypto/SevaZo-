@@ -81,7 +81,7 @@ export const StatusTrackerScreen: React.FC<{ navigation: any; route?: any }> = (
 
   const verificationStages = [
     { id: 'cat', title: '1. Business Category', desc: 'Catalog classification and merchant business type.' },
-    { id: 'owner', title: '2. Owner & Emergency Contact', desc: 'Authorized signatory, verified mobile & emergency contact.' },
+    { id: 'owner', title: '2. Owner & Emergency Contact', desc: 'Authorized signatory, verified email & emergency contact.' },
     { id: 'biz', title: '3. Legal Business Information', desc: 'Registered legal entity name, structure & PAN / GST.' },
     { id: 'address', title: '4. Physical Store Address', desc: 'Store street address, landmark, city & postal code.' },
     { id: 'location', title: '5. Location & Geo-Pin', desc: 'GPS coordinates lock and 5 storefront shop photos.' },

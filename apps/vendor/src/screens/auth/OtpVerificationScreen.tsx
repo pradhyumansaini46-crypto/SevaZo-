@@ -87,13 +87,13 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
 
     try {
       if (isRegister && email) {
-        await VendorApi.registerOtp({ phone, email });
+        await VendorApi.registerOtp({ phone: phone || '9876543210', email });
       } else {
-        await VendorApi.sendOtp(phone);
+        await VendorApi.sendOtp(email || phone);
       }
       setTimer(30);
       setCanResend(false);
-      Alert.alert('OTP Sent', `A fresh 6-digit verification code was sent to ${formatPhone(phone)}.`);
+      Alert.alert('OTP Sent', `A fresh 6-digit verification code was sent to ${email || formatPhone(phone)}.`);
     } catch (err: any) {
       const normalized = normalizeApiError(err);
       if (normalized.code === 'RATE_LIMIT_EXCEEDED' || normalized.statusCode === 429) {
@@ -202,7 +202,7 @@ export const OtpVerificationScreen: React.FC<{ navigation: any; route: any }> = 
             <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(255, 102, 0, 0.15)' : '#FFF7ED', borderColor: '#FF6600' }]}>
               <ShieldCheck size={32} color="#FF6600" />
             </View>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Gmail OTP</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Email OTP</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Enter the 6-digit code sent from Support@sevazo.in to{' '}
               <Text style={{ fontWeight: '700', color: colors.textPrimary }}>
@@ -346,18 +346,24 @@ const styles = StyleSheet.create({
   },
   otpGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
     marginBottom: 18,
+    width: '100%',
+    paddingHorizontal: 2,
   },
   otpBox: {
     flex: 1,
-    height: 56,
+    maxWidth: 48,
+    minWidth: 36,
+    height: 52,
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
     textAlign: 'center',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
+    paddingHorizontal: 0,
     ...Shadows.card,
   },
   errorBox: {
