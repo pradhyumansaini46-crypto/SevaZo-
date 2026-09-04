@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     paddingHorizontal: 14,
     height: 48,
+    overflow: 'hidden',
   },
   multilineContainer: {
     height: 100,
@@ -118,14 +119,17 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginRight: 8,
+    flexShrink: 0,
   },
   prefixText: {
     fontSize: 15,
     fontWeight: '600',
     marginRight: 6,
+    flexShrink: 0,
   },
   input: {
     flex: 1,
+    minWidth: 0,
     fontSize: 15,
     fontWeight: '500',
     padding: 0,

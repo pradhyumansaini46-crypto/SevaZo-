@@ -508,6 +508,97 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
 
   const handleUseCurrentLocation = async () => {
     setIsLocating(true);
+
+    const applyCoordsAndReverseGeocode = async (lat: number, lng: number) => {
+      setLatitude(lat);
+      setLongitude(lng);
+
+      try {
+        let detectedStreet = '';
+        let detectedArea = '';
+        let detectedCity = '';
+        let detectedState = '';
+        let detectedPin = '';
+
+        if (Platform.OS === 'web' && typeof fetch !== 'undefined') {
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+              { headers: { 'User-Agent': 'SevaZo-Vendor-App/1.0' } }
+            );
+            const data = await res.json();
+            if (data?.address) {
+              const a = data.address;
+              detectedStreet = [a.road, a.house_number, a.suburb].filter(Boolean).join(', ');
+              detectedArea = a.neighbourhood || a.suburb || a.city_district || a.county || '';
+              detectedCity = a.city || a.town || a.village || a.state_district || '';
+              detectedState = a.state || '';
+              detectedPin = a.postcode || '';
+            }
+          } catch (e) {
+            // fallback
+          }
+        } else {
+          try {
+            const reverseResults = await Location.reverseGeocodeAsync({
+              latitude: lat,
+              longitude: lng,
+            });
+            if (reverseResults && reverseResults.length > 0) {
+              const item = reverseResults[0];
+              detectedStreet = [item.name, item.street].filter(Boolean).join(', ');
+              detectedArea = item.district || item.subregion || item.name || '';
+              detectedCity = item.city || item.subregion || '';
+              detectedState = item.region || '';
+              detectedPin = item.postalCode || '';
+            }
+          } catch (e) {}
+        }
+
+        if (detectedStreet) setLine1(detectedStreet);
+        if (detectedArea) setArea(detectedArea);
+        if (detectedCity) setCity(detectedCity);
+        if (detectedState) setState(detectedState);
+        if (detectedPin) setPincode(detectedPin);
+        setCountry('India');
+
+        Alert.alert(
+          '📍 GPS Location Fetched',
+          `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}\n${[detectedStreet, detectedArea, detectedCity, detectedPin].filter(Boolean).join(', ') || 'GPS coordinates locked.'}`
+        );
+      } catch (geoError) {
+        Alert.alert('GPS Location Pinned', `📍 Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
+      }
+    };
+
+    // 1. Web HTML5 Geolocation Direct Handler
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          setIsLocating(false);
+          await applyCoordsAndReverseGeocode(position.coords.latitude, position.coords.longitude);
+        },
+        async () => {
+          try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+              const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+              await applyCoordsAndReverseGeocode(location.coords.latitude, location.coords.longitude);
+            } else {
+              Alert.alert('Location Permission Needed', 'Please allow location permission in your browser address bar.');
+            }
+          } catch (err: any) {
+            Alert.alert('Location Notice', 'Could not detect browser location. Please check location permissions.');
+          } finally {
+            setIsLocating(false);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+      return;
+    }
+
+    // 2. Mobile (Android / iOS)
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -523,51 +614,9 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
         accuracy: Location.Accuracy.High,
       });
 
-      const { latitude: lat, longitude: lng } = location.coords;
-      setLatitude(lat);
-      setLongitude(lng);
-
-      // Reverse geocode to extract address fields
-      try {
-        const reverseResults = await Location.reverseGeocodeAsync({
-          latitude: lat,
-          longitude: lng,
-        });
-
-        if (reverseResults && reverseResults.length > 0) {
-          const item = reverseResults[0];
-          if (item.name || item.street) {
-            const streetLine = [item.name, item.street].filter(Boolean).join(', ');
-            if (streetLine) setLine1(streetLine);
-          }
-          const detectedArea = item.district || item.subregion || item.name || '';
-          if (detectedArea) {
-            setArea(detectedArea);
-          }
-          if (item.city || item.subregion) {
-            setCity(item.city || item.subregion || '');
-          }
-          if (item.region) {
-            setState(item.region);
-          }
-          if (item.postalCode) {
-            setPincode(item.postalCode);
-          }
-          setCountry('India');
-
-          Alert.alert(
-            'GPS Location Fetched',
-            `📍 Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}\n${[item.name || item.street, detectedArea, item.city, item.postalCode].filter(Boolean).join(', ')}`
-          );
-        } else {
-          Alert.alert('GPS Location Pinned', `📍 Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
-        }
-      } catch (geoError) {
-        Alert.alert('GPS Location Pinned', `📍 Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
-      }
+      await applyCoordsAndReverseGeocode(location.coords.latitude, location.coords.longitude);
     } catch (err: any) {
-      console.error('Error fetching GPS location:', err);
-      Alert.alert('Location Error', err?.message || 'Could not fetch current GPS location. Please make sure location services are turned on.');
+      Alert.alert('Location Error', err?.message || 'Could not fetch current GPS location.');
     } finally {
       setIsLocating(false);
     }
@@ -613,16 +662,26 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
   };
 
   const handleVerifyUpi = () => {
-    if (!upiId || !upiId.includes('@')) {
-      Alert.alert('Invalid UPI ID', 'Please enter a valid UPI ID / VPA (e.g. name@okhdfcbank).');
+    const cleanUpi = (upiId || '').trim().toLowerCase();
+    const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+    if (!cleanUpi || !upiRegex.test(cleanUpi)) {
+      Alert.alert(
+        'Invalid UPI ID',
+        'Please enter a valid UPI Virtual Payment Address (e.g. name@okhdfcbank or merchant@icici).'
+      );
       return;
     }
     setVerifyingUpi(true);
     setTimeout(() => {
-      const verifiedName = accountHolder || `${firstName} ${lastName}`.trim() || 'Verified Store Partner';
-      setUpiVerifiedName(verifiedName);
+      const genuineName =
+        accountHolder.trim() ||
+        `${firstName} ${lastName}`.trim() ||
+        displayName.trim() ||
+        businessName.trim() ||
+        cleanUpi;
+      setUpiVerifiedName(genuineName);
       setVerifyingUpi(false);
-    }, 600);
+    }, 500);
   };
 
   const handleApplyUpiSuffix = (suffix: string) => {
@@ -666,6 +725,43 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
     } finally {
       setVerifyingIfsc(false);
     }
+  };
+
+  const handleSkipStep5 = async () => {
+    try {
+      await VendorApi.saveOnboardingStep(5, { latitude, longitude, shopPhotos: [] });
+    } catch (e) {}
+    setCurrentStep(6);
+  };
+
+  const handleSkipStep7 = async () => {
+    const finalStoreName = storeDisplayName.trim() || displayName.trim() || businessName.trim() || 'SevaZo Partner Store';
+    setStoreDisplayName(finalStoreName);
+    try {
+      await VendorApi.saveOnboardingStep(7, {
+        name: finalStoreName,
+        description: storeDesc,
+        logo: storeLogo,
+        banner: storeBanner,
+        phone: storePhone,
+        email: storeEmail,
+      });
+      updateVendor({ storeName: finalStoreName, logo: storeLogo, banner: storeBanner, currentOnboardingStep: 8 });
+    } catch (e) {}
+    setCurrentStep(8);
+  };
+
+  const handleSkipStep9 = async () => {
+    try {
+      await VendorApi.saveOnboardingStep(9, {
+        payoutPreference: 'BANK_ACCOUNT',
+        accountHolder: accountHolder || `${firstName} ${lastName}`.trim(),
+        bankName: bankName || 'Direct Bank Settlement (Pending)',
+        accountNumber: accountNumber || '',
+        ifsc: ifsc || '',
+      });
+    } catch (e) {}
+    setCurrentStep(10);
   };
 
   const handleSaveAndContinue = async () => {
@@ -1099,7 +1195,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 label="Registered Business Email *"
                 value={email || vendor?.email || ''}
                 editable={false}
-                leftIcon={<Badge label="Email verified successfully" variant="success" size="sm" />}
+                leftIcon={<Mail size={18} color={colors.textSecondary} />}
                 placeholder="Enter email address"
               />
               <Input
@@ -1384,7 +1480,7 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
               {/* SECTION: Upload Store / Shop Photos (Up to 5 images) */}
               <View style={[styles.shopPhotosSection, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                 <View style={styles.shopPhotosHeader}>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={[styles.shopPhotosTitle, { color: colors.textPrimary }]}>
                       Storefront & Shop Photos
                     </Text>
@@ -1392,11 +1488,19 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                       Upload up to 5 clear photos of your shop (front board, entrance, interior racks, billing area).
                     </Text>
                   </View>
-                  <Badge
-                    label={`${shopPhotos.length} / 5`}
-                    variant={shopPhotos.length >= 1 ? 'success' : 'warning'}
-                    size="sm"
-                  />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <TouchableOpacity
+                      onPress={handleSkipStep5}
+                      style={[styles.stepSkipBtn, { borderColor: colors.borderLight, backgroundColor: isDark ? colors.surfaceElevated : '#F1F5F9' }]}
+                    >
+                      <Text style={[styles.stepSkipBtnText, { color: colors.textSecondary }]}>Skip</Text>
+                    </TouchableOpacity>
+                    <Badge
+                      label={`${shopPhotos.length} / 5`}
+                      variant={shopPhotos.length >= 1 ? 'success' : 'warning'}
+                      size="sm"
+                    />
+                  </View>
                 </View>
 
                 {/* Photo Grid */}
@@ -1494,8 +1598,18 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           {/* STEP 7: Store Profile (Customer-Facing Brand Hub) */}
           {currentStep === 7 && (
             <View>
-              <Text style={[styles.stepHeading, { color: colors.textPrimary }]}>Store Profile & Media</Text>
-              <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>Your public brand presentation on SevaZo consumer app.</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={[styles.stepHeading, { color: colors.textPrimary, marginBottom: 2 }]}>Store Profile & Media</Text>
+                  <Text style={[styles.stepSubheading, { color: colors.textSecondary, marginBottom: 0 }]}>Your public brand presentation on SevaZo consumer app.</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleSkipStep7}
+                  style={[styles.stepSkipBtn, { borderColor: colors.borderLight, backgroundColor: isDark ? colors.surfaceElevated : '#F1F5F9' }]}
+                >
+                  <Text style={[styles.stepSkipBtnText, { color: colors.textSecondary }]}>Skip</Text>
+                </TouchableOpacity>
+              </View>
 
               {/* Cover Banner (16:9) & Logo (1:1) */}
               <View style={styles.storeMediaContainer}>
@@ -1538,12 +1652,36 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
                 </View>
               </View>
 
-              <Input label="Customer Display Store Name *" value={storeDisplayName} onChangeText={setStoreDisplayName} placeholder="Enter store name" />
-              <Input label="Store Description / Tagline" value={storeDesc} onChangeText={setStoreDesc} multiline numberOfLines={2} placeholder="Describe your store" />
-              <View style={styles.twoColRow}>
-                <View style={{ flex: 1, marginRight: 8 }}><Input label="Store Phone" value={storePhone} onChangeText={setStorePhone} placeholder="Enter phone number" /></View>
-                <View style={{ flex: 1, marginLeft: 8 }}><Input label="Store Email" value={storeEmail} onChangeText={setStoreEmail} autoCapitalize="none" placeholder="Enter email address" /></View>
-              </View>
+              <Input
+                label="Customer Display Store Name *"
+                value={storeDisplayName || displayName || businessName}
+                onChangeText={setStoreDisplayName}
+                placeholder="Enter customer display store name"
+              />
+              <Input
+                label="Store Description / Tagline"
+                value={storeDesc}
+                onChangeText={setStoreDesc}
+                multiline
+                numberOfLines={2}
+                placeholder="Describe your store"
+              />
+              <Input
+                label="Store Contact Phone Number"
+                value={storePhone}
+                onChangeText={setStorePhone}
+                keyboardType="phone-pad"
+                maxLength={10}
+                placeholder="Enter store contact phone number"
+              />
+              <Input
+                label="Store Contact Email Address"
+                value={storeEmail}
+                onChangeText={setStoreEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholder="Enter store contact email address"
+              />
             </View>
           )}
 
@@ -1606,8 +1744,18 @@ export const OnboardingWizardScreen: React.FC<{ navigation: any; route: any }> =
           {/* STEP 9: Bank & Settlements (Where should we send your earnings?) */}
           {currentStep === 9 && (
             <View>
-              <Text style={[styles.stepHeading, { color: colors.textPrimary }]}>Where should we send your earnings?</Text>
-              <Text style={[styles.stepSubheading, { color: colors.textSecondary }]}>Choose your preferred settlement method for store payouts.</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={[styles.stepHeading, { color: colors.textPrimary, marginBottom: 2 }]}>Where should we send your earnings?</Text>
+                  <Text style={[styles.stepSubheading, { color: colors.textSecondary, marginBottom: 0 }]}>Choose your preferred settlement method for store payouts.</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleSkipStep9}
+                  style={[styles.stepSkipBtn, { borderColor: colors.borderLight, backgroundColor: isDark ? colors.surfaceElevated : '#F1F5F9' }]}
+                >
+                  <Text style={[styles.stepSkipBtnText, { color: colors.textSecondary }]}>Skip</Text>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.payoutModeRow}>
                 <TouchableOpacity
@@ -2579,5 +2727,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   readyBannerTitle: { fontSize: 13, fontWeight: '800' },
-  readyBannerDesc: { fontSize: 12, marginTop: 2, lineHeight: 17 },
+  // Step Skip Button
+  stepSkipBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepSkipBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
 });

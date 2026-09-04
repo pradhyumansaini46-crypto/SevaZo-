@@ -109,11 +109,11 @@ export const StatusTrackerScreen: React.FC<{ navigation: any; route?: any }> = (
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('Welcome');
-    }
+    navigation.replace('ApplicationSubmitted', {
+      applicationId,
+      phone: vendor?.phone,
+      email: vendor?.email,
+    });
   };
 
   return (
@@ -219,6 +219,24 @@ export const StatusTrackerScreen: React.FC<{ navigation: any; route?: any }> = (
               </View>
             );
           })}
+          {/* Official Compliance Support Email Banner */}
+          <View style={styles.supportContactCard}>
+            <View style={styles.supportContactIconWrap}>
+              <Mail size={18} color="#FF6600" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.supportContactTitle}>Official Merchant Help Desk</Text>
+              <Text style={styles.supportContactDesc}>
+                Questions about verification status? Email us at{' '}
+                <Text
+                  style={styles.supportEmailLink}
+                  onPress={() => Linking.openURL('mailto:support@sevazo.in')}
+                >
+                  support@sevazo.in
+                </Text>
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Average Turnaround SLA Card */}
@@ -235,32 +253,18 @@ export const StatusTrackerScreen: React.FC<{ navigation: any; route?: any }> = (
         </View>
       </ScrollView>
 
-      {/* Fixed Bottom Footer Actions (Back Button + Contact Support) */}
+      {/* Fixed Bottom Footer Action (Back to Application ID) */}
       <View style={styles.footer}>
-        {/* Back Button */}
         <TouchableOpacity
-          style={styles.backBtn}
+          style={styles.backBtnFull}
           onPress={handleBack}
-          activeOpacity={0.8}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Back to previous screen"
-        >
-          <ArrowLeft size={18} color="#334155" />
-          <Text style={styles.backBtnText}>Back</Text>
-        </TouchableOpacity>
-
-        {/* Contact Support Button */}
-        <TouchableOpacity
-          style={styles.contactSupportBtn}
-          onPress={() => setShowSupportModal(true)}
           activeOpacity={0.85}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Contact SevaZo Merchant Support"
+          accessibilityLabel="Back to application ID screen"
         >
-          <Headphones size={18} color="#FFFFFF" />
-          <Text style={styles.contactSupportBtnText}>Contact Support</Text>
+          <ArrowLeft size={18} color="#0F172A" />
+          <Text style={styles.backBtnFullText}>Back to Application ID</Text>
         </TouchableOpacity>
       </View>
 
@@ -635,25 +639,58 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#334155',
   },
-  contactSupportBtn: {
-    flex: 1.3,
+  backBtnFull: {
+    width: '100%',
     flexDirection: 'row',
-    backgroundColor: '#FF6600',
-    paddingVertical: 14,
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    shadowColor: '#FF6600',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 3,
+    gap: 8,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 14,
   },
-  contactSupportBtnText: {
-    fontSize: 14,
+  backBtnFullText: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#0F172A',
+  },
+  supportContactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 16,
+  },
+  supportContactIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  supportContactTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  supportContactDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+  },
+  supportEmailLink: {
+    color: '#FF6600',
+    fontWeight: '800',
+    textDecorationLine: 'underline',
   },
   modalBackdrop: {
     flex: 1,
