@@ -2727,6 +2727,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   readyBannerTitle: { fontSize: 13, fontWeight: '800' },
+  readyBannerDesc: { fontSize: 12, marginTop: 2, lineHeight: 17 },
   // Step Skip Button
   stepSkipBtn: {
     paddingHorizontal: 12,
