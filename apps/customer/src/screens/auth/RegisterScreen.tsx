@@ -215,8 +215,8 @@ export const RegisterScreen: React.FC = () => {
             </View>
           </View>
 
-          <Text style={styles.mainTitle}>India's instant commerce app</Text>
-          <Text style={styles.subTitle}>Log in or sign up</Text>
+          <Text style={styles.mainTitle}>Seva Zo Dil Se Ki Jaye</Text>
+          <Text style={styles.subTitle}>Create your account</Text>
 
           <View style={styles.formWrap}>
             {/* Mobile Number Row */}
@@ -299,15 +299,15 @@ export const RegisterScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.continueBtnText}>
-                {isLoading ? 'Sending OTP...' : 'Continue'}
+                {isLoading ? 'Sending OTP...' : 'Create Account'}
               </Text>
             </TouchableOpacity>
 
             <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                By continuing, you agree to our:{' '}
-                <Text style={styles.termsLink}>Terms of Service</Text> &{' '}
-                <Text style={styles.termsLink}>Privacy policy</Text>
+              <Text style={styles.termsText} numberOfLines={1}>
+                By continuing, you agree to our{' '}
+                <Text style={styles.termsLink}>Terms</Text> &{' '}
+                <Text style={styles.termsLink}>Privacy Policy</Text>
               </Text>
             </View>
           </View>

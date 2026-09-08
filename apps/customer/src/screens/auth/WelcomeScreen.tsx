@@ -100,6 +100,7 @@ export const WelcomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { sendOtp, isLoading, continueAsGuest } = useAuthStore();
 
+  const [authMode, setAuthMode] = useState<'SIGNUP' | 'LOGIN'>('SIGNUP');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [phoneFocused, setPhoneFocused] = useState(false);
@@ -110,7 +111,9 @@ export const WelcomeScreen: React.FC = () => {
   const isPhoneValid = cleanPhone.length === 10;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email.trim());
-  const isFormValid = isPhoneValid && isEmailValid;
+  
+  // Validation: If SIGNUP, both phone and email are required. If LOGIN, only email is required.
+  const isFormValid = authMode === 'SIGNUP' ? isPhoneValid && isEmailValid : isEmailValid;
 
   const handlePhoneChange = (text: string) => {
     setError('');
@@ -126,23 +129,31 @@ export const WelcomeScreen: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!isPhoneValid) {
-      setError('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    if (!isEmailValid) {
-      setError('Please enter a valid email address');
-      return;
+    if (authMode === 'SIGNUP') {
+      if (!isPhoneValid) {
+        setError('Please enter a valid 10-digit mobile number');
+        return;
+      }
+      if (!isEmailValid) {
+        setError('Please enter a valid email address');
+        return;
+      }
+    } else {
+      if (!isEmailValid) {
+        setError('Please enter a valid registered email address');
+        return;
+      }
     }
 
     setError('');
-    const formattedPhone = `+91 ${cleanPhone}`;
+    const formattedPhone = authMode === 'SIGNUP' ? `+91 ${cleanPhone}` : '';
     const success = await sendOtp(formattedPhone, email.trim().toLowerCase());
 
     if (success) {
       navigation.navigate('Otp', {
-        phone: formattedPhone,
+        phone: formattedPhone || email.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
+        mode: authMode === 'SIGNUP' ? 'REGISTER' : 'LOGIN',
       });
     } else {
       setError('Failed to send OTP. Please check your network connection.');
@@ -223,47 +234,93 @@ export const WelcomeScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Tagline & Subheading */}
-          <Text style={styles.mainTitle}>India's instant commerce app</Text>
-          <Text style={styles.subTitle}>Log in or sign up</Text>
+          {/* Tagline */}
+          <Text style={styles.mainTitle}>Seva Zo Dil Se Ki Jaye</Text>
+
+          {/* Interactive Dual Mode Switch (Sign Up default vs Log In) */}
+          <View style={styles.tabSwitchContainer}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => {
+                setAuthMode('SIGNUP');
+                setError('');
+              }}
+              style={[
+                styles.tabSwitchBtn,
+                authMode === 'SIGNUP' && styles.tabSwitchBtnActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabSwitchText,
+                  authMode === 'SIGNUP' && styles.tabSwitchTextActive,
+                ]}
+              >
+                Sign Up
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => {
+                setAuthMode('LOGIN');
+                setError('');
+              }}
+              style={[
+                styles.tabSwitchBtn,
+                authMode === 'LOGIN' && styles.tabSwitchBtnActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabSwitchText,
+                  authMode === 'LOGIN' && styles.tabSwitchTextActive,
+                ]}
+              >
+                Log In
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Form Container */}
           <View style={styles.formWrap}>
-            {/* 1. Mobile Number Input with Flag Box */}
-            <View style={styles.mobileInputRow}>
-              {/* Flag Pill */}
-              <View style={styles.flagBox}>
-                <Text style={styles.flagText}>🇮🇳</Text>
-                <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
-              </View>
+            {/* 1. Mobile Number Input (Shown ONLY in SIGNUP mode) */}
+            {authMode === 'SIGNUP' ? (
+              <View style={styles.mobileInputRow}>
+                {/* Flag Pill */}
+                <View style={styles.flagBox}>
+                  <Text style={styles.flagText}>🇮🇳</Text>
+                  <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
+                </View>
 
-              {/* Number Input Field */}
-              <View
-                style={[
-                  styles.numberInputBox,
-                  phoneFocused && styles.inputFocused,
-                  isPhoneValid && styles.inputValid,
-                ]}
-              >
-                <Text style={styles.countryCode}>+91</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter mobile number"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  value={phone}
-                  onChangeText={handlePhoneChange}
-                  onFocus={() => setPhoneFocused(true)}
-                  onBlur={() => setPhoneFocused(false)}
-                />
-                {isPhoneValid ? (
-                  <CheckCircle2 size={16} color="#138808" style={styles.validIcon} />
-                ) : null}
+                {/* Number Input Field */}
+                <View
+                  style={[
+                    styles.numberInputBox,
+                    phoneFocused && styles.inputFocused,
+                    isPhoneValid && styles.inputValid,
+                  ]}
+                >
+                  <Text style={styles.countryCode}>+91</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Mobile number (Mandatory)"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    maxLength={10}
+                    value={phone}
+                    onChangeText={handlePhoneChange}
+                    onFocus={() => setPhoneFocused(true)}
+                    onBlur={() => setPhoneFocused(false)}
+                  />
+                  {isPhoneValid ? (
+                    <CheckCircle2 size={16} color="#138808" style={styles.validIcon} />
+                  ) : null}
+                </View>
               </View>
-            </View>
+            ) : null}
 
-            {/* 2. Email Address Input (Below Mobile Number) */}
+            {/* 2. Email Address Input */}
             <View
               style={[
                 styles.emailInputBox,
@@ -278,7 +335,7 @@ export const WelcomeScreen: React.FC = () => {
               />
               <TextInput
                 style={styles.textInput}
-                placeholder="Enter email address"
+                placeholder={authMode === 'SIGNUP' ? "Email address (Mandatory)" : "Enter your email address"}
                 placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -301,7 +358,7 @@ export const WelcomeScreen: React.FC = () => {
               </View>
             ) : null}
 
-            {/* 3. Continue Button */}
+            {/* 3. Continue / Action Button */}
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={handleSubmit}
@@ -312,16 +369,16 @@ export const WelcomeScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.continueBtnText}>
-                {isLoading ? 'Sending OTP...' : 'Continue'}
+                {isLoading ? 'Sending OTP...' : authMode === 'SIGNUP' ? 'Create Account' : 'Log In'}
               </Text>
             </TouchableOpacity>
 
-            {/* Terms and Privacy Policy */}
+            {/* Single-line Compact Terms & Privacy Policy */}
             <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                By continuing, you agree to our:{' '}
-                <Text style={styles.termsLink}>Terms of Service</Text> &{' '}
-                <Text style={styles.termsLink}>Privacy policy</Text>
+              <Text style={styles.termsText} numberOfLines={1}>
+                By continuing, you agree to our{' '}
+                <Text style={styles.termsLink}>Terms</Text> &{' '}
+                <Text style={styles.termsLink}>Privacy Policy</Text>
               </Text>
             </View>
           </View>
@@ -421,7 +478,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.sm,
     alignItems: 'center',
     borderTopWidth: 1,
     borderColor: '#E2E8F0',
@@ -433,19 +490,19 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   tricolorSegment: {
     flex: 1,
     height: '100%',
   },
   brandBoxWrap: {
-    marginBottom: Spacing.xs,
+    marginBottom: 2,
   },
   brandSquare: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
@@ -454,26 +511,47 @@ const styles = StyleSheet.create({
     ...Shadows.small,
   },
   brandLogoImg: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
   },
   mainTitle: {
     ...Typography.titleLarge,
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
     letterSpacing: -0.5,
-    marginTop: 2,
+    marginTop: 4,
+    marginBottom: Spacing.sm,
   },
-  subTitle: {
+  tabSwitchContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 3,
+    width: '100%',
+    marginBottom: Spacing.sm + 2,
+  },
+  tabSwitchBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  tabSwitchBtnActive: {
+    backgroundColor: '#FFFFFF',
+    ...Shadows.small,
+  },
+  tabSwitchText: {
     ...Typography.bodyMedium,
     fontSize: 14,
+    fontWeight: '700',
     color: '#64748B',
-    textAlign: 'center',
-    marginTop: 2,
-    marginBottom: Spacing.md,
-    fontWeight: '600',
+  },
+  tabSwitchTextActive: {
+    color: '#FF7700',
+    fontWeight: '800',
   },
   formWrap: {
     width: '100%',
@@ -482,7 +560,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: Spacing.sm + 2,
+    marginBottom: Spacing.sm,
   },
   flagBox: {
     flexDirection: 'row',
@@ -491,14 +569,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
     marginRight: Spacing.sm,
     ...Shadows.small,
   },
   flagText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   numberInputBox: {
     flex: 1,
@@ -507,16 +585,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
     ...Shadows.small,
   },
   countryCode: {
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     fontWeight: '800',
     color: '#0F172A',
-    marginRight: 8,
+    marginRight: 6,
   },
   emailInputBox: {
     flexDirection: 'row',
@@ -524,10 +602,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm + 2,
     ...Shadows.small,
   },
   inputLeftIcon: {
@@ -542,7 +620,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     fontWeight: '600',
     color: '#0F172A',
     height: '100%',
@@ -554,9 +632,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.xs + 2,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
   },
   errorText: {
     ...Typography.caption,
@@ -566,8 +644,8 @@ const styles = StyleSheet.create({
   },
   continueBtn: {
     backgroundColor: '#FF7700', // Saffron CTA
-    borderRadius: 16,
-    paddingVertical: 15,
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -582,19 +660,20 @@ const styles = StyleSheet.create({
     ...Typography.bodyLarge,
     fontWeight: '800',
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
   },
   termsContainer: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.xs + 2,
+    marginBottom: Spacing.xs,
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
+    justifyContent: 'center',
+    width: '100%',
   },
   termsText: {
     ...Typography.caption,
     fontSize: 11,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 16,
     fontWeight: '500',
   },
   termsLink: {

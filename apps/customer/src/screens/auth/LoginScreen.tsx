@@ -93,25 +93,13 @@ export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { sendOtp, isLoading } = useAuthStore();
 
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [phoneFocused, setPhoneFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
 
-  const cleanPhone = phone.replace(/\D/g, '');
-  const isPhoneValid = cleanPhone.length === 10;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email.trim());
-  const isFormValid = isPhoneValid && isEmailValid;
-
-  const handlePhoneChange = (text: string) => {
-    setError('');
-    const raw = text.replace(/\D/g, '');
-    if (raw.length <= 10) {
-      setPhone(raw);
-    }
-  };
+  const isFormValid = isEmailValid;
 
   const handleEmailChange = (text: string) => {
     setError('');
@@ -119,21 +107,16 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleContinue = async () => {
-    if (!isPhoneValid) {
-      setError('Please enter a valid 10-digit mobile number');
-      return;
-    }
     if (!isEmailValid) {
-      setError('Please enter a valid email address');
+      setError('Please enter a valid registered email address');
       return;
     }
 
     setError('');
-    const formattedPhone = `+91 ${cleanPhone}`;
-    const sent = await sendOtp(formattedPhone, email.trim().toLowerCase());
+    const sent = await sendOtp('', email.trim().toLowerCase());
     if (sent) {
       navigation.navigate('Otp', {
-        phone: formattedPhone,
+        phone: email.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
         mode: 'LOGIN',
       });
@@ -215,42 +198,10 @@ export const LoginScreen: React.FC = () => {
             </View>
           </View>
 
-          <Text style={styles.mainTitle}>India's instant commerce app</Text>
-          <Text style={styles.subTitle}>Log in or sign up</Text>
+          <Text style={styles.mainTitle}>Seva Zo Dil Se Ki Jaye</Text>
+          <Text style={styles.subTitle}>Log in to your account</Text>
 
           <View style={styles.formWrap}>
-            {/* Mobile Number Row */}
-            <View style={styles.mobileInputRow}>
-              <View style={styles.flagBox}>
-                <Text style={styles.flagText}>🇮🇳</Text>
-                <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
-              </View>
-
-              <View
-                style={[
-                  styles.numberInputBox,
-                  phoneFocused && styles.inputFocused,
-                  isPhoneValid && styles.inputValid,
-                ]}
-              >
-                <Text style={styles.countryCode}>+91</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter mobile number"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  value={phone}
-                  onChangeText={handlePhoneChange}
-                  onFocus={() => setPhoneFocused(true)}
-                  onBlur={() => setPhoneFocused(false)}
-                />
-                {isPhoneValid ? (
-                  <CheckCircle2 size={16} color="#138808" style={styles.validIcon} />
-                ) : null}
-              </View>
-            </View>
-
             {/* Email Address Row */}
             <View
               style={[
@@ -299,15 +250,15 @@ export const LoginScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.continueBtnText}>
-                {isLoading ? 'Sending OTP...' : 'Continue'}
+                {isLoading ? 'Sending OTP...' : 'Log In'}
               </Text>
             </TouchableOpacity>
 
             <View style={styles.termsContainer}>
-              <Text style={styles.termsText}>
-                By continuing, you agree to our:{' '}
-                <Text style={styles.termsLink}>Terms of Service</Text> &{' '}
-                <Text style={styles.termsLink}>Privacy policy</Text>
+              <Text style={styles.termsText} numberOfLines={1}>
+                By continuing, you agree to our{' '}
+                <Text style={styles.termsLink}>Terms</Text> &{' '}
+                <Text style={styles.termsLink}>Privacy Policy</Text>
               </Text>
             </View>
           </View>
