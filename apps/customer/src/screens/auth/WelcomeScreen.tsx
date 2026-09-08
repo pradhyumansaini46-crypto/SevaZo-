@@ -30,37 +30,52 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const GRID_ITEM_SIZE = 68;
-const GRID_ITEM_MARGIN = 5;
-const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_ITEM_MARGIN * 2;
+const GRID_GAP = 6;
+// Exactly 5 columns visible across mobile screen width
+const GRID_ITEM_SIZE = Math.floor((width - 16 - (GRID_GAP * 4)) / 5);
+const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_GAP;
 
-// Smooth Slow Continuous Moving Grid Row Component
+// Smooth Non-Stopping Infinite Continuous Moving Grid Row Component
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number; // duration in ms
   reverse?: boolean;
-}> = ({ items, speed = 40000, reverse = false }) => {
+}> = ({ items, speed = 36000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
-  const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
+  const singleCycleWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
   useEffect(() => {
-    const startAnimation = () => {
-      scrollAnim.setValue(reverse ? -rowWidth : 0);
-      Animated.loop(
-        Animated.timing(scrollAnim, {
-          toValue: reverse ? 0 : -rowWidth,
-          duration: speed,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
+    let anim: Animated.CompositeAnimation | null = null;
+    let isMounted = true;
+
+    const runNonStop = () => {
+      if (!isMounted) return;
+      scrollAnim.setValue(reverse ? -singleCycleWidth : 0);
+      anim = Animated.timing(scrollAnim, {
+        toValue: reverse ? 0 : -singleCycleWidth,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+        isInteraction: false,
+      });
+
+      anim.start(({ finished }) => {
+        if (finished && isMounted) {
+          runNonStop();
+        }
+      });
     };
 
-    startAnimation();
-  }, [items.length, reverse, speed, rowWidth]);
+    runNonStop();
 
-  // Triple buffer to guarantee completely gapless continuous loop
-  const displayItems = [...items, ...items, ...items];
+    return () => {
+      isMounted = false;
+      anim?.stop();
+    };
+  }, [items.length, reverse, speed, singleCycleWidth]);
+
+  // Quadruple buffer to guarantee completely gapless, non-stop continuous loop
+  const displayItems = [...items, ...items, ...items, ...items];
 
   return (
     <View style={styles.marqueeRowContainer}>
@@ -164,12 +179,12 @@ export const WelcomeScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF4EC" />
 
-      {/* Soft Gradient Background (Orange fading into White / Light Green) */}
+      {/* Lighter, Softer Pastel Orange / Peach Indian Themed Gradient */}
       <LinearGradient
-        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
-        locations={[0, 0.2, 0.45, 0.65, 0.85, 1]}
+        colors={['#FFF4EC', '#FFE8D6', '#FFFDF9', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
+        locations={[0, 0.22, 0.45, 0.65, 0.85, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -200,19 +215,19 @@ export const WelcomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Dynamic Movable 4x4 / 5-Row Stroke-Bordered Product Grid View (4 Rows on signup, 5 Rows on login) */}
+        {/* Dynamic Non-Stop Movable 5-Column Grid View (4 Rows on Register / 5 Rows on Login) reaching right to the tricolor line */}
         <View style={styles.marqueeSection}>
           {/* Row 1: Grocery - Left to Right */}
-          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={34000} reverse={true} />
           {/* Row 2: Dairy - Right to Left */}
-          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={38000} reverse={false} />
           {/* Row 3: Electronics - Left to Right */}
-          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={32000} reverse={true} />
           {/* Row 4: Personal Care - Right to Left */}
-          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={36000} reverse={false} />
           {/* Dynamic 5th Row: Grooming - Rendered only when activeTab === 'login' */}
           {activeTab === 'login' ? (
-            <MarqueeRow items={MARQUEE_ROW_5} speed={38000} reverse={true} />
+            <MarqueeRow items={MARQUEE_ROW_5} speed={34000} reverse={true} />
           ) : null}
         </View>
 
@@ -232,7 +247,7 @@ export const WelcomeScreen: React.FC = () => {
             <View style={[styles.tricolorSegment, { backgroundColor: '#138808' }]} />
           </View>
 
-          {/* Clean Enlarged Sevazo Logo (Prominent, no extra box) */}
+          {/* Clean Enlarged Sevazo Logo */}
           <Image
             source={require('../../../assets/logo.png')}
             style={styles.brandLogoImg}
@@ -384,7 +399,7 @@ export const WelcomeScreen: React.FC = () => {
             {/* 4. Terms & Privacy Policy at Absolute Bottom (Strict Sentence case with dot) */}
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our terms & privacy policy.
+                By Continuing, You Agree to Our Terms & Privacy Policy.
               </Text>
             </View>
           </View>
@@ -397,7 +412,7 @@ export const WelcomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF9933',
+    backgroundColor: '#FFF4EC',
     overflow: 'hidden',
   },
   topHeaderBar: {
@@ -431,13 +446,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.2,
-    paddingBottom: Spacing.xs,
+    paddingTop: Spacing.xxl * 1.05,
+    paddingBottom: 0,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 74,
-    marginVertical: 3,
+    height: GRID_ITEM_SIZE,
+    marginBottom: GRID_GAP,
     justifyContent: 'center',
   },
   marqueeTrack: {
@@ -447,14 +462,14 @@ const styles = StyleSheet.create({
   gridCardTile: {
     width: GRID_ITEM_SIZE,
     height: GRID_ITEM_SIZE,
-    marginHorizontal: GRID_ITEM_MARGIN,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    marginRight: GRID_GAP,
+    borderRadius: 12,
+    borderWidth: 1.2,
     borderColor: 'rgba(255, 255, 255, 0.85)',
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
+    padding: 5,
     ...Shadows.small,
   },
   gridProductImg: {

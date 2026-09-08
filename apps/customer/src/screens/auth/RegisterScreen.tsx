@@ -29,35 +29,52 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const GRID_ITEM_SIZE = 68;
-const GRID_ITEM_MARGIN = 5;
-const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_ITEM_MARGIN * 2;
+const GRID_GAP = 6;
+// Exactly 5 columns visible across mobile screen width
+const GRID_ITEM_SIZE = Math.floor((width - 16 - (GRID_GAP * 4)) / 5);
+const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_GAP;
 
+// Smooth Non-Stopping Infinite Continuous Moving Grid Row Component
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number;
   reverse?: boolean;
-}> = ({ items, speed = 40000, reverse = false }) => {
+}> = ({ items, speed = 36000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
-  const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
+  const singleCycleWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
   useEffect(() => {
-    const startAnimation = () => {
-      scrollAnim.setValue(reverse ? -rowWidth : 0);
-      Animated.loop(
-        Animated.timing(scrollAnim, {
-          toValue: reverse ? 0 : -rowWidth,
-          duration: speed,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
+    let anim: Animated.CompositeAnimation | null = null;
+    let isMounted = true;
+
+    const runNonStop = () => {
+      if (!isMounted) return;
+      scrollAnim.setValue(reverse ? -singleCycleWidth : 0);
+      anim = Animated.timing(scrollAnim, {
+        toValue: reverse ? 0 : -singleCycleWidth,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+        isInteraction: false,
+      });
+
+      anim.start(({ finished }) => {
+        if (finished && isMounted) {
+          runNonStop();
+        }
+      });
     };
 
-    startAnimation();
-  }, [items.length, reverse, speed, rowWidth]);
+    runNonStop();
 
-  const displayItems = [...items, ...items, ...items];
+    return () => {
+      isMounted = false;
+      anim?.stop();
+    };
+  }, [items.length, reverse, speed, singleCycleWidth]);
+
+  // Quadruple buffer to guarantee completely gapless, non-stop continuous loop
+  const displayItems = [...items, ...items, ...items, ...items];
 
   return (
     <View style={styles.marqueeRowContainer}>
@@ -145,12 +162,12 @@ export const RegisterScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF4EC" />
       
       {/* Indian Tricolor Full Page Linear Gradient */}
       <LinearGradient
-        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#E6F4EA', '#138808']}
-        locations={[0, 0.18, 0.42, 0.62, 0.85, 1]}
+        colors={['#FFF4EC', '#FFE8D6', '#FFFDF9', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
+        locations={[0, 0.22, 0.45, 0.65, 0.85, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -320,7 +337,7 @@ export const RegisterScreen: React.FC = () => {
             {/* Terms & Privacy Policy at Absolute Bottom */}
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our terms & privacy policy.
+                By Continuing, You Agree to Our Terms & Privacy Policy.
               </Text>
             </View>
           </View>
@@ -333,7 +350,7 @@ export const RegisterScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF9933',
+    backgroundColor: '#FFF4EC',
     overflow: 'hidden',
   },
   topNav: {
@@ -375,13 +392,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.2,
-    paddingBottom: Spacing.xs,
+    paddingTop: Spacing.xxl * 1.05,
+    paddingBottom: 0,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 74,
-    marginVertical: 3,
+    height: GRID_ITEM_SIZE,
+    marginBottom: GRID_GAP,
     justifyContent: 'center',
   },
   marqueeTrack: {
@@ -391,14 +408,14 @@ const styles = StyleSheet.create({
   gridCardTile: {
     width: GRID_ITEM_SIZE,
     height: GRID_ITEM_SIZE,
-    marginHorizontal: GRID_ITEM_MARGIN,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    marginRight: GRID_GAP,
+    borderRadius: 12,
+    borderWidth: 1.2,
     borderColor: 'rgba(255, 255, 255, 0.85)',
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
+    padding: 5,
     ...Shadows.small,
   },
   gridProductImg: {
