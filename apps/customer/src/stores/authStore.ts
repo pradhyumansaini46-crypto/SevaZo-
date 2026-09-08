@@ -47,8 +47,8 @@ interface AuthState {
 
   // Actions
   setPhoneNumber: (phone: string) => void;
-  sendOtp: (phone: string) => Promise<boolean>;
-  verifyOtp: (phone: string, otp: string, mode?: 'LOGIN' | 'REGISTER') => Promise<AuthResponse>;
+  sendOtp: (phone: string, email?: string) => Promise<boolean>;
+  verifyOtp: (phone: string, otp: string, email?: string, mode?: 'LOGIN' | 'REGISTER') => Promise<AuthResponse>;
   updateRegistrationDraft: (partial: Partial<RegistrationDraft>) => void;
   setRegistrationStep: (step: string) => void;
   completeRegistration: () => Promise<CustomerUser>;
@@ -75,13 +75,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }));
   },
 
-  sendOtp: async (phone: string) => {
+  sendOtp: async (phone: string, email?: string) => {
     set({ isLoading: true, phoneNumber: phone });
     try {
-      await customerApi.sendOtp(phone);
+      await customerApi.sendOtp(phone, email);
       set((state) => ({
         isLoading: false,
-        registrationDraft: { ...state.registrationDraft, phone },
+        registrationDraft: { ...state.registrationDraft, phone, email: email || state.registrationDraft.email },
       }));
       return true;
     } catch {
@@ -90,14 +90,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  verifyOtp: async (phone: string, otp: string, mode?: 'LOGIN' | 'REGISTER') => {
+  verifyOtp: async (phone: string, otp: string, email?: string, mode?: 'LOGIN' | 'REGISTER') => {
     set({ isLoading: true });
     try {
-      const response = await customerApi.verifyOtp(phone, otp);
+      const response = await customerApi.verifyOtp(phone, otp, email);
       setAuthToken(response.token);
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
 
-      const isProfileDone = response.profileCompleted ?? (mode === 'LOGIN');
+      const hasAddr = (response as any).hasAddress ?? (response.customer as any)?.addresses?.length > 0;
+      const nextAction = response.nextAction || (hasAddr ? 'OPEN_HOME' : 'LOCATION_SETUP');
 
       set({
         isAuthenticated: true,
@@ -109,8 +110,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       return {
         ...response,
-        profileCompleted: isProfileDone,
-        nextAction: isProfileDone ? 'OPEN_HOME' : 'RESUME_REGISTRATION',
+        profileCompleted: hasAddr,
+        nextAction: (nextAction as any),
       };
     } catch {
       const sessionToken = `jwt-customer-${Date.now()}`;
@@ -121,14 +122,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         id: `cust-${Date.now()}`,
         name: mode === 'LOGIN' ? 'User' : '',
         phone,
-        email: '',
+        email: email || '',
         isVerified: true,
         totalSpent: 0,
         ordersCount: 0,
         walletBalance: 0,
         loyaltyTier: 'BRONZE',
         createdAt: new Date().toISOString(),
-        profileCompleted: mode === 'LOGIN',
+        profileCompleted: false,
       };
 
       set({
@@ -142,8 +143,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return {
         token: sessionToken,
         customer: newCustomer,
-        profileCompleted: mode === 'LOGIN',
-        nextAction: mode === 'LOGIN' ? 'OPEN_HOME' : 'RESUME_REGISTRATION',
+        profileCompleted: false,
+        nextAction: 'LOCATION_SETUP' as any,
       };
     }
   },
@@ -266,7 +267,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           token,
           customer: user,
         });
-        return user.profileCompleted ? 'OPEN_HOME' : 'RESUME_REGISTRATION';
+        const hasAddr = Boolean((user as any).addresses?.length > 0 || user.profileCompleted);
+        return hasAddr ? 'OPEN_HOME' : 'RESUME_REGISTRATION';
       }
 
       set({ isAuthenticated: false, isGuest: false, customer: null, token: null });

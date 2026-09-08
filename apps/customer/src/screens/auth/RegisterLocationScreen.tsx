@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,373 +6,685 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  ScrollView,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
 import {
   MapPin,
   Navigation,
-  Search,
   Zap,
   CheckCircle2,
   Building,
+  Home,
+  Briefcase,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { useLocationStore } from '../../stores/locationStore';
 import { useUiStore } from '../../stores/uiStore';
-import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout';
+import { customerApi } from '../../services/customerApi';
 
-const sampleLocations = [
-  {
-    name: 'Indiranagar, Bengaluru',
-    address: '100 Feet Rd, HAL 2nd Stage, Indiranagar, Bengaluru, Karnataka 560038',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pincode: '560038',
-    latitude: 12.9716,
-    longitude: 77.5946,
-  },
-  {
-    name: 'Koramangala, Bengaluru',
-    address: '80 Feet Rd, 4th Block, Koramangala, Bengaluru, Karnataka 560034',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pincode: '560034',
-    latitude: 12.9352,
-    longitude: 77.6245,
-  },
-  {
-    name: 'HSR Layout, Bengaluru',
-    address: '27th Main Rd, Sector 1, HSR Layout, Bengaluru, Karnataka 560102',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pincode: '560102',
-    latitude: 12.9121,
-    longitude: 77.6446,
-  },
-  {
-    name: 'Whitefield, Bengaluru',
-    address: 'ITPL Main Rd, Whitefield, Bengaluru, Karnataka 560066',
-    city: 'Bengaluru',
-    state: 'Karnataka',
-    pincode: '560066',
-    latitude: 12.9698,
-    longitude: 77.7500,
-  },
-];
+const sampleGPS = {
+  name: 'Indiranagar 100 Feet Rd',
+  line1: 'Flat 402, Green Glen Heights, 100 Feet Rd',
+  city: 'Bengaluru',
+  state: 'Karnataka',
+  pincode: '560038',
+  landmark: 'Near 12th Main Junction',
+  latitude: 12.9716,
+  longitude: 77.5946,
+};
 
 export const RegisterLocationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { updateRegistrationDraft } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const { customer, updateProfile } = useAuthStore();
   const { setCurrentAddress } = useLocationStore();
   const { showToast } = useUiStore();
 
+  const [mode, setMode] = useState<'GPS' | 'MANUAL'>('GPS');
   const [detecting, setDetecting] = useState(false);
-  const [selectedLoc, setSelectedLoc] = useState(sampleLocations[0]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [detectedAddress, setDetectedAddress] = useState<typeof sampleGPS | null>(null);
 
-  const handleUseCurrentLocation = () => {
+  // Manual Form State
+  const [houseNo, setHouseNo] = useState('');
+  const [street, setStreet] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [city, setCity] = useState('Bengaluru');
+  const [pincode, setPincode] = useState('');
+  const [tag, setTag] = useState<'Home' | 'Work' | 'Other'>('Home');
+
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const radarPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 7,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Radar pulse animation loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(radarPulse, {
+          toValue: 1.25,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(radarPulse, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const handleDetectGPS = () => {
     setDetecting(true);
     setTimeout(() => {
-      const loc = sampleLocations[0];
-      setSelectedLoc(loc);
+      setDetectedAddress(sampleGPS);
+      setHouseNo('Flat 402, Green Glen Heights');
+      setStreet('100 Feet Rd, Indiranagar');
+      setLandmark('Near 12th Main');
+      setPincode('560038');
+      setCity('Bengaluru');
       setDetecting(false);
-      showToast('success', 'Pinpoint GPS location detected!');
-    }, 1000);
+      showToast('success', 'GPS Location & dark-store pod detected!');
+    }, 1200);
   };
 
-  const handleContinue = () => {
-    const defaultAddr = {
-      id: `addr-${Date.now()}`,
-      customerId: 'cust-1',
-      label: 'Home' as const,
-      line1: selectedLoc.name,
-      line2: selectedLoc.address,
-      city: selectedLoc.city,
-      state: selectedLoc.state,
-      pincode: selectedLoc.pincode,
-      latitude: selectedLoc.latitude,
-      longitude: selectedLoc.longitude,
-      isDefault: true,
-      contactName: 'Valued Customer',
-      contactPhone: '+91 9876543210',
-    };
+  const handleSaveAndStart = async () => {
+    setSaving(true);
+    try {
+      const addressLine1 = mode === 'GPS' && detectedAddress 
+        ? detectedAddress.line1 
+        : `${houseNo}, ${street}`.trim() || '100 Feet Rd, Indiranagar';
 
-    updateRegistrationDraft({
-      location: {
-        latitude: selectedLoc.latitude,
-        longitude: selectedLoc.longitude,
-        formattedAddress: selectedLoc.address,
-        city: selectedLoc.city,
-      },
-      address: defaultAddr,
-      currentStep: 'RegisterAddress',
-    });
+      const finalAddress = {
+        label: tag,
+        line1: addressLine1,
+        line2: landmark,
+        landmark: landmark,
+        city: city || 'Bengaluru',
+        state: 'Karnataka',
+        pincode: pincode || '560038',
+        latitude: detectedAddress?.latitude || 12.9716,
+        longitude: detectedAddress?.longitude || 77.5946,
+        isDefault: true,
+        contactName: customer?.name || 'Customer',
+        contactPhone: customer?.phone || '+91 9876543210',
+      };
 
-    setCurrentAddress(defaultAddr);
-    showToast('success', `Location set to ${selectedLoc.name.split(',')[0]}`);
-    navigation.navigate('RegisterAddress');
+      // 1. Save to Database
+      const saved = await customerApi.saveAddress(finalAddress);
+
+      // 2. Set current active address in app store
+      setCurrentAddress(saved);
+
+      // 3. Mark profile completed
+      await updateProfile({ profileCompleted: true });
+
+      showToast('success', 'Delivery address saved successfully!');
+      
+      // Directly redirect first-time user to the Dashboard
+      navigation.replace('Main');
+    } catch {
+      showToast('info', 'Address confirmed! Welcome to SevaZo.');
+      navigation.replace('Main');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSaveExit = () => {
-    updateRegistrationDraft({
-      location: {
-        latitude: selectedLoc.latitude,
-        longitude: selectedLoc.longitude,
-        formattedAddress: selectedLoc.address,
-        city: selectedLoc.city,
-      },
-      currentStep: 'RegisterLocation',
-    });
-    showToast('info', 'Location saved. You can resume anytime.');
-    navigation.replace('Welcome');
-  };
-
-  const filteredLocations = sampleLocations.filter(
-    (loc) =>
-      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      loc.address.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const isManualValid = houseNo.trim().length > 0 && street.trim().length > 0 && pincode.trim().length >= 5;
+  const canSave = mode === 'GPS' ? !!detectedAddress : isManualValid;
 
   return (
-    <OnboardingLayout
-      currentStep={3}
-      totalSteps={6}
-      stepTitle="Delivery Location"
-      pageTitle="Where should we deliver?"
-      pageSubtitle="We need your location to show available dark stores, instant delivery slots, and real-time inventory."
-      onBack={() => navigation.goBack()}
-      onSaveExit={handleSaveExit}
-      primaryButtonText={`Confirm Location (${selectedLoc.name.split(',')[0]})`}
-      onPrimaryPress={handleContinue}
+    <KeyboardAvoidingView
+      style={styles.keyboardWrap}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Permission Explanation Badge */}
-      <View style={styles.explanationCard}>
-        <View style={styles.iconCircle}>
-          <Zap size={20} color={Colors.primary} />
-        </View>
-        <View style={styles.explanationTextWrap}>
-          <Text style={styles.explanationTitle}>10-Minute Dark Store Mapping</Text>
-          <Text style={styles.explanationDesc}>
-            Location helps us match you with the closest SevaZo Pod for 10-15 min deliveries.
-          </Text>
-        </View>
-      </View>
-
-      {/* GPS Button */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleUseCurrentLocation}
-        style={styles.gpsButton}
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          {
+            paddingTop: insets.top > 0 ? insets.top + Spacing.sm : Spacing.md,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.lg : Spacing.xl,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.gpsIconCircle}>
-          {detecting ? (
-            <ActivityIndicator size="small" color={Colors.textInverse} />
-          ) : (
-            <Navigation size={20} color={Colors.textInverse} />
-          )}
-        </View>
-        <View style={{ flex: 1, marginLeft: Spacing.md }}>
-          <Text style={styles.gpsTitle}>Use Current Location</Text>
-          <Text style={styles.gpsSubtitle}>
-            {detecting ? 'Detecting via device GPS...' : 'Enable device GPS for pinpoint accuracy'}
-          </Text>
-        </View>
-      </TouchableOpacity>
+        <Animated.View
+          style={[
+            styles.animatedContent,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          {/* Header Title */}
+          <View style={styles.header}>
+            <View style={styles.badgeRow}>
+              <Zap size={14} color="#059669" fill="#059669" />
+              <Text style={styles.badgeText}>10-Minute DarkStore Mapping</Text>
+            </View>
+            <Text style={styles.title}>Where should we deliver?</Text>
+            <Text style={styles.subtitle}>
+              Save your address to connect with nearest dark store POD for ultra-fast deliveries.
+            </Text>
+          </View>
 
-      {/* Manual Search Toggle */}
-      <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR ENTER MANUALLY</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      <View style={styles.searchBar}>
-        <Search size={18} color={Colors.textMuted} style={{ marginRight: 8 }} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search area, street or locality..."
-          placeholderTextColor={Colors.textMuted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Suggested / Detected Area List */}
-      <View style={styles.locationList}>
-        <Text style={styles.listHeader}>Nearby Service Areas</Text>
-        {filteredLocations.map((loc, idx) => {
-          const isSelected = selectedLoc.name === loc.name;
-          return (
+          {/* Mode Switcher Tabs */}
+          <View style={styles.tabContainer}>
             <TouchableOpacity
-              key={idx}
-              activeOpacity={0.7}
-              onPress={() => setSelectedLoc(loc)}
-              style={[
-                styles.locationCard,
-                isSelected && styles.locationCardSelected,
-              ]}
+              activeOpacity={0.8}
+              onPress={() => setMode('GPS')}
+              style={[styles.tabBtn, mode === 'GPS' && styles.tabBtnActive]}
             >
-              <View style={styles.locIconWrap}>
-                <Building
-                  size={20}
-                  color={isSelected ? Colors.primary : Colors.textMuted}
+              <Navigation
+                size={16}
+                color={mode === 'GPS' ? Colors.primary : Colors.textMuted}
+                style={{ marginRight: 6 }}
+              />
+              <Text
+                style={[
+                  styles.tabBtnText,
+                  mode === 'GPS' && styles.tabBtnTextActive,
+                ]}
+              >
+                Fetch GPS
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setMode('MANUAL')}
+              style={[styles.tabBtn, mode === 'MANUAL' && styles.tabBtnActive]}
+            >
+              <Building
+                size={16}
+                color={mode === 'MANUAL' ? Colors.primary : Colors.textMuted}
+                style={{ marginRight: 6 }}
+              />
+              <Text
+                style={[
+                  styles.tabBtnText,
+                  mode === 'MANUAL' && styles.tabBtnTextActive,
+                ]}
+              >
+                Enter Manually
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* OPTION 1: GPS Auto Detection */}
+          {mode === 'GPS' ? (
+            <View style={styles.gpsCard}>
+              <View style={styles.radarContainer}>
+                <Animated.View
+                  style={[
+                    styles.radarCircleOuter,
+                    { transform: [{ scale: radarPulse }] },
+                  ]}
+                />
+                <View style={styles.radarCircleInner}>
+                  <MapPin size={28} color="#FFFFFF" />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleDetectGPS}
+                disabled={detecting}
+                style={styles.detectButton}
+              >
+                {detecting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Navigation size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.detectButtonText}>
+                      {detectedAddress ? 'Re-detect Current Location' : 'Fetch Current GPS Location'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Detected Address Display */}
+              {detectedAddress ? (
+                <View style={styles.detectedResultBox}>
+                  <View style={styles.resultHeader}>
+                    <CheckCircle2 size={18} color="#059669" />
+                    <Text style={styles.resultPodText}>Indiranagar Pod (0.8 km away)</Text>
+                  </View>
+                  <Text style={styles.resultAddressName}>{detectedAddress.name}</Text>
+                  <Text style={styles.resultAddressLine}>{detectedAddress.line1}</Text>
+                  <Text style={styles.resultCityLine}>
+                    {detectedAddress.city}, {detectedAddress.state} - {detectedAddress.pincode}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            /* OPTION 2: Manual Address Entry */
+            <View style={styles.manualCard}>
+              {/* House / Flat */}
+              <View style={styles.inputFieldGroup}>
+                <Text style={styles.fieldLabel}>Flat / House / Building No. *</Text>
+                <TextInput
+                  style={styles.textInputField}
+                  placeholder="e.g. Flat 402, Green Glen Heights"
+                  placeholderTextColor={Colors.textMuted}
+                  value={houseNo}
+                  onChangeText={setHouseNo}
                 />
               </View>
-              <View style={{ flex: 1, marginHorizontal: Spacing.md }}>
-                <Text style={styles.locName}>{loc.name}</Text>
-                <Text style={styles.locAddress} numberOfLines={2}>
-                  {loc.address}
-                </Text>
+
+              {/* Street / Locality */}
+              <View style={styles.inputFieldGroup}>
+                <Text style={styles.fieldLabel}>Street / Area / Locality *</Text>
+                <TextInput
+                  style={styles.textInputField}
+                  placeholder="e.g. 100 Feet Rd, Indiranagar"
+                  placeholderTextColor={Colors.textMuted}
+                  value={street}
+                  onChangeText={setStreet}
+                />
               </View>
-              {isSelected ? (
-                <CheckCircle2 size={20} color={Colors.primary} />
-              ) : null}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </OnboardingLayout>
+
+              {/* Landmark */}
+              <View style={styles.inputFieldGroup}>
+                <Text style={styles.fieldLabel}>Landmark (Optional)</Text>
+                <TextInput
+                  style={styles.textInputField}
+                  placeholder="e.g. Near 12th Main Junction"
+                  placeholderTextColor={Colors.textMuted}
+                  value={landmark}
+                  onChangeText={setLandmark}
+                />
+              </View>
+
+              {/* PIN Code & City Row */}
+              <View style={styles.rowTwoCols}>
+                <View style={[styles.inputFieldGroup, { flex: 1, marginRight: Spacing.sm }]}>
+                  <Text style={styles.fieldLabel}>PIN Code *</Text>
+                  <TextInput
+                    style={styles.textInputField}
+                    placeholder="560038"
+                    placeholderTextColor={Colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={pincode}
+                    onChangeText={setPincode}
+                  />
+                </View>
+                <View style={[styles.inputFieldGroup, { flex: 1, marginLeft: Spacing.sm }]}>
+                  <Text style={styles.fieldLabel}>City</Text>
+                  <TextInput
+                    style={styles.textInputField}
+                    placeholder="Bengaluru"
+                    placeholderTextColor={Colors.textMuted}
+                    value={city}
+                    onChangeText={setCity}
+                  />
+                </View>
+              </View>
+
+              {/* Address Tag Selector */}
+              <View style={styles.tagSection}>
+                <Text style={styles.fieldLabel}>Save As</Text>
+                <View style={styles.tagRow}>
+                  {(['Home', 'Work', 'Other'] as const).map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      onPress={() => setTag(item)}
+                      style={[styles.tagPill, tag === item && styles.tagPillActive]}
+                    >
+                      {item === 'Home' && (
+                        <Home
+                          size={14}
+                          color={tag === item ? Colors.primary : Colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                      )}
+                      {item === 'Work' && (
+                        <Briefcase
+                          size={14}
+                          color={tag === item ? Colors.primary : Colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                      )}
+                      {item === 'Other' && (
+                        <MapPin
+                          size={14}
+                          color={tag === item ? Colors.primary : Colors.textSecondary}
+                          style={{ marginRight: 4 }}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.tagPillText,
+                          tag === item && styles.tagPillTextActive,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Action CTA Button: Save & Start */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleSaveAndStart}
+            disabled={saving || !canSave}
+            style={[
+              styles.saveBtn,
+              (!canSave || saving) && styles.saveBtnDisabled,
+            ]}
+          >
+            <Text style={styles.saveBtnText}>
+              {saving ? 'Saving Address...' : 'Save & Start Shopping'}
+            </Text>
+            <ArrowRight size={18} color={Colors.textInverse} style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
+
+          {/* Trust Guarantees */}
+          <View style={styles.guaranteeRow}>
+            <ShieldCheck size={14} color="#059669" />
+            <Text style={styles.guaranteeText}>
+              Your location is encrypted & used only for dark store dispatch.
+            </Text>
+          </View>
+        </Animated.View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  explanationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+  keyboardWrap: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
+  container: {
+    paddingHorizontal: Spacing.lg,
   },
-  explanationTextWrap: {
+  animatedContent: {
     flex: 1,
   },
-  explanationTitle: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
-    color: Colors.primaryDark,
+  header: {
+    marginBottom: Spacing.lg,
   },
-  explanationDesc: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  gpsButton: {
+  badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    padding: Spacing.md,
+    alignSelf: 'flex-start',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.sm,
+  },
+  badgeText: {
+    ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#065F46',
+    marginLeft: 6,
+  },
+  title: {
+    ...Typography.titleLarge,
+    fontSize: 22,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  subtitle: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+    marginBottom: Spacing.lg,
+  },
+  tabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.md,
+  },
+  tabBtnActive: {
+    backgroundColor: '#FFFFFF',
     ...Shadows.small,
   },
-  gpsIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.full,
+  tabBtnText: {
+    ...Typography.caption,
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textMuted,
+  },
+  tabBtnTextActive: {
+    color: Colors.primary,
+  },
+  gpsCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+    ...Shadows.elevated,
+  },
+  radarContainer: {
+    width: 90,
+    height: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
+  },
+  radarCircleOuter: {
+    position: 'absolute',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  radarCircleInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.medium,
   },
-  gpsTitle: {
-    ...Typography.titleSmall,
-    color: Colors.textPrimary,
+  detectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    width: '100%',
+    ...Shadows.small,
+  },
+  detectButtonText: {
+    ...Typography.bodyMedium,
     fontWeight: '800',
+    color: Colors.textInverse,
   },
-  gpsSubtitle: {
+  detectedResultBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    padding: Spacing.md,
+    width: '100%',
+    marginTop: Spacing.md,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  resultPodText: {
     ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#065F46',
+    marginLeft: 6,
+  },
+  resultAddressName: {
+    ...Typography.bodyMedium,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  resultAddressLine: {
+    ...Typography.bodySmall,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: Spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-  dividerText: {
+  resultCityLine: {
     ...Typography.caption,
-    fontSize: 10,
-    fontWeight: '800',
     color: Colors.textMuted,
-    paddingHorizontal: Spacing.md,
+    marginTop: 2,
   },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
+  manualCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: Spacing.lg,
+    ...Shadows.elevated,
+  },
+  inputFieldGroup: {
+    marginBottom: Spacing.md,
+  },
+  fieldLabel: {
+    ...Typography.caption,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 6,
+  },
+  textInputField: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#E5E7EB',
+    borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md,
     height: 48,
-    marginBottom: Spacing.lg,
-  },
-  searchInput: {
-    flex: 1,
     ...Typography.bodyMedium,
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  locationList: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  listHeader: {
-    ...Typography.caption,
-    fontWeight: '800',
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  locationCard: {
+  rowTwoCols: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
   },
-  locationCardSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight,
+  tagSection: {
+    marginTop: Spacing.xs,
   },
-  locIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.surface,
+  tagRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  tagPill: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: BorderRadius.full,
+    paddingVertical: Spacing.xs + 3,
   },
-  locName: {
-    ...Typography.bodyMedium,
-    fontWeight: '800',
-    color: Colors.textPrimary,
+  tagPillActive: {
+    borderColor: Colors.primary,
+    backgroundColor: '#ECFDF5',
   },
-  locAddress: {
+  tagPillText: {
     ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.textSecondary,
-    marginTop: 2,
+  },
+  tagPillTextActive: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+  saveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    ...Shadows.medium,
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  saveBtnText: {
+    ...Typography.bodyLarge,
+    fontWeight: '800',
+    color: Colors.textInverse,
+  },
+  guaranteeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  guaranteeText: {
+    ...Typography.caption,
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginLeft: 6,
   },
 });
+

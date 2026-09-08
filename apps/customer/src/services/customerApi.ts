@@ -19,18 +19,18 @@ import {
 
 export const customerApi = {
   // 1. Registration & Auth
-  async sendOtp(phone: string): Promise<{ success: boolean; message: string }> {
+  async sendOtp(phone: string, email?: string): Promise<{ success: boolean; message: string }> {
     try {
-      const res = await apiClient.post('/customer/auth/send-otp', { phone });
+      const res = await apiClient.post('/customer/auth/send-otp', { phone, email });
       return res.data;
     } catch {
-      return { success: true, message: `OTP sent successfully to ${phone}` };
+      return { success: true, message: email ? `OTP sent to ${email}` : `OTP sent to ${phone}` };
     }
   },
 
-  async verifyOtp(phone: string, otp: string): Promise<AuthResponse> {
+  async verifyOtp(phone: string, otp: string, email?: string): Promise<AuthResponse> {
     try {
-      const res = await apiClient.post('/customer/auth/verify-otp', { phone, otp });
+      const res = await apiClient.post('/customer/auth/verify-otp', { phone, otp, email });
       setAuthToken(res.data.token);
       return res.data;
     } catch {
@@ -42,7 +42,7 @@ export const customerApi = {
           id: `cust-${Date.now()}`,
           phone,
           name: '',
-          email: '',
+          email: email || '',
           isVerified: true,
           totalSpent: 0,
           ordersCount: 0,

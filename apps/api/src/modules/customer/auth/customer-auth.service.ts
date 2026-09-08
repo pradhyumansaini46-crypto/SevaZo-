@@ -16,7 +16,7 @@ export class CustomerAuthService {
   private preferencesStore = new Map<string, { preferredCategories: string[]; preferredLanguage: string; preferredCurrency: string }>();
   private notificationPreferencesStore = new Map<string, { orderUpdates: boolean; deliveryAlerts: boolean; accountAlerts: boolean; marketingConsent: boolean }>();
 
-  async sendOtp(phone: string) {
+  async sendOtp(phone: string, email?: string) {
     if (!phone || phone.length < 10) {
       throw new BadRequestException('Valid 10-digit mobile number required');
     }
@@ -25,7 +25,12 @@ export class CustomerAuthService {
       ? phone
       : `+91 ${phone.replace(/\D/g, '').slice(-10)}`;
     const otp = '123456';
+    const identifier = (email && email.trim()) ? email.trim().toLowerCase() : normalizedPhone;
 
+    this.otpStore.set(identifier, {
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    });
     this.otpStore.set(normalizedPhone, {
       code: otp,
       expiresAt: Date.now() + 5 * 60 * 1000,
@@ -33,17 +38,19 @@ export class CustomerAuthService {
 
     return {
       success: true,
-      message: `OTP sent to ${normalizedPhone}`,
+      message: email ? `OTP sent to your email: ${email}` : `OTP sent to ${normalizedPhone}`,
       phone: normalizedPhone,
+      email: email || undefined,
       debugOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
     };
   }
 
-  async verifyOtp(phone: string, otp: string) {
+  async verifyOtp(phone: string, otp: string, email?: string) {
     const normalizedPhone = phone.startsWith('+91')
       ? phone
       : `+91 ${phone.replace(/\D/g, '').slice(-10)}`;
-    const record = this.otpStore.get(normalizedPhone);
+    const identifier = (email && email.trim()) ? email.trim().toLowerCase() : normalizedPhone;
+    const record = this.otpStore.get(identifier) || this.otpStore.get(normalizedPhone);
 
     const isDevelopment = process.env.NODE_ENV !== 'production' || otp === '123456';
     if (!isDevelopment) {
@@ -52,6 +59,7 @@ export class CustomerAuthService {
       }
     }
 
+    this.otpStore.delete(identifier);
     this.otpStore.delete(normalizedPhone);
 
     let customer = await this.prisma.customer.findUnique({
@@ -67,8 +75,8 @@ export class CustomerAuthService {
       customer = await this.prisma.customer.create({
         data: {
           phone: normalizedPhone,
-          name: `Customer ${normalizedPhone.slice(-4)}`,
-          email: `user_${normalizedPhone.slice(-4)}@sevazo.in`,
+          name: '',
+          email: email || `user_${normalizedPhone.slice(-4)}@sevazo.in`,
           isVerified: true,
           status: 'ACTIVE',
         },
@@ -78,11 +86,19 @@ export class CustomerAuthService {
       });
 
       this.onboardingStore.set(customer.id, {
-        currentStep: 'PROFILE_SETUP',
-        progress: 25,
+        currentStep: 'LOCATION_SETUP',
+        progress: 50,
         status: 'DRAFT',
       });
+    } else if (email && customer.email !== email) {
+      customer = await this.prisma.customer.update({
+        where: { id: customer.id },
+        data: { email: email.trim().toLowerCase() },
+        include: { addresses: true },
+      });
     }
+
+    const hasAddresses = customer.addresses && customer.addresses.length > 0;
 
     const payload = { sub: customer.id, phone: customer.phone, role: 'CUSTOMER' };
     const secret = this.config.get<string>(
@@ -91,14 +107,12 @@ export class CustomerAuthService {
     );
     const token = this.jwtService.sign(payload, { secret, expiresIn: '30d' });
 
-    const onboarding = this.onboardingStore.get(customer.id);
-
     return {
       token,
       isNew,
-      profileCompleted: !isNew,
-      nextAction: isNew ? 'RESUME_REGISTRATION' : 'OPEN_HOME',
-      currentStep: onboarding?.currentStep || 'PROFILE_SETUP',
+      hasAddress: hasAddresses,
+      profileCompleted: hasAddresses,
+      nextAction: hasAddresses ? 'OPEN_HOME' : 'LOCATION_SETUP',
       customer: {
         id: customer.id,
         name: customer.name,
@@ -106,12 +120,12 @@ export class CustomerAuthService {
         email: customer.email,
         avatar: customer.avatar,
         isVerified: customer.isVerified,
-        profileCompleted: !isNew,
+        profileCompleted: hasAddresses,
         status: customer.status,
-        totalSpent: Number(customer.totalSpent),
-        ordersCount: customer.ordersCount,
-        addresses: customer.addresses,
-        walletBalance: 450,
+        totalSpent: Number(customer.totalSpent || 0),
+        ordersCount: customer.ordersCount || 0,
+        addresses: customer.addresses || [],
+        walletBalance: 0,
       },
     };
   }

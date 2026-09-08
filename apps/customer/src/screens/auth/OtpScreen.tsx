@@ -7,36 +7,78 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import { Button } from '../../components/Button';
-import { ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Mail,
+  ShieldAlert,
+  RotateCcw,
+  Edit3,
+} from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
 
 export const OtpScreen: React.FC = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  
   const phone = route.params?.phone || '+91 9876543210';
+  const email = route.params?.email || 'user@example.com';
   const mode = route.params?.mode || 'LOGIN';
 
   const [otp, setOtp] = useState(['1', '2', '3', '4', '5', '6']);
   const [timer, setTimer] = useState(30);
   const [attempts, setAttempts] = useState(0);
   const [error, setError] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(0);
+
   const { verifyOtp, sendOtp, isLoading } = useAuthStore();
   const inputRefs = useRef<Array<TextInput | null>>([]);
+  
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 7,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     const countdown = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(countdown);
   }, []);
 
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
+
   const handleOtpChange = (value: string, index: number) => {
+    setError('');
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -56,21 +98,30 @@ export const OtpScreen: React.FC = () => {
     const fullOtp = otp.join('');
     if (fullOtp.length < 6) {
       setError('Please enter all 6 digits of the OTP');
+      triggerShake();
       return;
     }
 
-    if (attempts >= 4) {
+    if (attempts >= 5) {
       setError('Too many incorrect attempts. Please request a new OTP.');
+      triggerShake();
       return;
     }
 
     setError('');
-    const response = await verifyOtp(phone, fullOtp, mode);
+    try {
+      const response = await verifyOtp(phone, fullOtp, email, mode);
 
-    if (response.nextAction === 'OPEN_HOME') {
-      navigation.replace('Main');
-    } else {
-      navigation.replace('RegisterProfile');
+      if (response.nextAction === 'OPEN_HOME' || response.profileCompleted) {
+        navigation.replace('Main');
+      } else {
+        // First time user / No address registered $\rightarrow$ Ask for Location & Address
+        navigation.replace('RegisterLocation');
+      }
+    } catch {
+      setAttempts((prev) => prev + 1);
+      setError('Invalid OTP code. Please try again or use 123456.');
+      triggerShake();
     }
   };
 
@@ -79,7 +130,7 @@ export const OtpScreen: React.FC = () => {
     setTimer(30);
     setAttempts(0);
     setError('');
-    await sendOtp(phone);
+    await sendOtp(phone, email);
   };
 
   return (
@@ -93,6 +144,9 @@ export const OtpScreen: React.FC = () => {
       ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Header Back Button */}
       <View style={styles.headerRow}>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -101,64 +155,114 @@ export const OtpScreen: React.FC = () => {
         >
           <ArrowLeft size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Verification Code</Text>
+        <Text style={styles.headerTitle}>Email Verification</Text>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.infoTitle}>
-          {mode === 'REGISTER' ? 'Verify to Create Account' : 'Verify Mobile Number'}
-        </Text>
-        <Text style={styles.infoSubtitle}>
-          We have sent a 6-digit verification code to{' '}
-          <Text style={styles.phoneHighlight}>{phone}</Text>
-        </Text>
-
-        {/* 6 Digit OTP inputs */}
-        <View style={styles.otpRow}>
-          {otp.map((digit, idx) => (
-            <TextInput
-              key={idx}
-              ref={(ref) => {
-                inputRefs.current[idx] = ref;
-              }}
-              style={[styles.otpBox, !!digit && styles.otpBoxFilled]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text, idx)}
-              onKeyPress={(e) => handleKeyPress(e, idx)}
-              selectTextOnFocus
-            />
-          ))}
-        </View>
-
-        {error ? (
-          <View style={styles.errorBanner}>
-            <ShieldAlert size={16} color={Colors.danger} style={{ marginRight: 6 }} />
-            <Text style={styles.errorText}>{error}</Text>
+      <Animated.View
+        style={[
+          styles.contentWrap,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        {/* Email Badge Box */}
+        <View style={styles.emailBadgeCard}>
+          <View style={styles.emailIconCircle}>
+            <Mail size={22} color={Colors.primary} />
           </View>
-        ) : null}
-
-        <Button
-          title="Verify & Continue"
-          onPress={handleVerify}
-          loading={isLoading}
-          icon={<CheckCircle2 size={18} color={Colors.textInverse} />}
-          size="lg"
-          style={styles.verifyBtn}
-        />
-
-        <View style={styles.resendRow}>
-          <Text style={styles.resendText}>Didn't receive the code? </Text>
-          {timer > 0 ? (
-            <Text style={styles.timerText}>Resend in {timer}s</Text>
-          ) : (
-            <TouchableOpacity onPress={handleResend}>
-              <Text style={styles.resendLink}>Resend OTP</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.emailTextWrap}>
+            <Text style={styles.emailBadgeLabel}>Code sent to your email</Text>
+            <Text style={styles.emailAddressText} numberOfLines={1}>
+              {email}
+            </Text>
+          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+            style={styles.editEmailBtn}
+          >
+            <Edit3 size={14} color={Colors.primary} />
+            <Text style={styles.editEmailText}>Change</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+
+        {/* Card with OTP digits */}
+        <Animated.View
+          style={[
+            styles.card,
+            { transform: [{ translateX: shakeAnim }] },
+          ]}
+        >
+          <Text style={styles.cardTitle}>Enter 6-Digit Code</Text>
+          <Text style={styles.cardSubtitle}>
+            Check your inbox and spam folder for the 6-digit confirmation code.
+          </Text>
+
+          {/* 6 Digit OTP inputs */}
+          <View style={styles.otpRow}>
+            {otp.map((digit, idx) => (
+              <TextInput
+                key={idx}
+                ref={(ref) => {
+                  inputRefs.current[idx] = ref;
+                }}
+                style={[
+                  styles.otpBox,
+                  focusedIndex === idx && styles.otpBoxFocused,
+                  !!digit && styles.otpBoxFilled,
+                ]}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={digit}
+                onFocus={() => setFocusedIndex(idx)}
+                onBlur={() => setFocusedIndex(null)}
+                onChangeText={(text) => handleOtpChange(text, idx)}
+                onKeyPress={(e) => handleKeyPress(e, idx)}
+                selectTextOnFocus
+              />
+            ))}
+          </View>
+
+          {/* Error Banner */}
+          {error ? (
+            <View style={styles.errorBanner}>
+              <ShieldAlert size={16} color={Colors.danger} style={{ marginRight: 6 }} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          {/* Verify & Proceed Button */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleVerify}
+            disabled={isLoading || otp.join('').length < 6}
+            style={[
+              styles.verifyBtn,
+              (otp.join('').length < 6 || isLoading) && styles.verifyBtnDisabled,
+            ]}
+          >
+            <CheckCircle2 size={18} color={Colors.textInverse} style={{ marginRight: 8 }} />
+            <Text style={styles.verifyBtnText}>
+              {isLoading ? 'Verifying...' : 'Verify & Continue'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Resend Code Section */}
+          <View style={styles.resendRow}>
+            <RotateCcw size={14} color={timer > 0 ? Colors.textMuted : Colors.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.resendText}>Didn't receive email? </Text>
+            {timer > 0 ? (
+              <Text style={styles.timerText}>Resend in {timer}s</Text>
+            ) : (
+              <TouchableOpacity onPress={handleResend}>
+                <Text style={styles.resendLink}>Resend OTP</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 };
@@ -166,44 +270,98 @@ export const OtpScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.xl,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   backBtn: {
     padding: Spacing.xs,
-    marginRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   headerTitle: {
     ...Typography.titleMedium,
     color: Colors.textPrimary,
+    fontWeight: '800',
+  },
+  contentWrap: {
+    flex: 1,
+  },
+  emailBadgeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  emailIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+    ...Shadows.small,
+  },
+  emailTextWrap: {
+    flex: 1,
+  },
+  emailBadgeLabel: {
+    ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  emailAddressText: {
+    ...Typography.bodyMedium,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+  editEmailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  editEmailText: {
+    ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginLeft: 4,
   },
   card: {
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: '#FAFAFA',
     borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E5E7EB',
     ...Shadows.elevated,
   },
-  infoTitle: {
-    ...Typography.titleLarge,
+  cardTitle: {
+    ...Typography.titleMedium,
+    fontSize: 18,
+    fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
   },
-  infoSubtitle: {
-    ...Typography.bodyMedium,
+  cardSubtitle: {
+    ...Typography.bodySmall,
     color: Colors.textSecondary,
-    marginBottom: Spacing.xl,
-    lineHeight: 20,
-  },
-  phoneHighlight: {
-    fontWeight: '700',
-    color: Colors.textPrimary,
+    marginTop: 2,
+    marginBottom: Spacing.lg,
+    lineHeight: 18,
   },
   otpRow: {
     flexDirection: 'row',
@@ -211,19 +369,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   otpBox: {
-    width: 44,
-    height: 52,
+    width: 46,
+    height: 54,
     borderWidth: 1.5,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.surface,
+    borderColor: '#E5E7EB',
+    borderRadius: BorderRadius.lg,
+    backgroundColor: '#FFFFFF',
     textAlign: 'center',
     ...Typography.titleLarge,
+    fontWeight: '800',
     color: Colors.textPrimary,
+  },
+  otpBoxFocused: {
+    borderColor: Colors.primary,
+    backgroundColor: '#FFFFFF',
+    ...Shadows.small,
   },
   otpBoxFilled: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: '#F0FDF4',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -231,35 +395,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
     padding: Spacing.sm,
     borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: '#FECACA',
     marginBottom: Spacing.md,
   },
   errorText: {
-    ...Typography.bodySmall,
+    ...Typography.caption,
     color: Colors.danger,
     fontWeight: '600',
     flex: 1,
   },
   verifyBtn: {
-    marginTop: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.xs,
+    ...Shadows.medium,
+  },
+  verifyBtnDisabled: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  verifyBtnText: {
+    ...Typography.bodyLarge,
+    fontWeight: '800',
+    color: Colors.textInverse,
   },
   resendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
   resendText: {
-    ...Typography.bodyMedium,
+    ...Typography.bodySmall,
     color: Colors.textSecondary,
   },
   timerText: {
-    ...Typography.bodyMedium,
+    ...Typography.bodySmall,
     color: Colors.textMuted,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   resendLink: {
-    ...Typography.bodyMedium,
+    ...Typography.bodySmall,
     color: Colors.primary,
     fontWeight: '800',
   },
 });
+

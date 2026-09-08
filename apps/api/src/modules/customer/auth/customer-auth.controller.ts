@@ -11,17 +11,21 @@ export class CustomerAuthController {
   @Public()
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send 6-digit OTP to mobile' })
-  sendOtp(@Body('phone') phone: string) {
-    return this.service.sendOtp(phone);
+  @ApiOperation({ summary: 'Send 6-digit OTP to Email/Mobile' })
+  sendOtp(@Body('phone') phone: string, @Body('email') email?: string) {
+    return this.service.sendOtp(phone, email);
   }
 
   @Public()
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify OTP and issue session token' })
-  verifyOtp(@Body('phone') phone: string, @Body('otp') otp: string) {
-    return this.service.verifyOtp(phone, otp);
+  @ApiOperation({ summary: 'Verify Email OTP and issue session token' })
+  verifyOtp(
+    @Body('phone') phone: string,
+    @Body('otp') otp: string,
+    @Body('email') email?: string,
+  ) {
+    return this.service.verifyOtp(phone, otp, email);
   }
 
   @Get('me')
