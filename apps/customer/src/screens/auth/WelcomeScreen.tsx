@@ -14,10 +14,11 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import { Mail, CheckCircle2, AlertCircle, ChevronDown, Sparkles } from 'lucide-react-native';
+import { Mail, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
 import {
   MARQUEE_ROW_1,
@@ -28,9 +29,9 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = 84;
+const ITEM_WIDTH = 90;
 const ITEM_MARGIN = 6;
-const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2; // 96px
+const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
 
 // Smooth Continuous Moving Row Component
 const MarqueeRow: React.FC<{
@@ -75,14 +76,18 @@ const MarqueeRow: React.FC<{
             key={`${item.id}-${idx}`}
             style={[
               styles.productCard,
-              { backgroundColor: item.bgColor || '#F0F9FF' },
+              { backgroundColor: item.bgColor || '#FFFFFF' },
             ]}
           >
-            <Image
-              source={{ uri: item.image }}
-              style={styles.productImage}
-              resizeMode="contain"
-            />
+            {item.badge ? (
+              <View style={styles.productBadge}>
+                <Text style={styles.productBadgeText}>{item.badge}</Text>
+              </View>
+            ) : null}
+            <Text style={styles.productEmoji}>{item.emoji}</Text>
+            <Text style={styles.productName} numberOfLines={1}>
+              {item.name}
+            </Text>
           </View>
         ))}
       </Animated.View>
@@ -154,11 +159,14 @@ export const WelcomeScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF7ED" />
+      <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
 
-      {/* Background Gradient Ambient Layer (Light Orange with Greenish Touches) */}
-      <View style={styles.ambientTopGlow} />
-      <View style={styles.ambientGreenTouch} />
+      {/* Full Page Indian Tricolor Linear Gradient (Saffron -> White -> Green) */}
+      <LinearGradient
+        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#E6F4EA', '#138808']}
+        locations={[0, 0.18, 0.42, 0.62, 0.85, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
 
       {/* Top Floating Skip Login Pill */}
       <View
@@ -187,16 +195,23 @@ export const WelcomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Continuous Moving Product Marquee (4 Staggered Rows, 100+ Modern Items) */}
+        {/* Continuous Moving Product Marquee (4 Staggered Rows, 100 Modern Grocery Items) */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={30000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={34000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={28000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={32000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={28000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={32000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={26000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={30000} reverse={false} />
         </View>
 
         {/* Bottom Card / Auth Sheet */}
         <View style={styles.bottomCard}>
+          {/* Subtle Tricolor Ribbon Bar on top of the card */}
+          <View style={styles.tricolorBar}>
+            <View style={[styles.tricolorSegment, { backgroundColor: '#FF9933' }]} />
+            <View style={[styles.tricolorSegment, { backgroundColor: '#FFFFFF' }]} />
+            <View style={[styles.tricolorSegment, { backgroundColor: '#138808' }]} />
+          </View>
+
           {/* Brand Logo Box */}
           <View style={styles.brandBoxWrap}>
             <View style={styles.brandSquare}>
@@ -243,7 +258,7 @@ export const WelcomeScreen: React.FC = () => {
                   onBlur={() => setPhoneFocused(false)}
                 />
                 {isPhoneValid ? (
-                  <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
+                  <CheckCircle2 size={16} color="#138808" style={styles.validIcon} />
                 ) : null}
               </View>
             </View>
@@ -258,7 +273,7 @@ export const WelcomeScreen: React.FC = () => {
             >
               <Mail
                 size={18}
-                color={emailFocused ? Colors.primary : '#94A3B8'}
+                color={emailFocused ? '#FF7700' : '#94A3B8'}
                 style={styles.inputLeftIcon}
               />
               <TextInput
@@ -274,7 +289,7 @@ export const WelcomeScreen: React.FC = () => {
                 onBlur={() => setEmailFocused(false)}
               />
               {isEmailValid ? (
-                <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
+                <CheckCircle2 size={16} color="#138808" style={styles.validIcon} />
               ) : null}
             </View>
 
@@ -288,7 +303,7 @@ export const WelcomeScreen: React.FC = () => {
 
             {/* 3. Continue Button */}
             <TouchableOpacity
-              activeOpacity={0.85}
+              activeOpacity={0.88}
               onPress={handleSubmit}
               disabled={isLoading || !isFormValid}
               style={[
@@ -319,26 +334,7 @@ export const WelcomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF7ED', // Light Orange Background Theme
-  },
-  ambientTopGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 380,
-    backgroundColor: '#FFEDD5', // Soft Warm Light Orange
-    opacity: 0.6,
-  },
-  ambientGreenTouch: {
-    position: 'absolute',
-    top: 60,
-    right: -50,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#D1FAE5', // Fresh Greenish Accent Touch
-    opacity: 0.45,
+    backgroundColor: '#FF9933',
   },
   topHeaderBar: {
     position: 'absolute',
@@ -351,11 +347,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   skipLoginPill: {
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     paddingHorizontal: Spacing.md + 2,
     paddingVertical: Spacing.xs + 3,
     borderRadius: BorderRadius.full,
-    backdropFilter: 'blur(8px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   skipLoginText: {
     ...Typography.bodySmall,
@@ -369,12 +366,12 @@ const styles = StyleSheet.create({
   },
   marqueeSection: {
     paddingTop: Spacing.xxl * 1.5,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 98,
-    marginVertical: 4,
+    height: 94,
+    marginVertical: 3,
   },
   marqueeTrack: {
     flexDirection: 'row',
@@ -382,57 +379,92 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: ITEM_WIDTH,
-    height: ITEM_WIDTH,
+    height: 86,
     marginHorizontal: ITEM_MARGIN,
-    borderRadius: 22,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
+    padding: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.95)',
     ...Shadows.small,
   },
-  productImage: {
-    width: 66,
-    height: 66,
+  productBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  productBadgeText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  productEmoji: {
+    fontSize: 34,
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  productName: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1E293B',
+    textAlign: 'center',
+    width: '100%',
   },
   bottomCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#E2E8F0',
     ...Shadows.elevated,
+  },
+  tricolorBar: {
+    flexDirection: 'row',
+    width: 64,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  tricolorSegment: {
+    flex: 1,
+    height: '100%',
   },
   brandBoxWrap: {
     marginBottom: Spacing.xs,
   },
   brandSquare: {
-    width: 62,
-    height: 62,
+    width: 60,
+    height: 60,
     borderRadius: 18,
-    backgroundColor: '#FDE047', // Iconic Golden Warm Brand Box
+    backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#FFEDD5',
     ...Shadows.small,
   },
   brandLogoImg: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
   },
   mainTitle: {
     ...Typography.titleLarge,
-    fontSize: 23,
+    fontSize: 22,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
     letterSpacing: -0.5,
-    marginTop: 4,
+    marginTop: 2,
   },
   subTitle: {
     ...Typography.bodyMedium,
@@ -460,7 +492,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 16,
-    height: 54,
+    height: 52,
     paddingHorizontal: Spacing.md,
     marginRight: Spacing.sm,
     ...Shadows.small,
@@ -476,7 +508,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 16,
-    height: 54,
+    height: 52,
     paddingHorizontal: Spacing.md,
     ...Shadows.small,
   },
@@ -493,7 +525,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 16,
-    height: 54,
+    height: 52,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
     ...Shadows.small,
@@ -502,11 +534,11 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   inputFocused: {
-    borderColor: '#059669', // Emerald Green Accent on Focus
+    borderColor: '#FF7700',
     backgroundColor: '#FFFFFF',
   },
   inputValid: {
-    borderColor: '#10B981',
+    borderColor: '#138808',
   },
   textInput: {
     flex: 1,
@@ -533,7 +565,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   continueBtn: {
-    backgroundColor: '#059669', // Clean Emerald Green CTA
+    backgroundColor: '#FF7700', // Saffron CTA
     borderRadius: 16,
     paddingVertical: 15,
     alignItems: 'center',
@@ -542,7 +574,7 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   continueBtnDisabled: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: '#CBD5E1',
     shadowOpacity: 0,
     elevation: 0,
   },

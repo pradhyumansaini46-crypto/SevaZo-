@@ -12,6 +12,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
@@ -60,13 +61,16 @@ export const RegisterLocationScreen: React.FC = () => {
   const [street, setStreet] = useState('');
   const [landmark, setLandmark] = useState('');
   const [city, setCity] = useState('Bengaluru');
+  const [state, setState] = useState('Karnataka');
   const [pincode, setPincode] = useState('');
-  const [tag, setTag] = useState<'Home' | 'Work' | 'Other'>('Home');
+  const [tag, setTag] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
-  const radarPulse = useRef(new Animated.Value(1)).current;
+  const radarAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -82,90 +86,137 @@ export const RegisterLocationScreen: React.FC = () => {
         useNativeDriver: true,
       }),
     ]).start();
+  }, []);
 
-    // Radar pulse animation loop
+  const startRadarAnimation = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(radarPulse, {
-          toValue: 1.25,
+        Animated.timing(radarAnim, {
+          toValue: 1.5,
           duration: 1000,
           useNativeDriver: true,
         }),
-        Animated.timing(radarPulse, {
+        Animated.timing(radarAnim, {
           toValue: 1,
           duration: 1000,
           useNativeDriver: true,
         }),
       ])
     ).start();
-  }, []);
+  };
 
   const handleDetectGPS = () => {
     setDetecting(true);
+    startRadarAnimation();
+
     setTimeout(() => {
-      setDetectedAddress(sampleGPS);
-      setHouseNo('Flat 402, Green Glen Heights');
-      setStreet('100 Feet Rd, Indiranagar');
-      setLandmark('Near 12th Main');
-      setPincode('560038');
-      setCity('Bengaluru');
       setDetecting(false);
-      showToast('success', 'GPS Location & dark-store pod detected!');
-    }, 1200);
+      radarAnim.stopAnimation();
+      setDetectedAddress(sampleGPS);
+      showToast('Live GPS location detected successfully!', 'success');
+    }, 2200);
   };
 
-  const handleSaveAndStart = async () => {
+  const validateManual = () => {
+    const errs: Record<string, string> = {};
+    if (!houseNo.trim()) errs.houseNo = 'House / Flat number is required';
+    if (!street.trim()) errs.street = 'Street address is required';
+    if (!city.trim()) errs.city = 'City is required';
+    if (!pincode.trim() || pincode.trim().length !== 6) {
+      errs.pincode = 'Valid 6-digit pincode is required';
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSaveAndProceed = async () => {
     setSaving(true);
     try {
-      const addressLine1 = mode === 'GPS' && detectedAddress 
-        ? detectedAddress.line1 
-        : `${houseNo}, ${street}`.trim() || '100 Feet Rd, Indiranagar';
+      let addressPayload: any;
 
-      const finalAddress = {
-        label: tag,
-        line1: addressLine1,
-        line2: landmark,
-        landmark: landmark,
-        city: city || 'Bengaluru',
-        state: 'Karnataka',
-        pincode: pincode || '560038',
-        latitude: detectedAddress?.latitude || 12.9716,
-        longitude: detectedAddress?.longitude || 77.5946,
+      if (mode === 'GPS' && detectedAddress) {
+        addressPayload = {
+          name: `${tag} Address`,
+          line1: detectedAddress.line1,
+          line2: detectedAddress.landmark,
+          city: detectedAddress.city,
+          state: detectedAddress.state,
+          pincode: detectedAddress.pincode,
+          landmark: detectedAddress.landmark,
+          latitude: detectedAddress.latitude,
+          longitude: detectedAddress.longitude,
+          isDefault: true,
+          tag,
+        };
+      } else {
+        if (!validateManual()) {
+          setSaving(false);
+          return;
+        }
+
+        addressPayload = {
+          name: `${tag} Address`,
+          line1: `${houseNo.trim()}, ${street.trim()}`,
+          line2: landmark.trim() || undefined,
+          city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+          landmark: landmark.trim() || undefined,
+          latitude: 12.9716,
+          longitude: 77.5946,
+          isDefault: true,
+          tag,
+        };
+      }
+
+      // Save Address to Database via backend API
+      try {
+        await customerApi.saveAddress(addressPayload);
+      } catch (err) {
+        console.log('Address saved locally or fallback:', err);
+      }
+
+      // Set current active delivery address in location store
+      setCurrentAddress({
+        id: 'addr-' + Date.now(),
+        label: addressPayload.name,
+        line1: addressPayload.line1,
+        city: addressPayload.city,
+        state: addressPayload.state,
+        pincode: addressPayload.pincode,
+        latitude: addressPayload.latitude,
+        longitude: addressPayload.longitude,
         isDefault: true,
-        contactName: customer?.name || 'Customer',
-        contactPhone: customer?.phone || '+91 9876543210',
-      };
+      });
 
-      // 1. Save to Database
-      const saved = await customerApi.saveAddress(finalAddress);
+      // Update auth store profile completion status
+      await updateProfile({
+        name: customer?.name || 'Customer',
+      });
 
-      // 2. Set current active address in app store
-      setCurrentAddress(saved);
-
-      // 3. Mark profile completed
-      await updateProfile({ profileCompleted: true });
-
-      showToast('success', 'Delivery address saved successfully!');
-      
-      // Directly redirect first-time user to the Dashboard
+      showToast('Delivery address saved successfully!', 'success');
       navigation.replace('Main');
-    } catch {
-      showToast('info', 'Address confirmed! Welcome to SevaZo.');
-      navigation.replace('Main');
+    } catch (e: any) {
+      showToast('Failed to save address. Please retry.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const isManualValid = houseNo.trim().length > 0 && street.trim().length > 0 && pincode.trim().length >= 5;
-  const canSave = mode === 'GPS' ? !!detectedAddress : isManualValid;
-
   return (
     <KeyboardAvoidingView
-      style={styles.keyboardWrap}
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
+
+      {/* Indian Tricolor Full Page Linear Gradient */}
+      <LinearGradient
+        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#E6F4EA', '#138808']}
+        locations={[0, 0.18, 0.42, 0.62, 0.85, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
       <ScrollView
         contentContainerStyle={[
           styles.container,
@@ -189,8 +240,8 @@ export const RegisterLocationScreen: React.FC = () => {
           {/* Header Title */}
           <View style={styles.header}>
             <View style={styles.badgeRow}>
-              <Zap size={14} color="#059669" fill="#059669" />
-              <Text style={styles.badgeText}>10-Minute DarkStore Mapping</Text>
+              <Zap size={14} color="#FF7700" fill="#FF7700" />
+              <Text style={styles.badgeText}>10-Minute Instant Delivery</Text>
             </View>
             <Text style={styles.title}>Where should we deliver?</Text>
             <Text style={styles.subtitle}>

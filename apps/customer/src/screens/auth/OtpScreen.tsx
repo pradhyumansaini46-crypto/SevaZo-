@@ -10,6 +10,7 @@ import {
   Animated,
   StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
@@ -115,7 +116,7 @@ export const OtpScreen: React.FC = () => {
       if (response.nextAction === 'OPEN_HOME' || response.profileCompleted) {
         navigation.replace('Main');
       } else {
-        // First time user / No address registered $\rightarrow$ Ask for Location & Address
+        // First time user / No address registered -> Ask for Location & Address
         navigation.replace('RegisterLocation');
       }
     } catch {
@@ -144,7 +145,14 @@ export const OtpScreen: React.FC = () => {
       ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
+      
+      {/* Indian Tricolor Full Page Linear Gradient */}
+      <LinearGradient
+        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#E6F4EA', '#138808']}
+        locations={[0, 0.18, 0.42, 0.62, 0.85, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
 
       {/* Header Back Button */}
       <View style={styles.headerRow}>
@@ -153,7 +161,7 @@ export const OtpScreen: React.FC = () => {
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <ArrowLeft size={22} color={Colors.textPrimary} />
+          <ArrowLeft size={20} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Email Verification</Text>
       </View>
@@ -170,7 +178,7 @@ export const OtpScreen: React.FC = () => {
         {/* Email Badge Box */}
         <View style={styles.emailBadgeCard}>
           <View style={styles.emailIconCircle}>
-            <Mail size={22} color={Colors.primary} />
+            <Mail size={22} color="#FF7700" />
           </View>
           <View style={styles.emailTextWrap}>
             <Text style={styles.emailBadgeLabel}>Code sent to your email</Text>
@@ -183,7 +191,7 @@ export const OtpScreen: React.FC = () => {
             onPress={() => navigation.goBack()}
             style={styles.editEmailBtn}
           >
-            <Edit3 size={14} color={Colors.primary} />
+            <Edit3 size={14} color="#FF7700" />
             <Text style={styles.editEmailText}>Change</Text>
           </TouchableOpacity>
         </View>
@@ -235,7 +243,7 @@ export const OtpScreen: React.FC = () => {
 
           {/* Verify & Proceed Button */}
           <TouchableOpacity
-            activeOpacity={0.85}
+            activeOpacity={0.88}
             onPress={handleVerify}
             disabled={isLoading || otp.join('').length < 6}
             style={[
@@ -243,7 +251,7 @@ export const OtpScreen: React.FC = () => {
               (otp.join('').length < 6 || isLoading) && styles.verifyBtnDisabled,
             ]}
           >
-            <CheckCircle2 size={18} color={Colors.textInverse} style={{ marginRight: 8 }} />
+            <CheckCircle2 size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.verifyBtnText}>
               {isLoading ? 'Verifying...' : 'Verify & Continue'}
             </Text>
@@ -251,7 +259,7 @@ export const OtpScreen: React.FC = () => {
 
           {/* Resend Code Section */}
           <View style={styles.resendRow}>
-            <RotateCcw size={14} color={timer > 0 ? Colors.textMuted : Colors.primary} style={{ marginRight: 6 }} />
+            <RotateCcw size={14} color={timer > 0 ? '#94A3B8' : '#FF7700'} style={{ marginRight: 6 }} />
             <Text style={styles.resendText}>Didn't receive email? </Text>
             {timer > 0 ? (
               <Text style={styles.timerText}>Resend in {timer}s</Text>
@@ -270,7 +278,7 @@ export const OtpScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FF9933',
     paddingHorizontal: Spacing.lg,
   },
   headerRow: {
@@ -279,12 +287,16 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   backBtn: {
-    padding: Spacing.xs,
+    padding: Spacing.xs + 2,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     marginRight: Spacing.sm,
   },
   headerTitle: {
     ...Typography.titleMedium,
-    color: Colors.textPrimary,
+    color: '#FFFFFF',
     fontWeight: '800',
   },
   contentWrap: {
@@ -293,18 +305,19 @@ const styles = StyleSheet.create({
   emailBadgeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#E2E8F0',
     borderRadius: BorderRadius.xl,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
+    ...Shadows.card,
   },
   emailIconCircle: {
     width: 44,
     height: 44,
     borderRadius: BorderRadius.full,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
@@ -317,37 +330,37 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     fontSize: 11,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#64748B',
   },
   emailAddressText: {
     ...Typography.bodyMedium,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: '#0F172A',
     marginTop: 2,
   },
   editEmailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF7ED',
     paddingHorizontal: Spacing.sm + 2,
     paddingVertical: Spacing.xs + 2,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FED7AA',
   },
   editEmailText: {
     ...Typography.caption,
     fontSize: 11,
     fontWeight: '800',
-    color: Colors.primary,
+    color: '#FF7700',
     marginLeft: 4,
   },
   card: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: BorderRadius.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     ...Shadows.elevated,
   },
   cardTitle: {
