@@ -30,16 +30,16 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = 72;
-const ITEM_MARGIN = 8;
-const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
+const GRID_ITEM_SIZE = 68;
+const GRID_ITEM_MARGIN = 5;
+const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_ITEM_MARGIN * 2;
 
-// Smooth Slow Continuous Moving Row Component
+// Smooth Slow Continuous Moving Grid Row Component
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number; // duration in ms
   reverse?: boolean;
-}> = ({ items, speed = 44000, reverse = false }) => {
+}> = ({ items, speed = 40000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
@@ -75,11 +75,11 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={styles.productImageWrapper}
+            style={styles.gridCardTile}
           >
             <Image
               source={{ uri: item.image }}
-              style={styles.floatingProductImg}
+              style={styles.gridProductImg}
               resizeMode="contain"
             />
           </View>
@@ -200,15 +200,19 @@ export const WelcomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Dynamic Transparent Moving Product Marquee (4 Rows on signup, 5 Rows on login) */}
+        {/* Dynamic Movable 4x4 / 5-Row Stroke-Bordered Product Grid View (4 Rows on signup, 5 Rows on login) */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={42000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={46000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={40000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={44000} reverse={false} />
-          {/* Dynamic 5th Row: Rendered only when activeTab === 'login' */}
+          {/* Row 1: Grocery - Left to Right */}
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} />
+          {/* Row 2: Dairy - Right to Left */}
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} />
+          {/* Row 3: Electronics - Left to Right */}
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} />
+          {/* Row 4: Personal Care - Right to Left */}
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} />
+          {/* Dynamic 5th Row: Grooming - Rendered only when activeTab === 'login' */}
           {activeTab === 'login' ? (
-            <MarqueeRow items={MARQUEE_ROW_5} speed={42000} reverse={true} />
+            <MarqueeRow items={MARQUEE_ROW_5} speed={38000} reverse={true} />
           ) : null}
         </View>
 
@@ -228,19 +232,18 @@ export const WelcomeScreen: React.FC = () => {
             <View style={[styles.tricolorSegment, { backgroundColor: '#138808' }]} />
           </View>
 
-          {/* Brand Logo Box */}
-          <View style={styles.brandBoxWrap}>
-            <View style={styles.brandSquare}>
-              <Image
-                source={require('../../../assets/logo.png')}
-                style={styles.brandLogoImg}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+          {/* Clean Enlarged Sevazo Logo (Prominent, no extra box) */}
+          <Image
+            source={require('../../../assets/logo.png')}
+            style={styles.brandLogoImg}
+            resizeMode="contain"
+          />
 
-          {/* Slogan in Theme-Matching Blue */}
+          {/* Main Headline */}
           <Text style={styles.mainTitleBlue}>Seva Zo Dil Se Ki Jaye</Text>
+
+          {/* Sub-headline */}
+          <Text style={styles.subHeadline}>India's Trusted Service App</Text>
 
           {/* Interactive Dual Mode Switch (Sign Up vs Log In) */}
           <View style={styles.tabSwitchContainer}>
@@ -428,48 +431,52 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.35,
+    paddingTop: Spacing.xxl * 1.2,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 68,
-    marginVertical: 2,
+    height: 74,
+    marginVertical: 3,
     justifyContent: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  productImageWrapper: {
-    width: ITEM_WIDTH,
-    height: 64,
-    marginHorizontal: ITEM_MARGIN,
+  gridCardTile: {
+    width: GRID_ITEM_SIZE,
+    height: GRID_ITEM_SIZE,
+    marginHorizontal: GRID_ITEM_MARGIN,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    padding: 6,
+    ...Shadows.small,
   },
-  floatingProductImg: {
-    width: 60,
-    height: 60,
-    backgroundColor: 'transparent',
+  gridProductImg: {
+    width: '100%',
+    height: '100%',
   },
   bottomCard: {
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.xs,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.85)',
     overflow: 'hidden',
     ...Shadows.elevated,
   },
   bottomCardGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
   },
   tricolorBar: {
     flexDirection: 'row',
@@ -477,29 +484,16 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.xs + 2,
   },
   tricolorSegment: {
     flex: 1,
     height: '100%',
   },
-  brandBoxWrap: {
-    marginBottom: 2,
-  },
-  brandSquare: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFEDD5',
-    ...Shadows.small,
-  },
   brandLogoImg: {
-    width: 42,
-    height: 42,
+    width: 74,
+    height: 74,
+    marginBottom: 4,
   },
   mainTitleBlue: {
     ...Typography.titleLarge,
@@ -508,7 +502,15 @@ const styles = StyleSheet.create({
     color: '#1D4ED8', // Vibrant Brand Blue
     textAlign: 'center',
     letterSpacing: -0.5,
-    marginTop: 4,
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  subHeadline: {
+    ...Typography.bodyMedium,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+    textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   tabSwitchContainer: {
@@ -537,7 +539,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   tabSwitchTextActive: {
-    color: '#1D4ED8', // Matching Blue on Active tab
+    color: '#1D4ED8',
     fontWeight: '800',
   },
   formWrap: {

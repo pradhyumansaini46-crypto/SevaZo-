@@ -28,15 +28,16 @@ import {
   MarqueeProduct,
 } from './marqueeProducts';
 
-const ITEM_WIDTH = 76;
-const ITEM_MARGIN = 10;
-const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
+const { width } = Dimensions.get('window');
+const GRID_ITEM_SIZE = 68;
+const GRID_ITEM_MARGIN = 5;
+const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_ITEM_MARGIN * 2;
 
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number;
   reverse?: boolean;
-}> = ({ items, speed = 32000, reverse = false }) => {
+}> = ({ items, speed = 40000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
@@ -71,11 +72,11 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={styles.productImageWrapper}
+            style={styles.gridCardTile}
           >
             <Image
               source={{ uri: item.image }}
-              style={styles.floatingProductImg}
+              style={styles.gridProductImg}
               resizeMode="contain"
             />
           </View>
@@ -88,7 +89,7 @@ const MarqueeRow: React.FC<{
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { sendOtp, isLoading } = useAuthStore();
+  const { sendOtp, isLoading, continueAsGuest } = useAuthStore();
 
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -169,7 +170,10 @@ export const RegisterScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.replace('Main')}
+          onPress={() => {
+            continueAsGuest();
+            navigation.replace('Main');
+          }}
           style={styles.skipLoginPill}
         >
           <Text style={styles.skipLoginText}>Skip</Text>
@@ -186,12 +190,12 @@ export const RegisterScreen: React.FC = () => {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Moving Products Marquee */}
+        {/* Moving 4-Row Products Marquee Grid */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={42000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={46000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={40000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={44000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} />
         </View>
 
         {/* Bottom Card Form */}
@@ -209,18 +213,15 @@ export const RegisterScreen: React.FC = () => {
             <View style={[styles.tricolorSegment, { backgroundColor: '#138808' }]} />
           </View>
 
-          <View style={styles.brandBoxWrap}>
-            <View style={styles.brandSquare}>
-              <Image
-                source={require('../../../assets/logo.png')}
-                style={styles.brandLogoImg}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+          {/* Clean Enlarged Sevazo Logo */}
+          <Image
+            source={require('../../../assets/logo.png')}
+            style={styles.brandLogoImg}
+            resizeMode="contain"
+          />
 
           <Text style={styles.mainTitleBlue}>Seva Zo Dil Se Ki Jaye</Text>
-          <Text style={styles.subTitle}>Create your account</Text>
+          <Text style={styles.subHeadline}>India's Trusted Service App</Text>
 
           <View style={styles.formWrap}>
             {/* Mobile Number Row */}
@@ -240,7 +241,7 @@ export const RegisterScreen: React.FC = () => {
                 <Text style={styles.countryCode}>+91</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Enter mobile number"
+                  placeholder="Mobile number (Mandatory)"
                   placeholderTextColor="#94A3B8"
                   keyboardType="number-pad"
                   maxLength={10}
@@ -265,12 +266,12 @@ export const RegisterScreen: React.FC = () => {
             >
               <Mail
                 size={18}
-                color={emailFocused ? '#FF7700' : '#94A3B8'}
+                color={emailFocused ? '#2563EB' : '#94A3B8'}
                 style={styles.inputLeftIcon}
               />
               <TextInput
                 style={styles.textInput}
-                placeholder="Enter email address"
+                placeholder="Email address (Mandatory)"
                 placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -285,6 +286,7 @@ export const RegisterScreen: React.FC = () => {
               ) : null}
             </View>
 
+            {/* Error Message */}
             {error ? (
               <View style={styles.errorRow}>
                 <AlertCircle size={14} color={Colors.danger} style={{ marginRight: 6 }} />
@@ -307,6 +309,15 @@ export const RegisterScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
+            {/* Switch to Login */}
+            <View style={styles.loginPrompt}>
+              <Text style={styles.loginPromptText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.loginLinkText}>Log In</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Terms & Privacy Policy at Absolute Bottom */}
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
                 By continuing, you agree to our terms & privacy policy.
@@ -357,54 +368,59 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
+    letterSpacing: 0.2,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.35,
+    paddingTop: Spacing.xxl * 1.2,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 68,
-    marginVertical: 2,
+    height: 74,
+    marginVertical: 3,
     justifyContent: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  productImageWrapper: {
-    width: ITEM_WIDTH,
-    height: 64,
-    marginHorizontal: ITEM_MARGIN,
+  gridCardTile: {
+    width: GRID_ITEM_SIZE,
+    height: GRID_ITEM_SIZE,
+    marginHorizontal: GRID_ITEM_MARGIN,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    padding: 6,
+    ...Shadows.small,
   },
-  floatingProductImg: {
-    width: 60,
-    height: 60,
-    backgroundColor: 'transparent',
+  gridProductImg: {
+    width: '100%',
+    height: '100%',
   },
   bottomCard: {
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.85)',
     overflow: 'hidden',
     ...Shadows.elevated,
   },
   bottomCardGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
   },
   tricolorBar: {
     flexDirection: 'row',
@@ -412,29 +428,16 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs + 2,
   },
   tricolorSegment: {
     flex: 1,
     height: '100%',
   },
-  brandBoxWrap: {
-    marginBottom: Spacing.xs,
-  },
-  brandSquare: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFEDD5',
-    ...Shadows.small,
-  },
   brandLogoImg: {
-    width: 42,
-    height: 42,
+    width: 74,
+    height: 74,
+    marginBottom: 4,
   },
   mainTitleBlue: {
     ...Typography.titleLarge,
@@ -444,15 +447,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.5,
     marginTop: 2,
+    marginBottom: 2,
   },
-  subTitle: {
+  subHeadline: {
     ...Typography.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
     color: '#64748B',
     textAlign: 'center',
-    marginTop: 2,
-    marginBottom: Spacing.md,
-    fontWeight: '600',
+    marginBottom: Spacing.sm,
   },
   formWrap: {
     width: '100%',
@@ -461,7 +464,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: Spacing.sm + 2,
+    marginBottom: Spacing.sm,
   },
   flagBox: {
     flexDirection: 'row',
@@ -470,14 +473,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
     marginRight: Spacing.sm,
     ...Shadows.small,
   },
   flagText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   numberInputBox: {
     flex: 1,
@@ -486,16 +489,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
     ...Shadows.small,
   },
   countryCode: {
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     fontWeight: '800',
     color: '#0F172A',
-    marginRight: 8,
+    marginRight: 6,
   },
   emailInputBox: {
     flexDirection: 'row',
@@ -503,17 +506,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm + 2,
     ...Shadows.small,
   },
   inputLeftIcon: {
     marginRight: Spacing.sm,
   },
   inputFocused: {
-    borderColor: '#FF7700',
+    borderColor: '#1D4ED8',
     backgroundColor: '#FFFFFF',
   },
   inputValid: {
@@ -521,7 +524,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     fontWeight: '600',
     color: '#0F172A',
     height: '100%',
@@ -533,9 +536,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.xs + 2,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
   },
   errorText: {
     ...Typography.caption,
@@ -545,8 +548,8 @@ const styles = StyleSheet.create({
   },
   continueBtn: {
     backgroundColor: '#FF7700', // Saffron CTA
-    borderRadius: 16,
-    paddingVertical: 15,
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -561,20 +564,38 @@ const styles = StyleSheet.create({
     ...Typography.bodyLarge,
     fontWeight: '800',
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
+  },
+  loginPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: 4,
+  },
+  loginPromptText: {
+    ...Typography.caption,
+    color: '#64748B',
+    fontSize: 13,
+  },
+  loginLinkText: {
+    ...Typography.caption,
+    color: '#1D4ED8',
+    fontWeight: '800',
+    fontSize: 13,
   },
   termsContainer: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: 10,
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
+    justifyContent: 'center',
+    width: '100%',
   },
   termsText: {
     ...Typography.caption,
     fontSize: 11,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 16,
     fontWeight: '500',
   },
 });
-

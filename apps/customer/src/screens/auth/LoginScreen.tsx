@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import { Mail, CheckCircle2, AlertCircle, ChevronDown, ArrowLeft } from 'lucide-react-native';
+import { Mail, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
 import {
   MARQUEE_ROW_1,
@@ -29,15 +29,16 @@ import {
   MarqueeProduct,
 } from './marqueeProducts';
 
-const ITEM_WIDTH = 72;
-const ITEM_MARGIN = 8;
-const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
+const { width } = Dimensions.get('window');
+const GRID_ITEM_SIZE = 68;
+const GRID_ITEM_MARGIN = 5;
+const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_ITEM_MARGIN * 2;
 
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number;
   reverse?: boolean;
-}> = ({ items, speed = 44000, reverse = false }) => {
+}> = ({ items, speed = 40000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
@@ -72,11 +73,11 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={styles.productImageWrapper}
+            style={styles.gridCardTile}
           >
             <Image
               source={{ uri: item.image }}
-              style={styles.floatingProductImg}
+              style={styles.gridProductImg}
               resizeMode="contain"
             />
           </View>
@@ -89,7 +90,7 @@ const MarqueeRow: React.FC<{
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { sendOtp, isLoading } = useAuthStore();
+  const { sendOtp, isLoading, continueAsGuest } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
@@ -130,14 +131,12 @@ export const LoginScreen: React.FC = () => {
     >
       <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
       
-      {/* Soft Gradient Background (Orange fading into White / Light Green) */}
       <LinearGradient
         colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
         locations={[0, 0.2, 0.45, 0.65, 0.85, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Top Navigation */}
       <View
         style={[
           styles.topNav,
@@ -153,7 +152,10 @@ export const LoginScreen: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.replace('Main')}
+          onPress={() => {
+            continueAsGuest();
+            navigation.replace('Main');
+          }}
           style={styles.skipLoginPill}
         >
           <Text style={styles.skipLoginText}>Skip</Text>
@@ -170,18 +172,15 @@ export const LoginScreen: React.FC = () => {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Moving Products Marquee (5 Rows for Login Screen) */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={42000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={46000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={40000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={44000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_5} speed={42000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_5} speed={38000} reverse={true} />
         </View>
 
-        {/* Bottom Card Form */}
         <View style={styles.bottomCard}>
-          {/* Greenish Gradient starting right below "Seva Zo Dil Se Ki Jaye" title */}
           <LinearGradient
             colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0']}
             locations={[0, 0.22, 0.42, 0.65, 1]}
@@ -194,21 +193,16 @@ export const LoginScreen: React.FC = () => {
             <View style={[styles.tricolorSegment, { backgroundColor: '#138808' }]} />
           </View>
 
-          <View style={styles.brandBoxWrap}>
-            <View style={styles.brandSquare}>
-              <Image
-                source={require('../../../assets/logo.png')}
-                style={styles.brandLogoImg}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
+          <Image
+            source={require('../../../assets/logo.png')}
+            style={styles.brandLogoImg}
+            resizeMode="contain"
+          />
 
           <Text style={styles.mainTitleBlue}>Seva Zo Dil Se Ki Jaye</Text>
-          <Text style={styles.subTitle}>Log in to your account</Text>
+          <Text style={styles.subHeadline}>India's Trusted Service App</Text>
 
           <View style={styles.formWrap}>
-            {/* Email Address Row */}
             <View
               style={[
                 styles.emailInputBox,
@@ -245,7 +239,6 @@ export const LoginScreen: React.FC = () => {
               </View>
             ) : null}
 
-            {/* Continue CTA */}
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={handleContinue}
@@ -259,6 +252,13 @@ export const LoginScreen: React.FC = () => {
                 {isLoading ? 'Sending OTP...' : 'Log In'}
               </Text>
             </TouchableOpacity>
+
+            <View style={styles.signupPrompt}>
+              <Text style={styles.signupPromptText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.signupLinkText}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
@@ -310,54 +310,59 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
+    letterSpacing: 0.2,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.35,
+    paddingTop: Spacing.xxl * 1.2,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 68,
-    marginVertical: 2,
+    height: 74,
+    marginVertical: 3,
     justifyContent: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  productImageWrapper: {
-    width: ITEM_WIDTH,
-    height: 64,
-    marginHorizontal: ITEM_MARGIN,
+  gridCardTile: {
+    width: GRID_ITEM_SIZE,
+    height: GRID_ITEM_SIZE,
+    marginHorizontal: GRID_ITEM_MARGIN,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    padding: 6,
+    ...Shadows.small,
   },
-  floatingProductImg: {
-    width: 60,
-    height: 60,
-    backgroundColor: 'transparent',
+  gridProductImg: {
+    width: '100%',
+    height: '100%',
   },
   bottomCard: {
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.85)',
     overflow: 'hidden',
     ...Shadows.elevated,
   },
   bottomCardGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
   },
   tricolorBar: {
     flexDirection: 'row',
@@ -365,29 +370,16 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs + 2,
   },
   tricolorSegment: {
     flex: 1,
     height: '100%',
   },
-  brandBoxWrap: {
-    marginBottom: Spacing.xs,
-  },
-  brandSquare: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFEDD5',
-    ...Shadows.small,
-  },
   brandLogoImg: {
-    width: 42,
-    height: 42,
+    width: 74,
+    height: 74,
+    marginBottom: 4,
   },
   mainTitleBlue: {
     ...Typography.titleLarge,
@@ -397,15 +389,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.5,
     marginTop: 2,
+    marginBottom: 2,
   },
-  subTitle: {
+  subHeadline: {
     ...Typography.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
     color: '#64748B',
     textAlign: 'center',
-    marginTop: 2,
-    marginBottom: Spacing.md,
-    fontWeight: '600',
+    marginBottom: Spacing.sm,
   },
   formWrap: {
     width: '100%',
@@ -416,10 +408,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 14,
+    height: 48,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.md,
+    width: '100%',
     ...Shadows.small,
   },
   inputLeftIcon: {
@@ -434,7 +427,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     fontWeight: '600',
     color: '#0F172A',
     height: '100%',
@@ -446,9 +439,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
+    padding: Spacing.xs + 2,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
+    width: '100%',
   },
   errorText: {
     ...Typography.caption,
@@ -457,9 +451,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   continueBtn: {
-    backgroundColor: '#FF7700', // Saffron CTA
-    borderRadius: 16,
-    paddingVertical: 15,
+    backgroundColor: '#FF7700', // Saffron CTA Button
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -474,19 +468,38 @@ const styles = StyleSheet.create({
     ...Typography.bodyLarge,
     fontWeight: '800',
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
+  },
+  signupPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: 4,
+  },
+  signupPromptText: {
+    ...Typography.caption,
+    color: '#64748B',
+    fontSize: 13,
+  },
+  signupLinkText: {
+    ...Typography.caption,
+    color: '#1D4ED8',
+    fontWeight: '800',
+    fontSize: 13,
   },
   termsContainer: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: 10,
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
+    justifyContent: 'center',
+    width: '100%',
   },
   termsText: {
     ...Typography.caption,
     fontSize: 11,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 16,
     fontWeight: '500',
   },
 });
