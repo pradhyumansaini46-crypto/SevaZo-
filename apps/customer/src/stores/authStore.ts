@@ -202,9 +202,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
       const created: CustomerUser = {
         id: customer?.id || `cust-${Date.now()}`,
-        phone: customer?.phone || registrationDraft.phone,
+        phone: customer?.phone || registrationDraft.phone || '',
         name: `${registrationDraft.firstName} ${registrationDraft.lastName}`.trim(),
-        email: registrationDraft.email,
+        email: registrationDraft.email || '',
         avatar: registrationDraft.avatar,
         isVerified: true,
         totalSpent: 0,
@@ -282,7 +282,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     try {
       await appStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      await appStorage.removeItem(STORAGE_KEYS.USER_SESSION);
+      await appStorage.removeItem(STORAGE_KEYS.USER_DATA);
       setAuthToken(null);
     } finally {
       set({

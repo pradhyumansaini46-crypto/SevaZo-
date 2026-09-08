@@ -396,6 +396,7 @@ export const customerApi = {
         discount: orderPayload.discount || 0,
         totalAmount: orderPayload.totalAmount || 0,
         deliveryAddress: orderPayload.address,
+        store: orderPayload.store || { id: 'store-1', businessName: 'SevaZo Dark Store' },
         canCancel: true,
         canReturn: false,
       };
