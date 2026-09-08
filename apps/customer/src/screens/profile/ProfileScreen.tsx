@@ -130,31 +130,33 @@ export const ProfileScreen: React.FC = () => {
           />
           <View style={styles.userInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName}>{customer?.name || 'Aarav Sharma'}</Text>
+              <Text style={styles.userName}>{customer?.name || 'Guest User'}</Text>
               <View style={styles.tierBadge}>
                 <Award size={12} color="#92400E" />
-                <Text style={styles.tierText}>GOLD</Text>
+                <Text style={styles.tierText}>{customer?.loyaltyTier || 'BRONZE'}</Text>
               </View>
             </View>
-            <Text style={styles.userPhone}>{customer?.phone || '+91 9876543210'}</Text>
-            <Text style={styles.userEmail}>{customer?.email || 'aarav.sharma@example.com'}</Text>
+            <Text style={styles.userPhone}>{customer?.phone || 'No phone'}</Text>
+            {customer?.email ? (
+              <Text style={styles.userEmail}>{customer.email}</Text>
+            ) : null}
           </View>
         </View>
 
         {/* Metric Cards Row */}
         <View style={styles.metricsRow}>
           <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{customer?.ordersCount || 18}</Text>
+            <Text style={styles.metricValue}>{customer?.ordersCount ?? 0}</Text>
             <Text style={styles.metricLabel}>Total Orders</Text>
           </View>
           <View style={styles.metricCard}>
             <Text style={[styles.metricValue, { color: Colors.primary }]}>
-              ₹{customer?.walletBalance || 450}
+              ₹{customer?.walletBalance ?? 0}
             </Text>
             <Text style={styles.metricLabel}>Wallet Balance</Text>
           </View>
           <View style={styles.metricCard}>
-            <Text style={[styles.metricValue, { color: Colors.secondary }]}>₹1,240</Text>
+            <Text style={[styles.metricValue, { color: Colors.secondary }]}>₹0</Text>
             <Text style={styles.metricLabel}>Total Saved</Text>
           </View>
         </View>

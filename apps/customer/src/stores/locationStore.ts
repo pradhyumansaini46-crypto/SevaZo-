@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Address } from '../types';
-import { mockAddresses } from '../services/mockData';
 
 interface LocationState {
   currentAddress: Address;
@@ -12,9 +11,19 @@ interface LocationState {
   setDefaultAddress: (id: string) => void;
 }
 
+const defaultEmptyAddress: Address = {
+  id: '',
+  label: 'Select Location',
+  line1: 'Set your delivery location',
+  city: '',
+  state: '',
+  pincode: '',
+  isDefault: true,
+};
+
 export const useLocationStore = create<LocationState>((set, get) => ({
-  currentAddress: mockAddresses[0],
-  savedAddresses: mockAddresses,
+  currentAddress: defaultEmptyAddress,
+  savedAddresses: [],
 
   setCurrentAddress: (address: Address) => set({ currentAddress: address }),
 
@@ -43,7 +52,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     const filtered = savedAddresses.filter((a) => a.id !== id);
     set({
       savedAddresses: filtered,
-      currentAddress: get().currentAddress.id === id ? filtered[0] || mockAddresses[0] : get().currentAddress,
+      currentAddress: get().currentAddress.id === id ? filtered[0] || defaultEmptyAddress : get().currentAddress,
     });
   },
 

@@ -29,7 +29,6 @@ import { useWishlistStore } from '../../stores/wishlistStore';
 import { useLocationStore } from '../../stores/locationStore';
 import { customerApi } from '../../services/customerApi';
 import { Product, Store, Category } from '../../types';
-import { mockBanners } from '../../services/mockData';
 
 const { width } = Dimensions.get('window');
 
@@ -39,6 +38,7 @@ export const HomeScreen: React.FC = () => {
   const { items: cartItems, addItem, incrementItem, decrementItem, getItemQuantity, getCalculation, getTotalCount } = useCartStore();
   const { isInWishlist, toggleWishlist, items: wishlistItems } = useWishlistStore();
 
+  const [banners, setBanners] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [flashDeals, setFlashDeals] = useState<Product[]>([]);
@@ -50,10 +50,11 @@ export const HomeScreen: React.FC = () => {
 
   const loadHomeData = async () => {
     const data = await customerApi.getHomeFeed();
-    setCategories(data.categories);
-    setTrendingProducts(data.trendingProducts);
-    setFlashDeals(data.flashDeals);
-    setTopStores(data.topStores);
+    setBanners(data.banners || []);
+    setCategories(data.categories || []);
+    setTrendingProducts(data.trendingProducts || []);
+    setFlashDeals(data.flashDeals || []);
+    setTopStores(data.topStores || []);
   };
 
   const totalCount = getTotalCount();
@@ -64,7 +65,7 @@ export const HomeScreen: React.FC = () => {
       {/* Top Header */}
       <Header
         showLocation
-        locationAddress={`${currentAddress.label}: ${currentAddress.line1}`}
+        locationAddress={currentAddress.line1 ? `${currentAddress.label}: ${currentAddress.line1}` : 'Set delivery location'}
         onPressLocation={() => navigation.navigate('AddressList')}
         showSearch
         onPressSearch={() => navigation.navigate('Search')}
@@ -72,7 +73,7 @@ export const HomeScreen: React.FC = () => {
         wishlistCount={wishlistItems.length}
         onPressWishlist={() => navigation.navigate('Wishlist')}
         showNotifications
-        notificationCount={2}
+        notificationCount={0}
         onPressNotifications={() => navigation.navigate('Notifications')}
       />
 
@@ -88,7 +89,7 @@ export const HomeScreen: React.FC = () => {
         >
           <Search size={18} color={Colors.textMuted} />
           <Text style={styles.searchBarPlaceholder}>
-            Search "spinach", "amul milk", "doritos"...
+            Search products, stores, groceries...
           </Text>
           <View style={styles.deliveryPill}>
             <Zap size={11} color={Colors.primary} fill={Colors.primary} />
@@ -97,34 +98,42 @@ export const HomeScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* Hero Banners Carousel */}
-        <FlatList
-          data={mockBanners}
-          keyExtractor={(item) => item.id}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.bannersList}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => navigation.navigate('SearchResults', { query: 'deal' })}
-              style={[styles.bannerCard, { backgroundColor: item.bgColor }]}
-            >
-              <View style={styles.bannerInfo}>
-                <View style={styles.bannerTag}>
-                  <Text style={styles.bannerTagText}>{item.tag}</Text>
+        {banners.length > 0 && (
+          <FlatList
+            data={banners}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.bannersList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => navigation.navigate('SearchResults', { query: 'deal' })}
+                style={[styles.bannerCard, { backgroundColor: item.bgColor || Colors.primary }]}
+              >
+                <View style={styles.bannerInfo}>
+                  {item.tag && (
+                    <View style={styles.bannerTag}>
+                      <Text style={styles.bannerTagText}>{item.tag}</Text>
+                    </View>
+                  )}
+                  <Text numberOfLines={2} style={styles.bannerTitle}>
+                    {item.title}
+                  </Text>
+                  {item.subtitle && (
+                    <Text numberOfLines={2} style={styles.bannerSubtitle}>
+                      {item.subtitle}
+                    </Text>
+                  )}
                 </View>
-                <Text numberOfLines={2} style={styles.bannerTitle}>
-                  {item.title}
-                </Text>
-                <Text numberOfLines={2} style={styles.bannerSubtitle}>
-                  {item.subtitle}
-                </Text>
-              </View>
-              <Image source={{ uri: item.imageUrl }} style={styles.bannerImage} resizeMode="cover" />
-            </TouchableOpacity>
-          )}
-        />
+                {item.imageUrl && (
+                  <Image source={{ uri: item.imageUrl }} style={styles.bannerImage} resizeMode="cover" />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        )}
 
         {/* Quick Category Icons */}
         <View style={styles.sectionHeader}>

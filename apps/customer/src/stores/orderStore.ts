@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Order, LiveTrackingData, ReturnRequest } from '../types';
-import { mockOrders, mockLiveTracking } from '../services/mockData';
 import { customerApi } from '../services/customerApi';
 
 interface OrderState {
@@ -12,22 +11,22 @@ interface OrderState {
   placeOrder: (payload: any) => Promise<Order>;
   cancelOrder: (orderId: string, reason: string) => Promise<boolean>;
   requestReturn: (payload: Partial<ReturnRequest>) => Promise<boolean>;
-  fetchTracking: (orderId: string) => Promise<LiveTrackingData>;
+  fetchTracking: (orderId: string) => Promise<LiveTrackingData | null>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: mockOrders,
-  activeOrder: mockOrders[0],
-  activeTracking: mockLiveTracking,
+  orders: [],
+  activeOrder: null,
+  activeTracking: null,
   isLoading: false,
 
   fetchOrders: async () => {
     set({ isLoading: true });
     try {
       const orders = await customerApi.getOrders();
-      set({ orders, isLoading: false });
+      set({ orders: orders || [], isLoading: false });
     } catch {
-      set({ isLoading: false });
+      set({ orders: [], isLoading: false });
     }
   },
 
@@ -72,11 +71,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   fetchTracking: async (orderId: string) => {
     try {
-      const data = await customerApi.getLiveTracking(orderId);
-      set({ activeTracking: data });
-      return data;
+      const tracking = await customerApi.getLiveTracking(orderId);
+      set({ activeTracking: tracking });
+      return tracking;
     } catch {
-      return mockLiveTracking;
+      return null;
     }
   },
 }));

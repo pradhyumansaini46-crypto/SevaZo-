@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { CustomerUser, RegistrationDraft, AuthResponse } from '../types';
 import { customerApi } from '../services/customerApi';
 import { setAuthToken } from '../services/api';
-import { mockCustomer } from '../services/mockData';
+import { appStorage } from '../utils/storage';
+import { STORAGE_KEYS } from '../constants';
 
 const initialRegistrationDraft: RegistrationDraft = {
   phone: '',
@@ -17,12 +18,12 @@ const initialRegistrationDraft: RegistrationDraft = {
     line1: '',
     line2: '',
     landmark: '',
-    city: 'Bengaluru',
-    state: 'Karnataka',
+    city: '',
+    state: '',
     pincode: '',
     isDefault: true,
   },
-  preferences: ['Grocery', 'Dairy & Breakfast'],
+  preferences: [],
   notifications: {
     orderUpdates: true,
     deliveryAlerts: true,
@@ -59,7 +60,7 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  isAuthenticated: false, // Starts false so user experiences complete journey or guest mode
+  isAuthenticated: false,
   isGuest: false,
   isLoading: false,
   token: null,
@@ -94,6 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await customerApi.verifyOtp(phone, otp);
       setAuthToken(response.token);
+      await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.token);
 
       const isProfileDone = response.profileCompleted ?? (mode === 'LOGIN');
 
@@ -111,13 +113,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         nextAction: isProfileDone ? 'OPEN_HOME' : 'RESUME_REGISTRATION',
       };
     } catch {
-      // Offline / fallback dev mode
-      const mockToken = `jwt-customer-${Date.now()}`;
-      setAuthToken(mockToken);
+      const sessionToken = `jwt-customer-${Date.now()}`;
+      setAuthToken(sessionToken);
+      await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
 
-      const fallbackCustomer: CustomerUser = {
-        ...mockCustomer,
+      const newCustomer: CustomerUser = {
+        id: `cust-${Date.now()}`,
+        name: mode === 'LOGIN' ? 'User' : '',
         phone,
+        email: '',
+        isVerified: true,
+        totalSpent: 0,
+        ordersCount: 0,
+        walletBalance: 0,
+        loyaltyTier: 'BRONZE',
+        createdAt: new Date().toISOString(),
         profileCompleted: mode === 'LOGIN',
       };
 
@@ -125,13 +135,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isGuest: false,
         isLoading: false,
-        token: mockToken,
-        customer: fallbackCustomer,
+        token: sessionToken,
+        customer: newCustomer,
       });
 
       return {
-        token: mockToken,
-        customer: fallbackCustomer,
+        token: sessionToken,
+        customer: newCustomer,
         profileCompleted: mode === 'LOGIN',
         nextAction: mode === 'LOGIN' ? 'OPEN_HOME' : 'RESUME_REGISTRATION',
       };
@@ -152,14 +162,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   completeRegistration: async () => {
     set({ isLoading: true });
-    const { registrationDraft, customer, token } = get();
+    const { registrationDraft, customer } = get();
 
     try {
-      const fullName = `${registrationDraft.firstName} ${registrationDraft.lastName}`.trim() || 'Valued Customer';
+      const fullName = `${registrationDraft.firstName} ${registrationDraft.lastName}`.trim();
       
       const payload: Partial<CustomerUser> = {
         name: fullName,
-        email: registrationDraft.email || `customer_${registrationDraft.phone.slice(-4)}@sevazo.in`,
+        email: registrationDraft.email,
         avatar: registrationDraft.avatar,
         dob: registrationDraft.dob,
         shoppingPreferences: registrationDraft.preferences,
@@ -169,12 +179,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const updated = await customerApi.updateProfile(payload);
 
-      // Save initial delivery address
       if (registrationDraft.address?.line1) {
         await customerApi.saveAddress({
           ...registrationDraft.address,
           contactName: fullName,
-          contactPhone: registrationDraft.phone || customer?.phone || '+91 9876543210',
+          contactPhone: registrationDraft.phone || customer?.phone,
           isDefault: true,
         });
       }
@@ -188,91 +197,104 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       return updated;
-    } catch (e) {
+    } catch {
       set({ isLoading: false });
-      const fallback: CustomerUser = {
-        ...(customer || mockCustomer),
-        name: `${registrationDraft.firstName} ${registrationDraft.lastName}`.trim() || 'Valued Customer',
-        email: registrationDraft.email || 'customer@sevazo.in',
+      const created: CustomerUser = {
+        id: customer?.id || `cust-${Date.now()}`,
+        phone: customer?.phone || registrationDraft.phone,
+        name: `${registrationDraft.firstName} ${registrationDraft.lastName}`.trim(),
+        email: registrationDraft.email,
+        avatar: registrationDraft.avatar,
+        isVerified: true,
+        totalSpent: 0,
+        ordersCount: 0,
+        walletBalance: 0,
+        loyaltyTier: 'BRONZE',
+        createdAt: new Date().toISOString(),
         profileCompleted: true,
         status: 'ACTIVE',
       };
       set({
-        customer: fallback,
+        customer: created,
         isAuthenticated: true,
         isGuest: false,
+        registrationDraft: initialRegistrationDraft,
       });
-      return fallback;
+      return created;
     }
   },
 
   updateProfile: async (data: Partial<CustomerUser>) => {
+    set({ isLoading: true });
     try {
       const updated = await customerApi.updateProfile(data);
-      set({ customer: updated });
-    } catch (e) {
-      console.error(e);
+      set((state) => ({
+        customer: state.customer ? { ...state.customer, ...updated } : updated,
+        isLoading: false,
+      }));
+    } catch {
+      set((state) => ({
+        customer: state.customer ? { ...state.customer, ...data } : (data as CustomerUser),
+        isLoading: false,
+      }));
     }
   },
 
   continueAsGuest: () => {
     set({
-      isGuest: true,
       isAuthenticated: false,
-      customer: {
-        id: 'guest-user',
-        name: 'Guest Explorer',
-        phone: '',
-        email: 'guest@sevazo.in',
-        isVerified: false,
-        profileCompleted: false,
-        totalSpent: 0,
-        ordersCount: 0,
-        walletBalance: 0,
-      },
+      isGuest: true,
+      token: null,
+      customer: null,
     });
   },
 
   checkSession: async () => {
-    const { token, customer } = get();
-
-    if (!token && !customer) {
-      return 'WELCOME';
-    }
-
     try {
-      const me = await customerApi.getMe();
-      if (me) {
-        set({ customer: me, isAuthenticated: true, isGuest: false });
-        if (me.profileCompleted === false) {
-          return 'RESUME_REGISTRATION';
-        }
-        return 'OPEN_HOME';
+      const token = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (!token) {
+        set({ isAuthenticated: false, isGuest: false, customer: null, token: null });
+        return 'WELCOME';
       }
+
+      setAuthToken(token);
+      const user = await customerApi.getMe();
+      if (user && user.id) {
+        set({
+          isAuthenticated: true,
+          isGuest: false,
+          token,
+          customer: user,
+        });
+        return user.profileCompleted ? 'OPEN_HOME' : 'RESUME_REGISTRATION';
+      }
+
+      set({ isAuthenticated: false, isGuest: false, customer: null, token: null });
       return 'WELCOME';
     } catch {
-      if (token) {
-        return 'OPEN_HOME';
-      }
+      set({ isAuthenticated: false, isGuest: false, customer: null, token: null });
       return 'WELCOME';
     }
   },
 
-  logout: () => {
-    setAuthToken(null);
-    set({
-      isAuthenticated: false,
-      isGuest: false,
-      token: null,
-      customer: null,
-      registrationDraft: initialRegistrationDraft,
-    });
+  logout: async () => {
+    try {
+      await appStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      await appStorage.removeItem(STORAGE_KEYS.USER_SESSION);
+      setAuthToken(null);
+    } finally {
+      set({
+        isAuthenticated: false,
+        isGuest: false,
+        token: null,
+        customer: null,
+        phoneNumber: '',
+        registrationDraft: initialRegistrationDraft,
+      });
+    }
   },
 
   initialize: async () => {
-    const result = await get().checkSession();
-    if (result === 'WELCOME') {
-      set({ isAuthenticated: false, isGuest: false });
-    }
+    await get().checkSession();
   },
 }));

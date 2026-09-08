@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Product } from '../types';
-import { mockProducts } from '../services/mockData';
 
 interface WishlistState {
   items: Product[];
@@ -11,7 +10,7 @@ interface WishlistState {
 }
 
 export const useWishlistStore = create<WishlistState>((set, get) => ({
-  items: [mockProducts[0], mockProducts[2]], // Pre-fill 2 items for preview
+  items: [],
 
   toggleWishlist: (product: Product) => {
     const { items } = get();
