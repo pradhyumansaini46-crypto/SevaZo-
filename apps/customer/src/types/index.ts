@@ -13,7 +13,7 @@ export interface CustomerUser {
   totalSpent: number;
   ordersCount: number;
   walletBalance: number;
-  loyaltyTier?: 'SILVER' | 'GOLD' | 'PLATINUM';
+  loyaltyTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
   createdAt?: string;
 }
 
@@ -126,7 +126,7 @@ export interface ReviewSummary {
 export interface Address {
   id: string;
   customerId?: string;
-  label: 'Home' | 'Work' | 'Other';
+  label: 'Home' | 'Work' | 'Other' | 'Select Location' | string;
   line1: string;
   line2?: string;
   landmark?: string;
@@ -289,14 +289,14 @@ export interface LiveTrackingData {
 export interface ReturnRequest {
   id: string;
   orderId: string;
-  orderNumber: string;
+  orderNumber?: string;
   items: { productId: string; name: string; quantity: number }[];
   reason: string;
   notes?: string;
   images?: string[];
-  status: 'PENDING_APPROVAL' | 'APPROVED' | 'PICKUP_SCHEDULED' | 'REFUNDED' | 'REJECTED';
+  status: 'REQUESTED' | 'PENDING_APPROVAL' | 'APPROVED' | 'PICKUP_SCHEDULED' | 'REFUNDED' | 'REJECTED';
   createdAt: string;
-  refundAmount: number;
+  refundAmount?: number;
 }
 
 export interface RefundRecord {
