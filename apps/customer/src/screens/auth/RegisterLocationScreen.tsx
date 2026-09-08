@@ -15,17 +15,16 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
+import { Colors, Spacing, Typography, Shadows } from '../../theme';
 import {
   MapPin,
-  Navigation,
   CheckCircle2,
   Home,
   Briefcase,
   ArrowRight,
   ArrowLeft,
-  ShieldCheck,
   LocateFixed,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { useLocationStore } from '../../stores/locationStore';
@@ -46,8 +45,8 @@ export const RegisterLocationScreen: React.FC = () => {
   const [houseNo, setHouseNo] = useState('');
   const [street, setStreet] = useState('');
   const [landmark, setLandmark] = useState('');
-  const [city, setCity] = useState('Bengaluru');
-  const [state, setState] = useState('Karnataka');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [tag, setTag] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
   const [fetchedSuccessfully, setFetchedSuccessfully] = useState(false);
@@ -74,103 +73,144 @@ export const RegisterLocationScreen: React.FC = () => {
     ]).start();
   }, []);
 
-  // Fetch Location Auto-fill Handler
+  // Exact & Accurate Location Fetch Handler
   const handleFetchLocation = async () => {
     if (detecting) return;
     setDetecting(true);
     setErrors({});
 
-    const applyLocationData = (data: {
+    const onSuccess = (data: {
       houseNo: string;
       street: string;
-      landmark: string;
       city: string;
       state: string;
       pincode: string;
     }) => {
       setHouseNo(data.houseNo);
       setStreet(data.street);
-      setLandmark(data.landmark);
+      // NOTE: Landmark is strictly optional and NOT auto-filled per user specification
       setCity(data.city);
       setState(data.state);
       setPincode(data.pincode);
       setFetchedSuccessfully(true);
-      showToast('Current location detected and filled successfully!', 'success');
       setDetecting(false);
+      showToast('Exact location detected successfully!', 'success');
     };
 
-    // Try HTML5 / Browser Geolocation if on Web
+    const onError = (msg: string) => {
+      setDetecting(false);
+      showToast(msg, 'error');
+    };
+
+    // Check device / browser geolocation API
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            // Attempt reverse geocode lookup
+            // Real reverse geocode from OpenStreetMap Nominatim with high accuracy
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
             );
             const data = await res.json();
             const addr = data?.address || {};
 
-            applyLocationData({
-              houseNo: addr.house_number || addr.building || 'Flat 402',
-              street:
-                addr.road ||
-                addr.suburb ||
-                addr.neighbourhood ||
-                '100 Feet Rd, Indiranagar',
-              landmark: addr.landmark || addr.amenity || 'Near 12th Main Junction',
-              city: addr.city || addr.town || addr.state_district || 'Bengaluru',
-              state: addr.state || 'Karnataka',
-              pincode: addr.postcode
-                ? addr.postcode.replace(/\D/g, '').slice(0, 6)
-                : '560038',
+            const resolvedHouseNo =
+              addr.house_number ||
+              addr.building ||
+              addr.house_name ||
+              addr.residential ||
+              '';
+            const roadParts = [
+              addr.road,
+              addr.suburb || addr.neighbourhood || addr.residential,
+            ].filter(Boolean);
+            const resolvedStreet =
+              roadParts.join(', ') ||
+              addr.road ||
+              addr.suburb ||
+              addr.neighbourhood ||
+              data.display_name?.split(',')[0] ||
+              '';
+            const resolvedCity =
+              addr.city ||
+              addr.town ||
+              addr.village ||
+              addr.municipality ||
+              addr.state_district ||
+              addr.county ||
+              '';
+            const resolvedState = addr.state || '';
+            const resolvedPincode = addr.postcode
+              ? addr.postcode.replace(/\D/g, '').slice(0, 6)
+              : '';
+
+            onSuccess({
+              houseNo: resolvedHouseNo,
+              street: resolvedStreet,
+              city: resolvedCity,
+              state: resolvedState,
+              pincode: resolvedPincode,
             });
           } catch {
-            // Geocode fallback with accurate default
-            applyLocationData({
-              houseNo: 'Flat 402, Green Glen Heights',
-              street: '100 Feet Rd, Indiranagar',
-              landmark: 'Near 12th Main Junction',
-              city: 'Bengaluru',
-              state: 'Karnataka',
-              pincode: '560038',
-            });
+            // Secondary accurate client geocode provider fallback
+            try {
+              const bdcRes = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
+              );
+              const bdcData = await bdcRes.json();
+              onSuccess({
+                houseNo: '',
+                street: [bdcData.locality, bdcData.principalSubdivision]
+                  .filter(Boolean)
+                  .join(', '),
+                city: bdcData.city || bdcData.locality || '',
+                state: bdcData.principalSubdivision || '',
+                pincode: bdcData.postcode
+                  ? bdcData.postcode.replace(/\D/g, '').slice(0, 6)
+                  : '',
+              });
+            } catch {
+              onError('Failed to reverse-lookup address. Please enter manually.');
+            }
           }
         },
-        () => {
-          // GPS Permission denied or timeout - apply high accuracy default
-          applyLocationData({
-            houseNo: 'Flat 402, Green Glen Heights',
-            street: '100 Feet Rd, Indiranagar',
-            landmark: 'Near 12th Main Junction',
-            city: 'Bengaluru',
-            state: 'Karnataka',
-            pincode: '560038',
-          });
+        (error) => {
+          let errorMsg = 'Could not fetch location. Please enter address manually.';
+          if (error.code === 1) {
+            errorMsg = 'Location permission denied. Please allow location access in your device/browser settings.';
+          } else if (error.code === 2) {
+            errorMsg = 'Location unavailable. Please check your GPS connection.';
+          } else if (error.code === 3) {
+            errorMsg = 'Location request timed out. Please retry or enter manually.';
+          }
+          onError(errorMsg);
         },
-        { timeout: 5000, enableHighAccuracy: true }
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
       );
     } else {
-      // Direct simulation fallback
-      setTimeout(() => {
-        applyLocationData({
-          houseNo: 'Flat 402, Green Glen Heights',
-          street: '100 Feet Rd, Indiranagar',
-          landmark: 'Near 12th Main Junction',
-          city: 'Bengaluru',
-          state: 'Karnataka',
-          pincode: '560038',
-        });
-      }, 800);
+      onError('Geolocation is not supported by your browser/device. Please enter manually.');
     }
   };
+
+  // Operating City Check (Currently only Jaipur is operational)
+  const isOperatingCity = city.trim().toLowerCase() === 'jaipur';
+  const isCityEntered = city.trim().length > 0;
+  const isCityNotOperating = isCityEntered && !isOperatingCity;
 
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!houseNo.trim()) errs.houseNo = 'House / Flat number is required';
     if (!street.trim()) errs.street = 'Street address is required';
-    if (!city.trim()) errs.city = 'City is required';
+    if (!city.trim()) {
+      errs.city = 'City is required';
+    } else if (!isOperatingCity) {
+      errs.city = 'Currently we are not operating in this city, Please choose other city';
+    }
     if (!pincode.trim() || pincode.trim().length !== 6) {
       errs.pincode = 'Valid 6-digit PIN code is required';
     }
@@ -179,6 +219,11 @@ export const RegisterLocationScreen: React.FC = () => {
   };
 
   const handleSaveAndProceed = async () => {
+    if (isCityNotOperating) {
+      showToast('Currently we are not operating in this city, Please choose other city', 'error');
+      return;
+    }
+
     if (!validate()) {
       showToast('Please fill all required address fields', 'error');
       return;
@@ -194,8 +239,8 @@ export const RegisterLocationScreen: React.FC = () => {
         state: state.trim(),
         pincode: pincode.trim(),
         landmark: landmark.trim() || undefined,
-        latitude: 12.9716,
-        longitude: 77.5946,
+        latitude: 26.9124,
+        longitude: 75.7873,
         isDefault: true,
         tag,
       };
@@ -248,7 +293,9 @@ export const RegisterLocationScreen: React.FC = () => {
   const isFormValid =
     houseNo.trim().length > 0 &&
     street.trim().length > 0 &&
-    pincode.trim().length === 6;
+    pincode.trim().length === 6 &&
+    city.trim().length > 0 &&
+    isOperatingCity;
 
   return (
     <KeyboardAvoidingView
@@ -257,7 +304,7 @@ export const RegisterLocationScreen: React.FC = () => {
     >
       <StatusBar barStyle="dark-content" backgroundColor="#FFF4EC" />
 
-      {/* Matching Light Indian Pastel Gradient Background */}
+      {/* Light Indian Pastel Gradient Background */}
       <LinearGradient
         colors={['#FFF4EC', '#FFE8D6', '#FFFDF9', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
         locations={[0, 0.22, 0.45, 0.65, 0.85, 1]}
@@ -309,6 +356,19 @@ export const RegisterLocationScreen: React.FC = () => {
             </Text>
           </View>
 
+          {/* Operating City Alert Banner (if non-Jaipur city is entered) */}
+          {isCityNotOperating ? (
+            <View style={styles.notOperatingBanner}>
+              <AlertTriangle size={20} color="#DC2626" style={{ marginRight: 10, marginTop: 2 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.notOperatingTitle}>Currently Not Available</Text>
+                <Text style={styles.notOperatingText}>
+                  Currently we are not operating in this city, Please choose other city (Operational in Jaipur)
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           {/* Residential Address Card */}
           <View style={styles.addressCard}>
             {/* Card Header Row with Heading & Fetch Location Button */}
@@ -325,9 +385,9 @@ export const RegisterLocationScreen: React.FC = () => {
                 style={styles.fetchLocationBtn}
               >
                 {detecting ? (
-                  <ActivityIndicator size="small" color="#FF7700" style={{ marginRight: 4 }} />
+                  <ActivityIndicator size="small" color="#FF7700" style={{ marginRight: 5 }} />
                 ) : (
-                  <LocateFixed size={14} color="#FF7700" style={{ marginRight: 4 }} />
+                  <LocateFixed size={14} color="#FF7700" style={{ marginRight: 5 }} />
                 )}
                 <Text style={styles.fetchLocationText}>
                   {detecting ? 'Fetching...' : 'Fetch Location'}
@@ -339,7 +399,7 @@ export const RegisterLocationScreen: React.FC = () => {
             {fetchedSuccessfully ? (
               <View style={styles.autoFilledBadge}>
                 <CheckCircle2 size={13} color="#138808" style={{ marginRight: 5 }} />
-                <Text style={styles.autoFilledText}>Address auto-filled via GPS</Text>
+                <Text style={styles.autoFilledText}>Exact location detected via GPS</Text>
               </View>
             ) : null}
 
@@ -348,7 +408,7 @@ export const RegisterLocationScreen: React.FC = () => {
               <Text style={styles.fieldLabel}>Flat / House / Building No. *</Text>
               <TextInput
                 style={[styles.textInputField, !!errors.houseNo && styles.inputError]}
-                placeholder="e.g. Flat 402, Green Glen Heights"
+                placeholder="e.g. Flat 402, Royal Palms Apartment"
                 placeholderTextColor="#94A3B8"
                 value={houseNo}
                 onChangeText={(text) => {
@@ -364,7 +424,7 @@ export const RegisterLocationScreen: React.FC = () => {
               <Text style={styles.fieldLabel}>Street / Area / Locality *</Text>
               <TextInput
                 style={[styles.textInputField, !!errors.street && styles.inputError]}
-                placeholder="e.g. 100 Feet Rd, Indiranagar"
+                placeholder="e.g. Tonk Road, Malviya Nagar"
                 placeholderTextColor="#94A3B8"
                 value={street}
                 onChangeText={(text) => {
@@ -375,12 +435,15 @@ export const RegisterLocationScreen: React.FC = () => {
               {errors.street ? <Text style={styles.errorText}>{errors.street}</Text> : null}
             </View>
 
-            {/* Landmark */}
+            {/* Landmark (Optional - NOT Auto-filled) */}
             <View style={styles.inputFieldGroup}>
-              <Text style={styles.fieldLabel}>Landmark (Optional)</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.fieldLabel}>Landmark</Text>
+                <Text style={styles.optionalBadge}>Optional</Text>
+              </View>
               <TextInput
                 style={styles.textInputField}
-                placeholder="e.g. Near 12th Main Junction"
+                placeholder="e.g. Near World Trade Park (WTP)"
                 placeholderTextColor="#94A3B8"
                 value={landmark}
                 onChangeText={setLandmark}
@@ -393,7 +456,7 @@ export const RegisterLocationScreen: React.FC = () => {
                 <Text style={styles.fieldLabel}>PIN Code *</Text>
                 <TextInput
                   style={[styles.textInputField, !!errors.pincode && styles.inputError]}
-                  placeholder="560038"
+                  placeholder="302017"
                   placeholderTextColor="#94A3B8"
                   keyboardType="number-pad"
                   maxLength={6}
@@ -410,8 +473,11 @@ export const RegisterLocationScreen: React.FC = () => {
               <View style={[styles.inputFieldGroup, { flex: 1, marginLeft: Spacing.sm }]}>
                 <Text style={styles.fieldLabel}>City *</Text>
                 <TextInput
-                  style={[styles.textInputField, !!errors.city && styles.inputError]}
-                  placeholder="Bengaluru"
+                  style={[
+                    styles.textInputField,
+                    (!!errors.city || isCityNotOperating) && styles.inputError,
+                  ]}
+                  placeholder="Jaipur"
                   placeholderTextColor="#94A3B8"
                   value={city}
                   onChangeText={(text) => {
@@ -428,7 +494,7 @@ export const RegisterLocationScreen: React.FC = () => {
               <Text style={styles.fieldLabel}>State</Text>
               <TextInput
                 style={styles.textInputField}
-                placeholder="Karnataka"
+                placeholder="Rajasthan"
                 placeholderTextColor="#94A3B8"
                 value={state}
                 onChangeText={setState}
@@ -485,10 +551,10 @@ export const RegisterLocationScreen: React.FC = () => {
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={handleSaveAndProceed}
-            disabled={saving || !isFormValid}
+            disabled={saving || !isFormValid || isCityNotOperating}
             style={[
               styles.saveBtn,
-              (!isFormValid || saving) && styles.saveBtnDisabled,
+              (!isFormValid || saving || isCityNotOperating) && styles.saveBtnDisabled,
             ]}
           >
             {saving ? (
@@ -501,14 +567,6 @@ export const RegisterLocationScreen: React.FC = () => {
               <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
             ) : null}
           </TouchableOpacity>
-
-          {/* Trust Guarantee */}
-          <View style={styles.guaranteeRow}>
-            <ShieldCheck size={14} color="#138808" style={{ marginRight: 5 }} />
-            <Text style={styles.guaranteeText}>
-              Secured with 256-bit encryption for safe delivery dispatch.
-            </Text>
-          </View>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -563,6 +621,29 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 13.5,
     lineHeight: 19,
+  },
+  notOperatingBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.small,
+  },
+  notOperatingTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#B91C1C',
+    marginBottom: 2,
+  },
+  notOperatingText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#DC2626',
+    lineHeight: 17,
   },
   addressCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -637,6 +718,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 12.5,
   },
+  optionalBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginBottom: 5,
+  },
   textInputField: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
@@ -650,12 +737,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   inputError: {
-    borderColor: Colors.danger,
+    borderColor: '#EF4444',
     backgroundColor: '#FEF2F2',
   },
   errorText: {
     ...Typography.caption,
-    color: Colors.danger,
+    color: '#DC2626',
     fontSize: 11,
     marginTop: 2,
     fontWeight: '600',
@@ -718,20 +805,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.2,
   },
-  guaranteeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    opacity: 0.9,
-  },
-  guaranteeText: {
-    ...Typography.caption,
-    fontSize: 11.5,
-    color: '#138808',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
 });
-
