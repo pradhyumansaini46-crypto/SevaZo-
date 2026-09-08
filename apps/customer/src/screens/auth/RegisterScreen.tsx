@@ -1,51 +1,137 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  Image,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
+  Easing,
+  StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import { Button } from '../../components/Button';
-import { Phone, Mail, Gift, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
+import { Mail, CheckCircle2, AlertCircle, ChevronDown, ArrowLeft } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
+import {
+  MARQUEE_ROW_1,
+  MARQUEE_ROW_2,
+  MARQUEE_ROW_3,
+  MARQUEE_ROW_4,
+  MarqueeProduct,
+} from './marqueeProducts';
+
+const ITEM_WIDTH = 84;
+const ITEM_MARGIN = 6;
+const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
+
+const MarqueeRow: React.FC<{
+  items: MarqueeProduct[];
+  speed?: number;
+  reverse?: boolean;
+}> = ({ items, speed = 32000, reverse = false }) => {
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
+
+  useEffect(() => {
+    scrollAnim.setValue(reverse ? -rowWidth : 0);
+    Animated.loop(
+      Animated.timing(scrollAnim, {
+        toValue: reverse ? 0 : -rowWidth,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, [items.length, reverse, speed]);
+
+  const displayItems = [...items, ...items, ...items];
+
+  return (
+    <View style={styles.marqueeRowContainer}>
+      <Animated.View
+        style={[
+          styles.marqueeTrack,
+          {
+            transform: [{ translateX: scrollAnim }],
+          },
+        ]}
+      >
+        {displayItems.map((item, idx) => (
+          <View
+            key={`${item.id}-${idx}`}
+            style={[
+              styles.productCard,
+              { backgroundColor: item.bgColor || '#F0F9FF' },
+            ]}
+          >
+            <Image
+              source={{ uri: item.image }}
+              style={styles.productImage}
+              resizeMode="contain"
+            />
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+};
 
 export const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { sendOtp, updateRegistrationDraft, isLoading } = useAuthStore();
+  const { sendOtp, isLoading } = useAuthStore();
 
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [phoneFocused, setPhoneFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [error, setError] = useState('');
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  const isPhoneValid = cleanPhone.length === 10;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmailValid = emailRegex.test(email.trim());
+  const isFormValid = isPhoneValid && isEmailValid;
+
+  const handlePhoneChange = (text: string) => {
+    setError('');
+    const raw = text.replace(/\D/g, '');
+    if (raw.length <= 10) {
+      setPhone(raw);
+    }
+  };
+
+  const handleEmailChange = (text: string) => {
+    setError('');
+    setEmail(text);
+  };
 
   const handleContinue = async () => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
+    if (!isPhoneValid) {
       setError('Please enter a valid 10-digit mobile number');
       return;
     }
+    if (!isEmailValid) {
+      setError('Please enter a valid email address');
+      return;
+    }
 
-    setError(null);
-    const formattedPhone = cleanPhone.startsWith('91') && cleanPhone.length === 12
-      ? `+${cleanPhone}`
-      : `+91 ${cleanPhone.slice(-10)}`;
-
-    updateRegistrationDraft({
-      phone: formattedPhone,
-      email: email.trim(),
-    });
-
-    const sent = await sendOtp(formattedPhone);
+    setError('');
+    const formattedPhone = `+91 ${cleanPhone}`;
+    const sent = await sendOtp(formattedPhone, email.trim().toLowerCase());
     if (sent) {
-      navigation.navigate('Otp', { phone: formattedPhone, mode: 'REGISTER' });
+      navigation.navigate('Otp', {
+        phone: formattedPhone,
+        email: email.trim().toLowerCase(),
+        mode: 'REGISTER',
+      });
     } else {
       setError('Failed to send verification code. Please try again.');
     }
@@ -54,123 +140,160 @@ export const RegisterScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top > 0 ? insets.top + Spacing.sm : Spacing.md,
-          paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg,
-        },
-      ]}
+      style={styles.container}
     >
-      {/* Top Navigation Bar */}
-      <View style={styles.topNav}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF7ED" />
+      <View style={styles.ambientTopGlow} />
+      <View style={styles.ambientGreenTouch} />
+
+      {/* Top Navigation */}
+      <View
+        style={[
+          styles.topNav,
+          { paddingTop: insets.top > 0 ? insets.top + Spacing.xs : Spacing.md },
+        ]}
+      >
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <ArrowLeft size={22} color={Colors.textPrimary} />
+          <ArrowLeft size={22} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.stepBadge}>Step 1 of 4: Mobile Verification</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.replace('Main')}
+          style={styles.skipLoginPill}
+        >
+          <Text style={styles.skipLoginText}>Skip login</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Header Titles */}
-        <View style={styles.headerBlock}>
-          <Text style={styles.title}>Create your account</Text>
-          <Text style={styles.subtitle}>
-            Enter your mobile number to get started with SevaZo Express.
-          </Text>
+        {/* Moving Products Marquee */}
+        <View style={styles.marqueeSection}>
+          <MarqueeRow items={MARQUEE_ROW_1} speed={30000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={34000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={28000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={32000} reverse={false} />
         </View>
 
-        {/* Input Form */}
-        <View style={styles.formContainer}>
-          {/* Mobile Number Input */}
-          <Text style={styles.inputLabel}>
-            Mobile Number <Text style={styles.requiredStar}>*</Text>
-          </Text>
-          <View style={[styles.inputRow, !!error && styles.inputRowError]}>
-            <View style={styles.prefixWrap}>
-              <Text style={styles.flagEmoji}>🇮🇳</Text>
-              <Text style={styles.prefixText}>+91</Text>
+        {/* Bottom Card Form */}
+        <View style={styles.bottomCard}>
+          <View style={styles.brandBoxWrap}>
+            <View style={styles.brandSquare}>
+              <Image
+                source={require('../../../assets/logo.png')}
+                style={styles.brandLogoImg}
+                resizeMode="contain"
+              />
             </View>
-            <View style={styles.dividerVertical} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="98765 43210"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="phone-pad"
-              maxLength={11}
-              value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                if (error) setError(null);
-              }}
-            />
           </View>
 
-          {/* Email Address Input (Optional) */}
-          <Text style={styles.inputLabel}>
-            Email Address <Text style={styles.optionalTag}>(Optional for e-bills)</Text>
-          </Text>
-          <View style={styles.standardInputRow}>
-            <Mail size={18} color={Colors.textMuted} style={{ marginRight: 10 }} />
-            <TextInput
-              style={styles.standardTextInput}
-              placeholder="name@example.com"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
+          <Text style={styles.mainTitle}>India's instant commerce app</Text>
+          <Text style={styles.subTitle}>Log in or sign up</Text>
 
-          {/* Referral Code Input (Optional) */}
-          <Text style={styles.inputLabel}>
-            Referral Code <Text style={styles.optionalTag}>(Optional: Get ₹100 Wallet Credit)</Text>
-          </Text>
-          <View style={styles.standardInputRow}>
-            <Gift size={18} color={Colors.primary} style={{ marginRight: 10 }} />
-            <TextInput
-              style={styles.standardTextInput}
-              placeholder="e.g. SEVAZO100"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="characters"
-              value={referralCode}
-              onChangeText={setReferralCode}
-            />
-          </View>
+          <View style={styles.formWrap}>
+            {/* Mobile Number Row */}
+            <View style={styles.mobileInputRow}>
+              <View style={styles.flagBox}>
+                <Text style={styles.flagText}>🇮🇳</Text>
+                <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
+              </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              <View
+                style={[
+                  styles.numberInputBox,
+                  phoneFocused && styles.inputFocused,
+                  isPhoneValid && styles.inputValid,
+                ]}
+              >
+                <Text style={styles.countryCode}>+91</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter mobile number"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  onFocus={() => setPhoneFocused(true)}
+                  onBlur={() => setPhoneFocused(false)}
+                />
+                {isPhoneValid ? (
+                  <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
+                ) : null}
+              </View>
+            </View>
 
-          {/* Value Assurance Card */}
-          <View style={styles.assuranceCard}>
-            <ShieldCheck size={16} color={Colors.success} style={{ marginRight: 8 }} />
-            <Text style={styles.assuranceText}>
-              We will send a 6-digit OTP to verify your mobile number.
-            </Text>
-          </View>
-        </View>
+            {/* Email Address Row */}
+            <View
+              style={[
+                styles.emailInputBox,
+                emailFocused && styles.inputFocused,
+                isEmailValid && styles.inputValid,
+              ]}
+            >
+              <Mail
+                size={18}
+                color={emailFocused ? Colors.primary : '#94A3B8'}
+                style={styles.inputLeftIcon}
+              />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter email address"
+                placeholderTextColor="#94A3B8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={handleEmailChange}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
+              />
+              {isEmailValid ? (
+                <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
+              ) : null}
+            </View>
 
-        {/* Bottom Actions */}
-        <View style={styles.actionBlock}>
-          <Button
-            title="Continue"
-            onPress={handleContinue}
-            loading={isLoading}
-            size="lg"
-            style={styles.continueBtn}
-          />
+            {error ? (
+              <View style={styles.errorRow}>
+                <AlertCircle size={14} color={Colors.danger} style={{ marginRight: 6 }} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-          <View style={styles.loginPromptRow}>
-            <Text style={styles.loginPromptText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Login</Text>
+            {/* Continue CTA */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleContinue}
+              disabled={isLoading || !isFormValid}
+              style={[
+                styles.continueBtn,
+                (!isFormValid || isLoading) && styles.continueBtnDisabled,
+              ]}
+            >
+              <Text style={styles.continueBtnText}>
+                {isLoading ? 'Sending OTP...' : 'Continue'}
+              </Text>
             </TouchableOpacity>
+
+            <View style={styles.termsContainer}>
+              <Text style={styles.termsText}>
+                By continuing, you agree to our:{' '}
+                <Text style={styles.termsLink}>Terms of Service</Text> &{' '}
+                <Text style={styles.termsLink}>Privacy policy</Text>
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -181,164 +304,261 @@ export const RegisterScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFF7ED',
+  },
+  ambientTopGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 380,
+    backgroundColor: '#FFEDD5',
+    opacity: 0.6,
+  },
+  ambientGreenTouch: {
+    position: 'absolute',
+    top: 60,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#D1FAE5',
+    opacity: 0.45,
   },
   topNav: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
   },
   backBtn: {
     padding: Spacing.xs,
-  },
-  stepBadge: {
-    ...Typography.caption,
-    fontSize: 11,
-    fontWeight: '800',
-    color: Colors.primary,
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: BorderRadius.full,
   },
+  skipLoginPill: {
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    paddingHorizontal: Spacing.md + 2,
+    paddingVertical: Spacing.xs + 3,
+    borderRadius: BorderRadius.full,
+  },
+  skipLoginText: {
+    ...Typography.bodySmall,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+  },
+  marqueeSection: {
+    paddingTop: Spacing.xxl * 1.5,
+    paddingBottom: Spacing.sm,
+    overflow: 'hidden',
+  },
+  marqueeRowContainer: {
+    height: 98,
+    marginVertical: 4,
+  },
+  marqueeTrack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  productCard: {
+    width: ITEM_WIDTH,
+    height: ITEM_WIDTH,
+    marginHorizontal: ITEM_MARGIN,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    ...Shadows.small,
+  },
+  productImage: {
+    width: 66,
+    height: 66,
+  },
+  bottomCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    justifyContent: 'space-between',
-    flexGrow: 1,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#FED7AA',
+    ...Shadows.elevated,
   },
-  headerBlock: {
-    marginBottom: Spacing.xl,
-  },
-  title: {
-    ...Typography.titleLarge,
-    fontSize: 24,
-    fontWeight: '900',
-    color: Colors.textPrimary,
+  brandBoxWrap: {
     marginBottom: Spacing.xs,
   },
-  subtitle: {
-    ...Typography.bodyMedium,
-    color: Colors.textSecondary,
-    lineHeight: 22,
-  },
-  formContainer: {
-    gap: Spacing.md,
-  },
-  inputLabel: {
-    ...Typography.bodySmall,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: Spacing.xs,
-  },
-  requiredStar: {
-    color: Colors.danger,
-  },
-  optionalTag: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: '500',
-  },
-  inputRow: {
-    flexDirection: 'row',
+  brandSquare: {
+    width: 62,
+    height: 62,
+    borderRadius: 18,
+    backgroundColor: '#FDE047',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...Shadows.small,
+  },
+  brandLogoImg: {
+    width: 52,
     height: 52,
   },
-  inputRowError: {
-    borderColor: Colors.danger,
-    backgroundColor: '#FEF2F2',
+  mainTitle: {
+    ...Typography.titleLarge,
+    fontSize: 23,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginTop: 4,
   },
-  prefixWrap: {
+  subTitle: {
+    ...Typography.bodyMedium,
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 2,
+    marginBottom: Spacing.md,
+    fontWeight: '600',
+  },
+  formWrap: {
+    width: '100%',
+  },
+  mobileInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    marginBottom: Spacing.sm + 2,
   },
-  flagEmoji: {
-    fontSize: 18,
-    marginRight: 6,
+  flagBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    marginRight: Spacing.sm,
+    ...Shadows.small,
   },
-  prefixText: {
+  flagText: {
+    fontSize: 20,
+  },
+  numberInputBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    ...Shadows.small,
+  },
+  countryCode: {
     ...Typography.bodyLarge,
-    fontWeight: '700',
-    color: Colors.textPrimary,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginRight: 8,
   },
-  dividerVertical: {
-    width: 1,
-    height: 24,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.md,
+  emailInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.small,
+  },
+  inputLeftIcon: {
+    marginRight: Spacing.sm,
+  },
+  inputFocused: {
+    borderColor: '#059669',
+    backgroundColor: '#FFFFFF',
+  },
+  inputValid: {
+    borderColor: '#10B981',
   },
   textInput: {
     flex: 1,
     ...Typography.bodyLarge,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: '#0F172A',
+    height: '100%',
   },
-  standardInputRow: {
+  validIcon: {
+    marginLeft: Spacing.xs,
+  },
+  errorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    height: 52,
-  },
-  standardTextInput: {
-    flex: 1,
-    ...Typography.bodyMedium,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+    backgroundColor: '#FEF2F2',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
   },
   errorText: {
-    ...Typography.bodySmall,
+    ...Typography.caption,
     color: Colors.danger,
     fontWeight: '600',
-    marginTop: 4,
-  },
-  assuranceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  assuranceText: {
     flex: 1,
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 11,
-  },
-  actionBlock: {
-    marginTop: Spacing.xl * 1.5,
-    gap: Spacing.md,
   },
   continueBtn: {
-    width: '100%',
-  },
-  loginPromptRow: {
-    flexDirection: 'row',
+    backgroundColor: '#059669',
+    borderRadius: 16,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xs,
+    width: '100%',
+    ...Shadows.card,
   },
-  loginPromptText: {
-    ...Typography.bodyMedium,
-    color: Colors.textSecondary,
+  continueBtnDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  loginLink: {
-    ...Typography.bodyMedium,
+  continueBtnText: {
+    ...Typography.bodyLarge,
     fontWeight: '800',
-    color: Colors.primary,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  termsContainer: {
+    marginTop: Spacing.md,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  termsText: {
+    ...Typography.caption,
+    fontSize: 11,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  termsLink: {
+    color: '#0F172A',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });
+

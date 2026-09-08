@@ -10,21 +10,85 @@ import {
   Platform,
   ScrollView,
   Animated,
+  Easing,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import {
-  Mail,
-  Zap,
-  ShieldCheck,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react-native';
+import { Mail, CheckCircle2, AlertCircle, ChevronDown, Sparkles } from 'lucide-react-native';
 import { useAuthStore } from '../../stores/authStore';
+import {
+  MARQUEE_ROW_1,
+  MARQUEE_ROW_2,
+  MARQUEE_ROW_3,
+  MARQUEE_ROW_4,
+  MarqueeProduct,
+} from './marqueeProducts';
+
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = 84;
+const ITEM_MARGIN = 6;
+const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2; // 96px
+
+// Smooth Continuous Moving Row Component
+const MarqueeRow: React.FC<{
+  items: MarqueeProduct[];
+  speed?: number; // duration in ms
+  reverse?: boolean;
+}> = ({ items, speed = 32000, reverse = false }) => {
+  const scrollAnim = useRef(new Animated.Value(0)).current;
+  const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
+
+  useEffect(() => {
+    const startAnimation = () => {
+      scrollAnim.setValue(reverse ? -rowWidth : 0);
+      Animated.loop(
+        Animated.timing(scrollAnim, {
+          toValue: reverse ? 0 : -rowWidth,
+          duration: speed,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    };
+
+    startAnimation();
+  }, [items.length, reverse, speed]);
+
+  // Triple buffer to guarantee completely gapless continuous loop
+  const displayItems = [...items, ...items, ...items];
+
+  return (
+    <View style={styles.marqueeRowContainer}>
+      <Animated.View
+        style={[
+          styles.marqueeTrack,
+          {
+            transform: [{ translateX: scrollAnim }],
+          },
+        ]}
+      >
+        {displayItems.map((item, idx) => (
+          <View
+            key={`${item.id}-${idx}`}
+            style={[
+              styles.productCard,
+              { backgroundColor: item.bgColor || '#F0F9FF' },
+            ]}
+          >
+            <Image
+              source={{ uri: item.image }}
+              style={styles.productImage}
+              resizeMode="contain"
+            />
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+};
 
 export const WelcomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -36,59 +100,6 @@ export const WelcomeScreen: React.FC = () => {
   const [phoneFocused, setPhoneFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
-
-  // Animation values
-  const heroFade = useRef(new Animated.Value(0)).current;
-  const heroTranslate = useRef(new Animated.Value(-20)).current;
-  const formFade = useRef(new Animated.Value(0)).current;
-  const formTranslate = useRef(new Animated.Value(30)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    // Entrance animations
-    Animated.parallel([
-      Animated.timing(heroFade, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(heroTranslate, {
-        toValue: 0,
-        friction: 7,
-        tension: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(formFade, {
-        toValue: 1,
-        duration: 700,
-        delay: 200,
-        useNativeDriver: true,
-      }),
-      Animated.spring(formTranslate, {
-        toValue: 0,
-        friction: 7,
-        tension: 50,
-        delay: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Subtle pulsing animation on the badge
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
 
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = cleanPhone.length === 10;
@@ -129,7 +140,7 @@ export const WelcomeScreen: React.FC = () => {
         email: email.trim().toLowerCase(),
       });
     } else {
-      setError('Failed to send OTP. Please check your internet connection.');
+      setError('Failed to send OTP. Please check your network connection.');
     }
   };
 
@@ -140,127 +151,120 @@ export const WelcomeScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.keyboardContainer}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF7ED" />
+
+      {/* Background Gradient Ambient Layer (Light Orange with Greenish Touches) */}
+      <View style={styles.ambientTopGlow} />
+      <View style={styles.ambientGreenTouch} />
+
+      {/* Top Floating Skip Login Pill */}
+      <View
+        style={[
+          styles.topHeaderBar,
+          { paddingTop: insets.top > 0 ? insets.top + Spacing.xs : Spacing.md },
+        ]}
+      >
+        <View />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleGuestMode}
+          style={styles.skipLoginPill}
+        >
+          <Text style={styles.skipLoginText}>Skip login</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top > 0 ? insets.top + Spacing.sm : Spacing.md,
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.lg : Spacing.xl,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg,
           },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Animated Hero Header */}
-        <Animated.View
-          style={[
-            styles.heroSection,
-            {
-              opacity: heroFade,
-              transform: [{ translateY: heroTranslate }],
-            },
-          ]}
-        >
-          {/* Official Swan Logo */}
-          <View style={styles.logoWrap}>
-            <Image
-              source={require('../../../assets/logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
+        {/* Continuous Moving Product Marquee (4 Staggered Rows, 100+ Modern Items) */}
+        <View style={styles.marqueeSection}>
+          <MarqueeRow items={MARQUEE_ROW_1} speed={30000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={34000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={28000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={32000} reverse={false} />
+        </View>
 
-          {/* Tagline & Animated Delivery Pill */}
-          <Animated.View
-            style={[
-              styles.speedPill,
-              { transform: [{ scale: pulseAnim }] },
-            ]}
-          >
-            <Zap size={14} color="#059669" fill="#059669" />
-            <Text style={styles.speedPillText}>Instant 10-15 Min Delivery</Text>
-          </Animated.View>
-
-          <Text style={styles.heroTitle}>Groceries & Essentials in Minutes</Text>
-          <Text style={styles.heroSubtitle}>
-            Login or sign up with your mobile and email to access 10,000+ instant items.
-          </Text>
-        </Animated.View>
-
-        {/* Animated Input Form Card */}
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              opacity: formFade,
-              transform: [{ translateY: formTranslate }],
-            },
-          ]}
-        >
-          <Text style={styles.cardHeader}>Get Started</Text>
-          <Text style={styles.cardSubHeader}>Enter your details to receive Email OTP</Text>
-
-          {/* 1. Mobile Number Input (Mandatory) */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Mobile Number <Text style={styles.requiredStar}>*</Text>
-            </Text>
-            <View
-              style={[
-                styles.inputWrapper,
-                phoneFocused && styles.inputWrapperFocused,
-                isPhoneValid && styles.inputWrapperValid,
-              ]}
-            >
-              <View style={styles.prefixContainer}>
-                <Text style={styles.flagIcon}>🇮🇳</Text>
-                <Text style={styles.prefixText}>+91</Text>
-                <View style={styles.prefixDivider} />
-              </View>
-
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter 10-digit number"
-                placeholderTextColor={Colors.textMuted}
-                keyboardType="number-pad"
-                maxLength={10}
-                value={phone}
-                onChangeText={handlePhoneChange}
-                onFocus={() => setPhoneFocused(true)}
-                onBlur={() => setPhoneFocused(false)}
+        {/* Bottom Card / Auth Sheet */}
+        <View style={styles.bottomCard}>
+          {/* Brand Logo Box */}
+          <View style={styles.brandBoxWrap}>
+            <View style={styles.brandSquare}>
+              <Image
+                source={require('../../../assets/logo.png')}
+                style={styles.brandLogoImg}
+                resizeMode="contain"
               />
-
-              {isPhoneValid ? (
-                <CheckCircle2 size={18} color="#059669" style={styles.validCheck} />
-              ) : null}
             </View>
           </View>
 
-          {/* 2. Email Address Input (Mandatory) */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>
-              Email Address <Text style={styles.requiredStar}>*</Text>
-            </Text>
+          {/* Tagline & Subheading */}
+          <Text style={styles.mainTitle}>India's instant commerce app</Text>
+          <Text style={styles.subTitle}>Log in or sign up</Text>
+
+          {/* Form Container */}
+          <View style={styles.formWrap}>
+            {/* 1. Mobile Number Input with Flag Box */}
+            <View style={styles.mobileInputRow}>
+              {/* Flag Pill */}
+              <View style={styles.flagBox}>
+                <Text style={styles.flagText}>🇮🇳</Text>
+                <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
+              </View>
+
+              {/* Number Input Field */}
+              <View
+                style={[
+                  styles.numberInputBox,
+                  phoneFocused && styles.inputFocused,
+                  isPhoneValid && styles.inputValid,
+                ]}
+              >
+                <Text style={styles.countryCode}>+91</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter mobile number"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  onFocus={() => setPhoneFocused(true)}
+                  onBlur={() => setPhoneFocused(false)}
+                />
+                {isPhoneValid ? (
+                  <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
+                ) : null}
+              </View>
+            </View>
+
+            {/* 2. Email Address Input (Below Mobile Number) */}
             <View
               style={[
-                styles.inputWrapper,
-                emailFocused && styles.inputWrapperFocused,
-                isEmailValid && styles.inputWrapperValid,
+                styles.emailInputBox,
+                emailFocused && styles.inputFocused,
+                isEmailValid && styles.inputValid,
               ]}
             >
               <Mail
                 size={18}
-                color={emailFocused ? Colors.primary : Colors.textMuted}
-                style={styles.fieldIcon}
+                color={emailFocused ? Colors.primary : '#94A3B8'}
+                style={styles.inputLeftIcon}
               />
               <TextInput
                 style={styles.textInput}
-                placeholder="name@example.com"
-                placeholderTextColor={Colors.textMuted}
+                placeholder="Enter email address"
+                placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -269,215 +273,257 @@ export const WelcomeScreen: React.FC = () => {
                 onFocus={() => setEmailFocused(true)}
                 onBlur={() => setEmailFocused(false)}
               />
-
               {isEmailValid ? (
-                <CheckCircle2 size={18} color="#059669" style={styles.validCheck} />
+                <CheckCircle2 size={16} color="#059669" style={styles.validIcon} />
               ) : null}
             </View>
-          </View>
 
-          {/* Error Banner */}
-          {error ? (
-            <View style={styles.errorContainer}>
-              <AlertCircle size={16} color={Colors.danger} style={{ marginRight: 6 }} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorRow}>
+                <AlertCircle size={14} color={Colors.danger} style={{ marginRight: 6 }} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-          {/* Animated Continue CTA Button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleSubmit}
-            disabled={isLoading || !isFormValid}
-            style={[
-              styles.continueButton,
-              (!isFormValid || isLoading) && styles.continueButtonDisabled,
-            ]}
-          >
-            <Text style={styles.continueButtonText}>
-              {isLoading ? 'Sending OTP...' : 'Send Verification OTP'}
-            </Text>
-            <ArrowRight size={18} color={Colors.textInverse} style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
+            {/* 3. Continue Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleSubmit}
+              disabled={isLoading || !isFormValid}
+              style={[
+                styles.continueBtn,
+                (!isFormValid || isLoading) && styles.continueBtnDisabled,
+              ]}
+            >
+              <Text style={styles.continueBtnText}>
+                {isLoading ? 'Sending OTP...' : 'Continue'}
+              </Text>
+            </TouchableOpacity>
 
-          {/* Trust Guarantees */}
-          <View style={styles.trustBadgesRow}>
-            <View style={styles.trustBadge}>
-              <ShieldCheck size={14} color="#059669" />
-              <Text style={styles.trustBadgeText}>100% Safe & Secure</Text>
-            </View>
-            <View style={styles.trustBadge}>
-              <Sparkles size={14} color={Colors.primary} />
-              <Text style={styles.trustBadgeText}>Instant Access</Text>
+            {/* Terms and Privacy Policy */}
+            <View style={styles.termsContainer}>
+              <Text style={styles.termsText}>
+                By continuing, you agree to our:{' '}
+                <Text style={styles.termsLink}>Terms of Service</Text> &{' '}
+                <Text style={styles.termsLink}>Privacy policy</Text>
+              </Text>
             </View>
           </View>
-        </Animated.View>
-
-        {/* Guest Exploration Option */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={handleGuestMode}
-          style={styles.guestLink}
-        >
-          <Text style={styles.guestLinkText}>Explore Catalog as Guest</Text>
-          <ArrowRight size={14} color={Colors.textSecondary} style={{ marginLeft: 4 }} />
-        </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF7ED', // Light Orange Background Theme
+  },
+  ambientTopGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 380,
+    backgroundColor: '#FFEDD5', // Soft Warm Light Orange
+    opacity: 0.6,
+  },
+  ambientGreenTouch: {
+    position: 'absolute',
+    top: 60,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#D1FAE5', // Fresh Greenish Accent Touch
+    opacity: 0.45,
+  },
+  topHeaderBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+  },
+  skipLoginPill: {
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    paddingHorizontal: Spacing.md + 2,
+    paddingVertical: Spacing.xs + 3,
+    borderRadius: BorderRadius.full,
+    backdropFilter: 'blur(8px)',
+  },
+  skipLoginText: {
+    ...Typography.bodySmall,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'space-between',
   },
-  heroSection: {
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: Spacing.lg,
+  marqueeSection: {
+    paddingTop: Spacing.xxl * 1.5,
+    paddingBottom: Spacing.sm,
+    overflow: 'hidden',
   },
-  logoWrap: {
-    width: 140,
-    height: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xs,
+  marqueeRowContainer: {
+    height: 98,
+    marginVertical: 4,
   },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  speedPill: {
+  marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+  },
+  productCard: {
+    width: ITEM_WIDTH,
+    height: ITEM_WIDTH,
+    marginHorizontal: ITEM_MARGIN,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
     borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.sm,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    ...Shadows.small,
   },
-  speedPillText: {
-    ...Typography.caption,
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#065F46',
-    marginLeft: 6,
+  productImage: {
+    width: 66,
+    height: 66,
   },
-  heroTitle: {
-    ...Typography.titleLarge,
-    fontSize: 22,
-    fontWeight: '900',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 4,
-    letterSpacing: -0.3,
-  },
-  heroSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: Spacing.md,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: '#FAFAFA',
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+  bottomCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#FED7AA',
     ...Shadows.elevated,
   },
-  cardHeader: {
-    ...Typography.titleMedium,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.textPrimary,
+  brandBoxWrap: {
+    marginBottom: Spacing.xs,
   },
-  cardSubHeader: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
+  brandSquare: {
+    width: 62,
+    height: 62,
+    borderRadius: 18,
+    backgroundColor: '#FDE047', // Iconic Golden Warm Brand Box
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    ...Shadows.small,
+  },
+  brandLogoImg: {
+    width: 52,
+    height: 52,
+  },
+  mainTitle: {
+    ...Typography.titleLarge,
+    fontSize: 23,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginTop: 4,
+  },
+  subTitle: {
+    ...Typography.bodyMedium,
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
     marginTop: 2,
-    marginBottom: Spacing.lg,
-  },
-  inputGroup: {
     marginBottom: Spacing.md,
+    fontWeight: '600',
   },
-  inputLabel: {
-    ...Typography.caption,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 6,
+  formWrap: {
+    width: '100%',
   },
-  requiredStar: {
-    color: Colors.danger,
+  mobileInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: Spacing.sm + 2,
   },
-  inputWrapper: {
+  flagBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    marginRight: Spacing.sm,
+    ...Shadows.small,
+  },
+  flagText: {
+    fontSize: 20,
+  },
+  numberInputBox: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: BorderRadius.lg,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
     paddingHorizontal: Spacing.md,
-    height: 52,
-  },
-  inputWrapperFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: '#FFFFFF',
     ...Shadows.small,
   },
-  inputWrapperValid: {
-    borderColor: '#10B981',
+  countryCode: {
+    ...Typography.bodyLarge,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginRight: 8,
   },
-  prefixContainer: {
+  emailInputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: Spacing.xs,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.small,
   },
-  flagIcon: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  prefixText: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  prefixDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 8,
-  },
-  fieldIcon: {
+  inputLeftIcon: {
     marginRight: Spacing.sm,
+  },
+  inputFocused: {
+    borderColor: '#059669', // Emerald Green Accent on Focus
+    backgroundColor: '#FFFFFF',
+  },
+  inputValid: {
+    borderColor: '#10B981',
   },
   textInput: {
     flex: 1,
-    ...Typography.bodyMedium,
-    color: Colors.textPrimary,
+    ...Typography.bodyLarge,
     fontWeight: '600',
+    color: '#0F172A',
     height: '100%',
   },
-  validCheck: {
+  validIcon: {
     marginLeft: Spacing.xs,
   },
-  errorContainer: {
+  errorRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: BorderRadius.md,
     padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
   },
   errorText: {
@@ -486,56 +532,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
-  continueButton: {
-    flexDirection: 'row',
+  continueBtn: {
+    backgroundColor: '#059669', // Clean Emerald Green CTA
+    borderRadius: 16,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.xs,
-    ...Shadows.medium,
+    width: '100%',
+    ...Shadows.card,
   },
-  continueButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+  continueBtnDisabled: {
+    backgroundColor: '#94A3B8',
     shadowOpacity: 0,
     elevation: 0,
   },
-  continueButtonText: {
+  continueBtnText: {
     ...Typography.bodyLarge,
     fontWeight: '800',
-    color: Colors.textInverse,
+    color: '#FFFFFF',
+    fontSize: 16,
   },
-  trustBadgesRow: {
-    flexDirection: 'row',
+  termsContainer: {
+    marginTop: Spacing.md,
     alignItems: 'center',
-    justifyContent: 'space-around',
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    paddingHorizontal: Spacing.sm,
   },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  trustBadgeText: {
+  termsText: {
     ...Typography.caption,
     fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginLeft: 5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 16,
+    fontWeight: '500',
   },
-  guestLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.lg,
-  },
-  guestLinkText: {
-    ...Typography.bodySmall,
+  termsLink: {
+    color: '#0F172A',
     fontWeight: '700',
-    color: Colors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });
+
 
