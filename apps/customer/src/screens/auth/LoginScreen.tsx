@@ -28,8 +28,8 @@ import {
   MarqueeProduct,
 } from './marqueeProducts';
 
-const ITEM_WIDTH = 90;
-const ITEM_MARGIN = 6;
+const ITEM_WIDTH = 76;
+const ITEM_MARGIN = 10;
 const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
 
 const MarqueeRow: React.FC<{
@@ -41,16 +41,20 @@ const MarqueeRow: React.FC<{
   const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
   useEffect(() => {
-    scrollAnim.setValue(reverse ? -rowWidth : 0);
-    Animated.loop(
-      Animated.timing(scrollAnim, {
-        toValue: reverse ? 0 : -rowWidth,
-        duration: speed,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    ).start();
-  }, [items.length, reverse, speed]);
+    const startAnimation = () => {
+      scrollAnim.setValue(reverse ? -rowWidth : 0);
+      Animated.loop(
+        Animated.timing(scrollAnim, {
+          toValue: reverse ? 0 : -rowWidth,
+          duration: speed,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    };
+
+    startAnimation();
+  }, [items.length, reverse, speed, rowWidth]);
 
   const displayItems = [...items, ...items, ...items];
 
@@ -67,20 +71,13 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={[
-              styles.productCard,
-              { backgroundColor: item.bgColor || '#FFFFFF' },
-            ]}
+            style={styles.productImageWrapper}
           >
-            {item.badge ? (
-              <View style={styles.productBadge}>
-                <Text style={styles.productBadgeText}>{item.badge}</Text>
-              </View>
-            ) : null}
-            <Text style={styles.productEmoji}>{item.emoji}</Text>
-            <Text style={styles.productName} numberOfLines={1}>
-              {item.name}
-            </Text>
+            <Image
+              source={{ uri: item.image }}
+              style={styles.floatingProductImg}
+              resizeMode="contain"
+            />
           </View>
         ))}
       </Animated.View>
@@ -182,6 +179,13 @@ export const LoginScreen: React.FC = () => {
 
         {/* Bottom Card Form */}
         <View style={styles.bottomCard}>
+          {/* Greenish Gradient starting right below "Seva Zo Dil Se Ki Jaye" title */}
+          <LinearGradient
+            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0', '#86EFAC']}
+            locations={[0, 0.22, 0.42, 0.65, 0.85, 1]}
+            style={styles.bottomCardGradient}
+          />
+
           <View style={styles.tricolorBar}>
             <View style={[styles.tricolorSegment, { backgroundColor: '#FF9933' }]} />
             <View style={[styles.tricolorSegment, { backgroundColor: '#FFFFFF' }]} />
@@ -256,9 +260,7 @@ export const LoginScreen: React.FC = () => {
 
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our{' '}
-                <Text style={styles.termsLink}>Terms</Text> &{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
+                By continuing, you agree to our terms & privacy policy
               </Text>
             </View>
           </View>
@@ -310,67 +312,48 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.5,
+    paddingTop: Spacing.xxl * 1.4,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 94,
+    height: 72,
     marginVertical: 3,
+    justifyContent: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  productCard: {
+  productImageWrapper: {
     width: ITEM_WIDTH,
-    height: 86,
+    height: 68,
     marginHorizontal: ITEM_MARGIN,
-    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    ...Shadows.small,
+    backgroundColor: 'transparent',
   },
-  productBadge: {
-    position: 'absolute',
-    top: 5,
-    right: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  productBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: '#334155',
-  },
-  productEmoji: {
-    fontSize: 34,
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  productName: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#1E293B',
-    textAlign: 'center',
-    width: '100%',
+  floatingProductImg: {
+    width: 64,
+    height: 64,
+    backgroundColor: 'transparent',
   },
   bottomCard: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    overflow: 'hidden',
     ...Shadows.elevated,
+  },
+  bottomCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   tricolorBar: {
     flexDirection: 'row',
@@ -422,46 +405,6 @@ const styles = StyleSheet.create({
   },
   formWrap: {
     width: '100%',
-  },
-  mobileInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: Spacing.sm + 2,
-  },
-  flagBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
-    paddingHorizontal: Spacing.md,
-    marginRight: Spacing.sm,
-    ...Shadows.small,
-  },
-  flagText: {
-    fontSize: 20,
-  },
-  numberInputBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    height: 52,
-    paddingHorizontal: Spacing.md,
-    ...Shadows.small,
-  },
-  countryCode: {
-    ...Typography.bodyLarge,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginRight: 8,
   },
   emailInputBox: {
     flexDirection: 'row',
@@ -537,15 +480,9 @@ const styles = StyleSheet.create({
   termsText: {
     ...Typography.caption,
     fontSize: 11,
-    color: '#64748B',
+    color: '#475569',
     textAlign: 'center',
     lineHeight: 16,
     fontWeight: '500',
   },
-  termsLink: {
-    color: '#0F172A',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
 });
-

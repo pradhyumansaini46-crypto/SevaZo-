@@ -29,8 +29,8 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = 90;
-const ITEM_MARGIN = 6;
+const ITEM_WIDTH = 76;
+const ITEM_MARGIN = 10;
 const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
 
 // Smooth Continuous Moving Row Component
@@ -56,7 +56,7 @@ const MarqueeRow: React.FC<{
     };
 
     startAnimation();
-  }, [items.length, reverse, speed]);
+  }, [items.length, reverse, speed, rowWidth]);
 
   // Triple buffer to guarantee completely gapless continuous loop
   const displayItems = [...items, ...items, ...items];
@@ -74,20 +74,13 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={[
-              styles.productCard,
-              { backgroundColor: item.bgColor || '#FFFFFF' },
-            ]}
+            style={styles.productImageWrapper}
           >
-            {item.badge ? (
-              <View style={styles.productBadge}>
-                <Text style={styles.productBadgeText}>{item.badge}</Text>
-              </View>
-            ) : null}
-            <Text style={styles.productEmoji}>{item.emoji}</Text>
-            <Text style={styles.productName} numberOfLines={1}>
-              {item.name}
-            </Text>
+            <Image
+              source={{ uri: item.image }}
+              style={styles.floatingProductImg}
+              resizeMode="contain"
+            />
           </View>
         ))}
       </Animated.View>
@@ -216,6 +209,13 @@ export const WelcomeScreen: React.FC = () => {
 
         {/* Bottom Card / Auth Sheet */}
         <View style={styles.bottomCard}>
+          {/* Greenish Gradient starting right below "Seva Zo Dil Se Ki Jaye" title */}
+          <LinearGradient
+            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0', '#86EFAC']}
+            locations={[0, 0.22, 0.42, 0.65, 0.85, 1]}
+            style={styles.bottomCardGradient}
+          />
+
           {/* Subtle Tricolor Ribbon Bar on top of the card */}
           <View style={styles.tricolorBar}>
             <View style={[styles.tricolorSegment, { backgroundColor: '#FF9933' }]} />
@@ -373,12 +373,10 @@ export const WelcomeScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* Single-line Compact Terms & Privacy Policy */}
+            {/* Single-line Compact Terms & Privacy Policy at bottom (1st letter Capital, rest small) */}
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our{' '}
-                <Text style={styles.termsLink}>Terms</Text> &{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
+                By continuing, you agree to our terms & privacy policy
               </Text>
             </View>
           </View>
@@ -422,67 +420,48 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.5,
+    paddingTop: Spacing.xxl * 1.4,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 94,
+    height: 72,
     marginVertical: 3,
+    justifyContent: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  productCard: {
+  productImageWrapper: {
     width: ITEM_WIDTH,
-    height: 86,
+    height: 68,
     marginHorizontal: ITEM_MARGIN,
-    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    ...Shadows.small,
+    backgroundColor: 'transparent',
   },
-  productBadge: {
-    position: 'absolute',
-    top: 5,
-    right: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  productBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: '#334155',
-  },
-  productEmoji: {
-    fontSize: 34,
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  productName: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#1E293B',
-    textAlign: 'center',
-    width: '100%',
+  floatingProductImg: {
+    width: 64,
+    height: 64,
+    backgroundColor: 'transparent',
   },
   bottomCard: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.sm,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    overflow: 'hidden',
     ...Shadows.elevated,
+  },
+  bottomCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   tricolorBar: {
     flexDirection: 'row',
@@ -526,7 +505,7 @@ const styles = StyleSheet.create({
   },
   tabSwitchContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(241, 245, 249, 0.9)',
     borderRadius: 14,
     padding: 3,
     width: '100%',
@@ -663,7 +642,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   termsContainer: {
-    marginTop: Spacing.xs + 2,
+    marginTop: Spacing.xs + 4,
     marginBottom: Spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
@@ -672,14 +651,9 @@ const styles = StyleSheet.create({
   termsText: {
     ...Typography.caption,
     fontSize: 11,
-    color: '#64748B',
+    color: '#475569',
     textAlign: 'center',
     fontWeight: '500',
-  },
-  termsLink: {
-    color: '#0F172A',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
   },
 });
 
