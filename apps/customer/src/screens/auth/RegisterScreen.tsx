@@ -172,7 +172,7 @@ export const RegisterScreen: React.FC = () => {
           onPress={() => navigation.replace('Main')}
           style={styles.skipLoginPill}
         >
-          <Text style={styles.skipLoginText}>Skip login</Text>
+          <Text style={styles.skipLoginText}>Skip</Text>
         </TouchableOpacity>
       </View>
 
@@ -181,25 +181,25 @@ export const RegisterScreen: React.FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.sm : Spacing.md,
           },
         ]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Moving Products Marquee */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={28000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={32000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={26000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={30000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={42000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={46000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={40000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={44000} reverse={false} />
         </View>
 
         {/* Bottom Card Form */}
         <View style={styles.bottomCard}>
           {/* Greenish Gradient starting right below "Seva Zo Dil Se Ki Jaye" title */}
           <LinearGradient
-            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0', '#86EFAC']}
-            locations={[0, 0.22, 0.42, 0.65, 0.85, 1]}
+            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0']}
+            locations={[0, 0.22, 0.42, 0.65, 1]}
             style={styles.bottomCardGradient}
           />
 
@@ -219,7 +219,7 @@ export const RegisterScreen: React.FC = () => {
             </View>
           </View>
 
-          <Text style={styles.mainTitle}>Seva Zo Dil Se Ki Jaye</Text>
+          <Text style={styles.mainTitleBlue}>Seva Zo Dil Se Ki Jaye</Text>
           <Text style={styles.subTitle}>Create your account</Text>
 
           <View style={styles.formWrap}>
@@ -309,7 +309,7 @@ export const RegisterScreen: React.FC = () => {
 
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our terms & privacy policy
+                By continuing, you agree to our terms & privacy policy.
               </Text>
             </View>
           </View>
@@ -323,6 +323,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FF9933',
+    overflow: 'hidden',
   },
   topNav: {
     position: 'absolute',
@@ -343,31 +344,32 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   skipLoginPill: {
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    paddingHorizontal: Spacing.md + 2,
-    paddingVertical: Spacing.xs + 3,
-    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    ...Shadows.small,
   },
   skipLoginText: {
     ...Typography.bodySmall,
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 12,
+    fontWeight: '800',
+    fontSize: 13,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.4,
+    paddingTop: Spacing.xxl * 1.35,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 72,
-    marginVertical: 3,
+    height: 68,
+    marginVertical: 2,
     justifyContent: 'center',
   },
   marqueeTrack: {
@@ -376,37 +378,37 @@ const styles = StyleSheet.create({
   },
   productImageWrapper: {
     width: ITEM_WIDTH,
-    height: 68,
+    height: 64,
     marginHorizontal: ITEM_MARGIN,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   floatingProductImg: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
     backgroundColor: 'transparent',
   },
   bottomCard: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     overflow: 'hidden',
     ...Shadows.elevated,
   },
   bottomCardGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
   },
   tricolorBar: {
     flexDirection: 'row',
-    width: 64,
+    width: 60,
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
@@ -420,9 +422,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   brandSquare: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
@@ -431,14 +433,14 @@ const styles = StyleSheet.create({
     ...Shadows.small,
   },
   brandLogoImg: {
-    width: 48,
-    height: 48,
+    width: 42,
+    height: 42,
   },
-  mainTitle: {
+  mainTitleBlue: {
     ...Typography.titleLarge,
     fontSize: 22,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#1D4ED8',
     textAlign: 'center',
     letterSpacing: -0.5,
     marginTop: 2,

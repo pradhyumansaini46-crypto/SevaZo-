@@ -116,3 +116,26 @@ export const MARQUEE_ROW_4: MarqueeProduct[] = [
   { id: 'm99', name: 'Floor Cleaner', image: 'https://images.unsplash.com/photo-1585670210693-e7fdd16b142e?auto=format&fit=crop&w=140&q=80' },
   { id: 'm100', name: 'Laundry Detergent', image: 'https://images.unsplash.com/photo-1584813470613-5b1c1cad3d69?auto=format&fit=crop&w=140&q=80' },
 ];
+
+export const MARQUEE_ROW_5: MarqueeProduct[] = [
+  { id: 'm101', name: 'Green Apples', image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm102', name: 'Fresh Berries', image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm103', name: 'Cold Pressed Juice', image: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm104', name: 'Almond Milk', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm105', name: 'Dark Chocolate', image: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm106', name: 'Crispy Tortillas', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm107', name: 'Sparkling Lemon', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm108', name: 'Avocado Fresh', image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm109', name: 'Cherry Tomatoes', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm110', name: 'Fresh Paneer', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm111', name: 'Farm Eggs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm112', name: 'Alphonso Mango', image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm113', name: 'Cashew Jar', image: 'https://images.unsplash.com/photo-1536591375315-1b838085e347?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm114', name: 'Energy Bar', image: 'https://images.unsplash.com/photo-1622484212850-eb596d769edc?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm115', name: 'Coconut Water', image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm116', name: 'Green Tea Box', image: 'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm117', name: 'Nutella Cream', image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm118', name: 'Oreo Crunch', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm119', name: 'Pure Honey', image: 'https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&w=140&q=80' },
+  { id: 'm120', name: 'Maggi Noodles', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&w=140&q=80' },
+];

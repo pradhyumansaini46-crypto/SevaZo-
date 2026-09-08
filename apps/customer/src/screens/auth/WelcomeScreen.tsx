@@ -25,20 +25,21 @@ import {
   MARQUEE_ROW_2,
   MARQUEE_ROW_3,
   MARQUEE_ROW_4,
+  MARQUEE_ROW_5,
   MarqueeProduct,
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const ITEM_WIDTH = 76;
-const ITEM_MARGIN = 10;
+const ITEM_WIDTH = 72;
+const ITEM_MARGIN = 8;
 const SINGLE_ITEM_FULL_WIDTH = ITEM_WIDTH + ITEM_MARGIN * 2;
 
-// Smooth Continuous Moving Row Component
+// Smooth Slow Continuous Moving Row Component
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number; // duration in ms
   reverse?: boolean;
-}> = ({ items, speed = 32000, reverse = false }) => {
+}> = ({ items, speed = 44000, reverse = false }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const rowWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
 
@@ -93,7 +94,7 @@ export const WelcomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { sendOtp, isLoading, continueAsGuest } = useAuthStore();
 
-  const [authMode, setAuthMode] = useState<'SIGNUP' | 'LOGIN'>('SIGNUP');
+  const [activeTab, setActiveTab] = useState<'signup' | 'login'>('signup');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [phoneFocused, setPhoneFocused] = useState(false);
@@ -105,8 +106,8 @@ export const WelcomeScreen: React.FC = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email.trim());
   
-  // Validation: If SIGNUP, both phone and email are required. If LOGIN, only email is required.
-  const isFormValid = authMode === 'SIGNUP' ? isPhoneValid && isEmailValid : isEmailValid;
+  // Validation: If signup, both phone and email are required. If login, only email is required.
+  const isFormValid = activeTab === 'signup' ? isPhoneValid && isEmailValid : isEmailValid;
 
   const handlePhoneChange = (text: string) => {
     setError('');
@@ -122,7 +123,7 @@ export const WelcomeScreen: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (authMode === 'SIGNUP') {
+    if (activeTab === 'signup') {
       if (!isPhoneValid) {
         setError('Please enter a valid 10-digit mobile number');
         return;
@@ -139,14 +140,14 @@ export const WelcomeScreen: React.FC = () => {
     }
 
     setError('');
-    const formattedPhone = authMode === 'SIGNUP' ? `+91 ${cleanPhone}` : '';
+    const formattedPhone = activeTab === 'signup' ? `+91 ${cleanPhone}` : '';
     const success = await sendOtp(formattedPhone, email.trim().toLowerCase());
 
     if (success) {
       navigation.navigate('Otp', {
         phone: formattedPhone || email.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
-        mode: authMode === 'SIGNUP' ? 'REGISTER' : 'LOGIN',
+        mode: activeTab === 'signup' ? 'REGISTER' : 'LOGIN',
       });
     } else {
       setError('Failed to send OTP. Please check your network connection.');
@@ -165,14 +166,14 @@ export const WelcomeScreen: React.FC = () => {
     >
       <StatusBar barStyle="light-content" backgroundColor="#FF9933" />
 
-      {/* Full Page Indian Tricolor Linear Gradient (Saffron -> White -> Green) */}
+      {/* Soft Gradient Background (Orange fading into White / Light Green) */}
       <LinearGradient
-        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#E6F4EA', '#138808']}
-        locations={[0, 0.18, 0.42, 0.62, 0.85, 1]}
+        colors={['#FF9933', '#FFA756', '#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7']}
+        locations={[0, 0.2, 0.45, 0.65, 0.85, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Top Floating Skip Login Pill */}
+      {/* Top Right "Skip" Button (Semi-transparent dark pill, white bold text, z-50) */}
       <View
         style={[
           styles.topHeaderBar,
@@ -183,9 +184,9 @@ export const WelcomeScreen: React.FC = () => {
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={handleGuestMode}
-          style={styles.skipLoginPill}
+          style={styles.skipPill}
         >
-          <Text style={styles.skipLoginText}>Skip login</Text>
+          <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
       </View>
 
@@ -193,30 +194,34 @@ export const WelcomeScreen: React.FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.lg,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.sm : Spacing.md,
           },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Continuous Moving Product Marquee (4 Staggered Rows, 100 Modern Grocery Items) */}
+        {/* Dynamic Transparent Moving Product Marquee (4 Rows on signup, 5 Rows on login) */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={28000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={32000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={26000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={30000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={42000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={46000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={40000} reverse={true} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={44000} reverse={false} />
+          {/* Dynamic 5th Row: Rendered only when activeTab === 'login' */}
+          {activeTab === 'login' ? (
+            <MarqueeRow items={MARQUEE_ROW_5} speed={42000} reverse={true} />
+          ) : null}
         </View>
 
-        {/* Bottom Card / Auth Sheet */}
+        {/* Auth Form Card with Top Rounded Corners */}
         <View style={styles.bottomCard}>
-          {/* Greenish Gradient starting right below "Seva Zo Dil Se Ki Jaye" title */}
+          {/* Subtle Greenish Gradient Transition starting below Title */}
           <LinearGradient
-            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0', '#86EFAC']}
-            locations={[0, 0.22, 0.42, 0.65, 0.85, 1]}
+            colors={['#FFFFFF', '#FFFFFF', '#F0FDF4', '#DCFCE7', '#BBF7D0']}
+            locations={[0, 0.24, 0.46, 0.72, 1]}
             style={styles.bottomCardGradient}
           />
 
-          {/* Subtle Tricolor Ribbon Bar on top of the card */}
+          {/* Subtle Tricolor Ribbon Bar */}
           <View style={styles.tricolorBar}>
             <View style={[styles.tricolorSegment, { backgroundColor: '#FF9933' }]} />
             <View style={[styles.tricolorSegment, { backgroundColor: '#FFFFFF' }]} />
@@ -234,26 +239,26 @@ export const WelcomeScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Tagline */}
-          <Text style={styles.mainTitle}>Seva Zo Dil Se Ki Jaye</Text>
+          {/* Slogan in Theme-Matching Blue */}
+          <Text style={styles.mainTitleBlue}>Seva Zo Dil Se Ki Jaye</Text>
 
-          {/* Interactive Dual Mode Switch (Sign Up default vs Log In) */}
+          {/* Interactive Dual Mode Switch (Sign Up vs Log In) */}
           <View style={styles.tabSwitchContainer}>
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => {
-                setAuthMode('SIGNUP');
+                setActiveTab('signup');
                 setError('');
               }}
               style={[
                 styles.tabSwitchBtn,
-                authMode === 'SIGNUP' && styles.tabSwitchBtnActive,
+                activeTab === 'signup' && styles.tabSwitchBtnActive,
               ]}
             >
               <Text
                 style={[
                   styles.tabSwitchText,
-                  authMode === 'SIGNUP' && styles.tabSwitchTextActive,
+                  activeTab === 'signup' && styles.tabSwitchTextActive,
                 ]}
               >
                 Sign Up
@@ -263,18 +268,18 @@ export const WelcomeScreen: React.FC = () => {
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => {
-                setAuthMode('LOGIN');
+                setActiveTab('login');
                 setError('');
               }}
               style={[
                 styles.tabSwitchBtn,
-                authMode === 'LOGIN' && styles.tabSwitchBtnActive,
+                activeTab === 'login' && styles.tabSwitchBtnActive,
               ]}
             >
               <Text
                 style={[
                   styles.tabSwitchText,
-                  authMode === 'LOGIN' && styles.tabSwitchTextActive,
+                  activeTab === 'login' && styles.tabSwitchTextActive,
                 ]}
               >
                 Log In
@@ -282,18 +287,18 @@ export const WelcomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Form Container */}
+          {/* Form Inputs Container */}
           <View style={styles.formWrap}>
-            {/* 1. Mobile Number Input (Shown ONLY in SIGNUP mode) */}
-            {authMode === 'SIGNUP' ? (
+            {/* 1. Mobile Number Input (Visible only in 'signup' mode) */}
+            {activeTab === 'signup' ? (
               <View style={styles.mobileInputRow}>
-                {/* Flag Pill */}
+                {/* Flag Box */}
                 <View style={styles.flagBox}>
                   <Text style={styles.flagText}>🇮🇳</Text>
                   <ChevronDown size={14} color="#64748B" style={{ marginLeft: 2 }} />
                 </View>
 
-                {/* Number Input Field */}
+                {/* Mobile Input Field */}
                 <View
                   style={[
                     styles.numberInputBox,
@@ -330,12 +335,12 @@ export const WelcomeScreen: React.FC = () => {
             >
               <Mail
                 size={18}
-                color={emailFocused ? '#FF7700' : '#94A3B8'}
+                color={emailFocused ? '#2563EB' : '#94A3B8'}
                 style={styles.inputLeftIcon}
               />
               <TextInput
                 style={styles.textInput}
-                placeholder={authMode === 'SIGNUP' ? "Email address (Mandatory)" : "Enter your email address"}
+                placeholder={activeTab === 'signup' ? "Email address (Mandatory)" : "Enter your email address"}
                 placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -358,7 +363,7 @@ export const WelcomeScreen: React.FC = () => {
               </View>
             ) : null}
 
-            {/* 3. Continue / Action Button */}
+            {/* 3. Action Submit Button */}
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={handleSubmit}
@@ -369,14 +374,14 @@ export const WelcomeScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.continueBtnText}>
-                {isLoading ? 'Sending OTP...' : authMode === 'SIGNUP' ? 'Create Account' : 'Log In'}
+                {isLoading ? 'Sending OTP...' : activeTab === 'signup' ? 'Create Account' : 'Log In'}
               </Text>
             </TouchableOpacity>
 
-            {/* Single-line Compact Terms & Privacy Policy at bottom (1st letter Capital, rest small) */}
+            {/* 4. Terms & Privacy Policy at Absolute Bottom (Strict Sentence case with dot) */}
             <View style={styles.termsContainer}>
               <Text style={styles.termsText} numberOfLines={1}>
-                By continuing, you agree to our terms & privacy policy
+                By continuing, you agree to our terms & privacy policy.
               </Text>
             </View>
           </View>
@@ -390,6 +395,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FF9933',
+    overflow: 'hidden',
   },
   topHeaderBar: {
     position: 'absolute',
@@ -401,32 +407,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
   },
-  skipLoginPill: {
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    paddingHorizontal: Spacing.md + 2,
-    paddingVertical: Spacing.xs + 3,
-    borderRadius: BorderRadius.full,
+  skipPill: {
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    ...Shadows.small,
   },
-  skipLoginText: {
+  skipText: {
     ...Typography.bodySmall,
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 12,
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.2,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
   },
   marqueeSection: {
-    paddingTop: Spacing.xxl * 1.4,
+    paddingTop: Spacing.xxl * 1.35,
     paddingBottom: Spacing.xs,
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: 72,
-    marginVertical: 3,
+    height: 68,
+    marginVertical: 2,
     justifyContent: 'center',
   },
   marqueeTrack: {
@@ -435,37 +443,37 @@ const styles = StyleSheet.create({
   },
   productImageWrapper: {
     width: ITEM_WIDTH,
-    height: 68,
+    height: 64,
     marginHorizontal: ITEM_MARGIN,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   floatingProductImg: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
     backgroundColor: 'transparent',
   },
   bottomCard: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     overflow: 'hidden',
     ...Shadows.elevated,
   },
   bottomCardGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
   },
   tricolorBar: {
     flexDirection: 'row',
-    width: 64,
+    width: 60,
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
@@ -479,8 +487,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   brandSquare: {
-    width: 54,
-    height: 54,
+    width: 52,
+    height: 52,
     borderRadius: 16,
     backgroundColor: '#FFF7ED',
     alignItems: 'center',
@@ -490,14 +498,14 @@ const styles = StyleSheet.create({
     ...Shadows.small,
   },
   brandLogoImg: {
-    width: 44,
-    height: 44,
+    width: 42,
+    height: 42,
   },
-  mainTitle: {
+  mainTitleBlue: {
     ...Typography.titleLarge,
-    fontSize: 21,
+    fontSize: 22,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#1D4ED8', // Vibrant Brand Blue
     textAlign: 'center',
     letterSpacing: -0.5,
     marginTop: 4,
@@ -505,7 +513,7 @@ const styles = StyleSheet.create({
   },
   tabSwitchContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(241, 245, 249, 0.9)',
+    backgroundColor: 'rgba(241, 245, 249, 0.95)',
     borderRadius: 14,
     padding: 3,
     width: '100%',
@@ -529,7 +537,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   tabSwitchTextActive: {
-    color: '#FF7700',
+    color: '#1D4ED8', // Matching Blue on Active tab
     fontWeight: '800',
   },
   formWrap: {
@@ -591,7 +599,7 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   inputFocused: {
-    borderColor: '#FF7700',
+    borderColor: '#1D4ED8',
     backgroundColor: '#FFFFFF',
   },
   inputValid: {
@@ -622,7 +630,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   continueBtn: {
-    backgroundColor: '#FF7700', // Saffron CTA
+    backgroundColor: '#FF7700', // Saffron CTA Button
     borderRadius: 14,
     paddingVertical: 13,
     alignItems: 'center',
@@ -642,8 +650,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   termsContainer: {
-    marginTop: Spacing.xs + 4,
-    marginBottom: Spacing.xs,
+    marginTop: Spacing.sm,
+    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -656,5 +664,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
 
 
