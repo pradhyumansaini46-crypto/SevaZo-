@@ -29,19 +29,18 @@ import {
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
-const GRID_GAP = 6;
-// Exactly 5 columns visible across mobile screen width
-const GRID_ITEM_SIZE = Math.floor((width - 16 - (GRID_GAP * 4)) / 5);
-const SINGLE_ITEM_FULL_WIDTH = GRID_ITEM_SIZE + GRID_GAP;
+const GRID_GAP = 10; // Equal increased gap horizontally & vertically
 
-// Smooth Non-Stopping Infinite Continuous Moving Grid Row Component
+// Smooth Non-Stopping Infinite Continuous Moving Grid Row Component with Graduated Sizing
 const MarqueeRow: React.FC<{
   items: MarqueeProduct[];
   speed?: number;
   reverse?: boolean;
-}> = ({ items, speed = 36000, reverse = false }) => {
+  itemSize: number;
+}> = ({ items, speed = 36000, reverse = false, itemSize }) => {
   const scrollAnim = useRef(new Animated.Value(0)).current;
-  const singleCycleWidth = items.length * SINGLE_ITEM_FULL_WIDTH;
+  const singleItemFullWidth = itemSize + GRID_GAP;
+  const singleCycleWidth = items.length * singleItemFullWidth;
 
   useEffect(() => {
     let anim: Animated.CompositeAnimation | null = null;
@@ -77,7 +76,7 @@ const MarqueeRow: React.FC<{
   const displayItems = [...items, ...items, ...items, ...items];
 
   return (
-    <View style={styles.marqueeRowContainer}>
+    <View style={[styles.marqueeRowContainer, { height: itemSize, marginBottom: GRID_GAP }]}>
       <Animated.View
         style={[
           styles.marqueeTrack,
@@ -89,7 +88,16 @@ const MarqueeRow: React.FC<{
         {displayItems.map((item, idx) => (
           <View
             key={`${item.id}-${idx}`}
-            style={styles.gridCardTile}
+            style={[
+              styles.gridCardTile,
+              {
+                width: itemSize,
+                height: itemSize,
+                marginRight: GRID_GAP,
+                borderRadius: Math.max(10, Math.round(itemSize * 0.18)),
+                padding: Math.max(4, Math.round(itemSize * 0.08)),
+              },
+            ]}
           >
             <Image
               source={{ uri: item.image }}
@@ -207,12 +215,12 @@ export const RegisterScreen: React.FC = () => {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Moving 4-Row Products Marquee Grid */}
+        {/* Moving Graduated 4-Row Products Marquee Grid */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} itemSize={50} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} itemSize={60} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} itemSize={70} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} itemSize={80} />
         </View>
 
         {/* Bottom Card Form */}
@@ -397,8 +405,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   marqueeRowContainer: {
-    height: GRID_ITEM_SIZE,
-    marginBottom: GRID_GAP,
     justifyContent: 'center',
   },
   marqueeTrack: {
@@ -406,16 +412,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridCardTile: {
-    width: GRID_ITEM_SIZE,
-    height: GRID_ITEM_SIZE,
-    marginRight: GRID_GAP,
-    borderRadius: 12,
     borderWidth: 1.2,
     borderColor: 'rgba(255, 255, 255, 0.85)',
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 5,
     ...Shadows.small,
   },
   gridProductImg: {
