@@ -142,7 +142,19 @@ export const OtpScreen: React.FC = () => {
       const response = await verifyOtp(phone, fullOtp, email, mode);
 
       if (response.nextAction === 'OPEN_HOME' || response.profileCompleted) {
-        navigation.replace('Main');
+        try {
+          const parent = navigation.getParent();
+          if (parent) {
+            parent.reset({
+              index: 0,
+              routes: [{ name: 'Main' }],
+            });
+            return;
+          }
+        } catch {
+          // fallback
+        }
+        navigation.navigate('Main' as any);
       } else {
         // First time user / Location registration
         navigation.replace('RegisterLocation');

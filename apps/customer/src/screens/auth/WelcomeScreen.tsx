@@ -185,7 +185,14 @@ export const WelcomeScreen: React.FC = () => {
 
   const handleGuestMode = () => {
     continueAsGuest();
-    navigation.replace('Main');
+    try {
+      navigation.getParent()?.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    } catch {
+      navigation.navigate('Main' as any);
+    }
   };
 
   return (

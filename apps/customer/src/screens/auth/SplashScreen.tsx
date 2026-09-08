@@ -38,7 +38,14 @@ export const SplashScreen: React.FC = () => {
       ]);
 
       if (destination === 'OPEN_HOME') {
-        navigation.replace('Main');
+        try {
+          navigation.getParent()?.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+        } catch {
+          navigation.navigate('Main' as any);
+        }
       } else if (destination === 'RESUME_REGISTRATION') {
         navigation.replace('RegisterLocation');
       } else {

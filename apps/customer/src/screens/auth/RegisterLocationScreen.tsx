@@ -67,6 +67,8 @@ export const RegisterLocationScreen: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const canSave = mode === 'GPS' ? !!detectedAddress : (houseNo.trim().length > 0 && street.trim().length > 0 && pincode.trim().length === 6);
+
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -195,13 +197,22 @@ export const RegisterLocationScreen: React.FC = () => {
       });
 
       showToast('Delivery address saved successfully!', 'success');
-      navigation.replace('Main');
+      try {
+        navigation.getParent()?.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      } catch {
+        navigation.navigate('Main');
+      }
     } catch (e: any) {
       showToast('Failed to save address. Please retry.', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const handleSaveAndStart = handleSaveAndProceed;
 
   return (
     <KeyboardAvoidingView
@@ -299,7 +310,7 @@ export const RegisterLocationScreen: React.FC = () => {
                 <Animated.View
                   style={[
                     styles.radarCircleOuter,
-                    { transform: [{ scale: radarPulse }] },
+                    { transform: [{ scale: radarAnim }] },
                   ]}
                 />
                 <View style={styles.radarCircleInner}>

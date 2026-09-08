@@ -75,7 +75,14 @@ export const RegisterTermsScreen: React.FC = () => {
 
   const handleStartShopping = () => {
     setShowCelebration(false);
-    navigation.replace('Main');
+    try {
+      navigation.getParent()?.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    } catch {
+      navigation.navigate('Main' as any);
+    }
   };
 
   return (

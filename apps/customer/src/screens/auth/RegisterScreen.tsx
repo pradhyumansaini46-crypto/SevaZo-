@@ -203,7 +203,14 @@ export const RegisterScreen: React.FC = () => {
           activeOpacity={0.8}
           onPress={() => {
             continueAsGuest();
-            navigation.replace('Main');
+            try {
+              navigation.getParent()?.reset({
+                index: 0,
+                routes: [{ name: 'Main' }],
+              });
+            } catch {
+              navigation.navigate('Main' as any);
+            }
           }}
           style={styles.skipLoginPill}
         >
