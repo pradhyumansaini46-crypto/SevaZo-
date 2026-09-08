@@ -27,6 +27,7 @@ import {
   MARQUEE_ROW_4,
   MARQUEE_ROW_5,
   MarqueeProduct,
+  preloadMarqueeImages,
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
@@ -121,6 +122,11 @@ export const LoginScreen: React.FC = () => {
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    // Preload product images into cache
+    preloadMarqueeImages();
+  }, []);
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email.trim());
   const isFormValid = isEmailValid;
@@ -198,11 +204,11 @@ export const LoginScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} itemSize={46} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} itemSize={54} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} itemSize={63} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} itemSize={73} />
-          <MarqueeRow items={MARQUEE_ROW_5} speed={38000} reverse={true} itemSize={84} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} itemSize={52} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} itemSize={62} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} itemSize={72} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} itemSize={84} />
+          <MarqueeRow items={MARQUEE_ROW_5} speed={38000} reverse={true} itemSize={96} />
         </View>
 
         <View style={styles.bottomCard}>
@@ -283,12 +289,6 @@ export const LoginScreen: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                 <Text style={styles.signupLinkText}>Sign Up</Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText} numberOfLines={1}>
-                By Continuing, You Agree to Our Terms & Privacy Policy.
-              </Text>
             </View>
           </View>
         </View>
@@ -505,19 +505,5 @@ const styles = StyleSheet.create({
     color: '#1D4ED8',
     fontWeight: '800',
     fontSize: 13,
-  },
-  termsContainer: {
-    marginTop: Spacing.sm,
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  termsText: {
-    ...Typography.caption,
-    fontSize: 11,
-    color: '#475569',
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });

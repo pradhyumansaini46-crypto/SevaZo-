@@ -26,6 +26,7 @@ import {
   MARQUEE_ROW_3,
   MARQUEE_ROW_4,
   MarqueeProduct,
+  preloadMarqueeImages,
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
@@ -122,6 +123,11 @@ export const RegisterScreen: React.FC = () => {
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    // Preload product images into cache
+    preloadMarqueeImages();
+  }, []);
+
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = cleanPhone.length === 10;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -217,10 +223,10 @@ export const RegisterScreen: React.FC = () => {
       >
         {/* Moving Graduated 4-Row Products Marquee Grid */}
         <View style={styles.marqueeSection}>
-          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} itemSize={50} />
-          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} itemSize={60} />
-          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} itemSize={70} />
-          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} itemSize={80} />
+          <MarqueeRow items={MARQUEE_ROW_1} speed={38000} reverse={true} itemSize={58} />
+          <MarqueeRow items={MARQUEE_ROW_2} speed={42000} reverse={false} itemSize={70} />
+          <MarqueeRow items={MARQUEE_ROW_3} speed={36000} reverse={true} itemSize={82} />
+          <MarqueeRow items={MARQUEE_ROW_4} speed={40000} reverse={false} itemSize={96} />
         </View>
 
         {/* Bottom Card Form */}
@@ -266,7 +272,7 @@ export const RegisterScreen: React.FC = () => {
                 <Text style={styles.countryCode}>+91</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Mobile number (Mandatory)"
+                  placeholder="Mobile number"
                   placeholderTextColor="#94A3B8"
                   keyboardType="number-pad"
                   maxLength={10}
@@ -296,7 +302,7 @@ export const RegisterScreen: React.FC = () => {
               />
               <TextInput
                 style={styles.textInput}
-                placeholder="Email address (Mandatory)"
+                placeholder="Email address"
                 placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -340,13 +346,6 @@ export const RegisterScreen: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.loginLinkText}>Log In</Text>
               </TouchableOpacity>
-            </View>
-
-            {/* Terms & Privacy Policy at Absolute Bottom */}
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText} numberOfLines={1}>
-                By Continuing, You Agree to Our Terms & Privacy Policy.
-              </Text>
             </View>
           </View>
         </View>
@@ -601,19 +600,5 @@ const styles = StyleSheet.create({
     color: '#1D4ED8',
     fontWeight: '800',
     fontSize: 13,
-  },
-  termsContainer: {
-    marginTop: Spacing.sm,
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  termsText: {
-    ...Typography.caption,
-    fontSize: 11,
-    color: '#475569',
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });

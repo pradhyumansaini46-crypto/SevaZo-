@@ -27,6 +27,7 @@ import {
   MARQUEE_ROW_4,
   MARQUEE_ROW_5,
   MarqueeProduct,
+  preloadMarqueeImages,
 } from './marqueeProducts';
 
 const { width } = Dimensions.get('window');
@@ -123,6 +124,11 @@ export const WelcomeScreen: React.FC = () => {
   const [phoneFocused, setPhoneFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Preload all product images into cache immediately on mount
+    preloadMarqueeImages();
+  }, []);
 
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = cleanPhone.length === 10;
@@ -230,28 +236,28 @@ export const WelcomeScreen: React.FC = () => {
             items={MARQUEE_ROW_1}
             speed={34000}
             reverse={true}
-            itemSize={activeTab === 'login' ? 46 : 50}
+            itemSize={activeTab === 'login' ? 52 : 58}
           />
           {/* Row 2: Dairy - Right to Left */}
           <MarqueeRow
             items={MARQUEE_ROW_2}
             speed={38000}
             reverse={false}
-            itemSize={activeTab === 'login' ? 54 : 60}
+            itemSize={activeTab === 'login' ? 62 : 70}
           />
           {/* Row 3: Electronics - Left to Right */}
           <MarqueeRow
             items={MARQUEE_ROW_3}
             speed={32000}
             reverse={true}
-            itemSize={activeTab === 'login' ? 63 : 70}
+            itemSize={activeTab === 'login' ? 72 : 82}
           />
           {/* Row 4: Personal Care - Right to Left */}
           <MarqueeRow
             items={MARQUEE_ROW_4}
             speed={36000}
             reverse={false}
-            itemSize={activeTab === 'login' ? 73 : 80}
+            itemSize={activeTab === 'login' ? 84 : 96}
           />
           {/* Dynamic 5th Row: Grooming - Rendered on Login (Largest) */}
           {activeTab === 'login' ? (
@@ -259,7 +265,7 @@ export const WelcomeScreen: React.FC = () => {
               items={MARQUEE_ROW_5}
               speed={34000}
               reverse={true}
-              itemSize={84}
+              itemSize={96}
             />
           ) : null}
         </View>
@@ -360,7 +366,7 @@ export const WelcomeScreen: React.FC = () => {
                   <Text style={styles.countryCode}>+91</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Mobile number (Mandatory)"
+                    placeholder="Mobile number"
                     placeholderTextColor="#94A3B8"
                     keyboardType="number-pad"
                     maxLength={10}
@@ -391,7 +397,7 @@ export const WelcomeScreen: React.FC = () => {
               />
               <TextInput
                 style={styles.textInput}
-                placeholder={activeTab === 'signup' ? "Email address (Mandatory)" : "Enter your email address"}
+                placeholder={activeTab === 'signup' ? "Email address" : "Enter your email address"}
                 placeholderTextColor="#94A3B8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -428,13 +434,6 @@ export const WelcomeScreen: React.FC = () => {
                 {isLoading ? 'Sending OTP...' : activeTab === 'signup' ? 'Create Account' : 'Log In'}
               </Text>
             </TouchableOpacity>
-
-            {/* 4. Terms & Privacy Policy at Absolute Bottom (Strict Sentence case with dot) */}
-            <View style={styles.termsContainer}>
-              <Text style={styles.termsText} numberOfLines={1}>
-                By Continuing, You Agree to Our Terms & Privacy Policy.
-              </Text>
-            </View>
           </View>
         </View>
       </ScrollView>
@@ -691,20 +690,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     fontSize: 15,
-  },
-  termsContainer: {
-    marginTop: Spacing.sm,
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  termsText: {
-    ...Typography.caption,
-    fontSize: 11,
-    color: '#475569',
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });
 

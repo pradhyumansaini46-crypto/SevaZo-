@@ -3,6 +3,7 @@ import { View, StyleSheet, Image, Animated, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../theme';
+import { preloadMarqueeImages } from './marqueeProducts';
 
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -11,6 +12,9 @@ export const SplashScreen: React.FC = () => {
   const scaleAnim = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
+    // Immediately trigger pre-fetching of all product images in background
+    preloadMarqueeImages();
+
     // Smooth fade & scale entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {

@@ -125,3 +125,28 @@ export const MARQUEE_ROW_5: MarqueeProduct[] = [
   { id: 'gr-19', name: 'Solitaire Platinum Ring', image: 'https://pngimg.com/d/ring_PNG26.png', category: 'Grooming' },
   { id: 'gr-20', name: 'Gold Band Diamond Ring', image: 'https://pngimg.com/d/ring_PNG27.png', category: 'Grooming' },
 ];
+
+export const ALL_MARQUEE_PRODUCTS: MarqueeProduct[] = [
+  ...MARQUEE_ROW_1,
+  ...MARQUEE_ROW_2,
+  ...MARQUEE_ROW_3,
+  ...MARQUEE_ROW_4,
+  ...MARQUEE_ROW_5,
+];
+
+// Pre-load all 100 transparent product images into memory/cache immediately
+export const preloadMarqueeImages = () => {
+  if (typeof Image !== 'undefined' && Image.prefetch) {
+    ALL_MARQUEE_PRODUCTS.forEach((product) => {
+      if (product.image) {
+        Image.prefetch(product.image).catch(() => {});
+      }
+    });
+  }
+};
+
+// Immediate background execution
+try {
+  preloadMarqueeImages();
+} catch (e) {}
+
