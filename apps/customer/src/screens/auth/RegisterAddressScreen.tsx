@@ -73,8 +73,8 @@ export const RegisterAddressScreen: React.FC = () => {
         state: state.trim(),
         pincode: pincode.trim(),
         landmark: landmark.trim(),
-        latitude: registrationDraft.location?.latitude || 12.9716,
-        longitude: registrationDraft.location?.longitude || 77.5946,
+        latitude: registrationDraft.location?.latitude || 26.9124,
+        longitude: registrationDraft.location?.longitude || 75.7873,
         isDefault: true,
       },
       currentStep: 'RegisterPreferences',
@@ -94,8 +94,8 @@ export const RegisterAddressScreen: React.FC = () => {
         state: state.trim(),
         pincode: pincode.trim(),
         landmark: landmark.trim(),
-        latitude: registrationDraft.location?.latitude || 12.9716,
-        longitude: registrationDraft.location?.longitude || 77.5946,
+        latitude: registrationDraft.location?.latitude || 26.9124,
+        longitude: registrationDraft.location?.longitude || 75.7873,
         isDefault: true,
       },
       currentStep: 'RegisterAddress',
@@ -241,7 +241,7 @@ export const RegisterAddressScreen: React.FC = () => {
             <View style={styles.standardInputRow}>
               <TextInput
                 style={styles.standardTextInput}
-                placeholder="e.g. Bengaluru"
+                placeholder="e.g. Jaipur"
                 placeholderTextColor={Colors.textMuted}
                 value={city}
                 onChangeText={setCity}
@@ -254,7 +254,7 @@ export const RegisterAddressScreen: React.FC = () => {
             <View style={styles.standardInputRow}>
               <TextInput
                 style={styles.standardTextInput}
-                placeholder="e.g. Karnataka"
+                placeholder="e.g. Rajasthan"
                 placeholderTextColor={Colors.textMuted}
                 value={state}
                 onChangeText={setState}

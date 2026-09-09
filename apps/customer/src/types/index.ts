@@ -57,6 +57,9 @@ export interface Store {
   isOpen: boolean;
   tags: string[];
   bannerText?: string;
+  minOrder?: number;
+  deliveryFee?: number;
+  offerText?: string;
 }
 
 export interface ProductVariant {
@@ -85,6 +88,7 @@ export interface Product {
   price: number;
   compareAtPrice?: number;
   discountPercent?: number;
+  discountBadge?: string;
   stock: number;
   unit: string;
   rating: number;
@@ -95,6 +99,47 @@ export interface Product {
   isFeatured?: boolean;
   isTrending?: boolean;
   inStock: boolean;
+  deliveryEtaMinutes?: number;
+  warranty?: string;
+  prescriptionRequired?: boolean;
+  isVeg?: boolean;
+  colorsCount?: number;
+  sizes?: string[];
+  priceDrop?: number;
+  backInStock?: boolean;
+  sellerId?: string;
+  sku?: string;
+  barcode?: string;
+  mrp?: number;
+  sellingPrice?: number;
+  inventory?: number;
+  stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  minimumOrder?: number;
+  maximumOrder?: number;
+  weight?: string;
+  dimensions?: string;
+  deliveryZone?: string;
+  sellerRating?: number;
+  returnPolicy?: string;
+  expiry?: string;
+  certifications?: string[];
+  videos?: string[];
+}
+
+export interface SmartBasketItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  unit: string;
+  emoji?: string;
+}
+
+export interface SmartBasket {
+  title: string;
+  subtitle: string;
+  items: SmartBasketItem[];
+  totalPrice: number;
 }
 
 export interface Review {
@@ -327,7 +372,7 @@ export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  type: 'ORDER' | 'PROMO' | 'SYSTEM' | 'DELIVERY';
+  type: 'ORDER' | 'PROMO' | 'SYSTEM' | 'DELIVERY' | 'WISHLIST' | 'DEALS' | 'ACCOUNT';
   isRead: boolean;
   timestamp: string;
   actionUrl?: string;
@@ -364,9 +409,11 @@ export type RootStackParamList = {
   Filters: { currentFilters?: any };
   Reviews: { productId: string; productName?: string };
   Wishlist: undefined;
+  Cart: undefined;
   Checkout: undefined;
   AddressList: { onSelectAddress?: (address: Address) => void };
   AddEditAddress: { address?: Address };
+  RegisterLocation?: { returnTo?: string; address?: Address };
   CouponList: { onApplyCoupon?: (coupon: Coupon) => void; currentCartTotal?: number };
   Payment: { orderPayload?: any };
   OrderConfirmation: { orderId: string; orderNumber: string; estimatedTime?: string };
@@ -445,7 +492,7 @@ export type AuthStackParamList = {
   Otp: { phone: string; mode?: 'LOGIN' | 'REGISTER' };
   ResumeRegistration: undefined;
   RegisterProfile: undefined;
-  RegisterLocation: undefined;
+  RegisterLocation?: { returnTo?: string; address?: Address };
   RegisterAddress: undefined;
   RegisterPreferences: undefined;
   RegisterTerms: undefined;
@@ -454,7 +501,73 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   HomeTab: undefined;
   CategoriesTab: undefined;
-  CartTab: undefined;
   OrdersTab: undefined;
+  WishlistTab?: undefined;
+  OffersTab?: undefined;
   ProfileTab: undefined;
+  CartTab?: undefined;
 };
+
+// -------------------------------------------------------------
+// Dashboard & Dynamic Section Configuration
+// -------------------------------------------------------------
+export type DashboardSectionId =
+  | 'location_header'
+  | 'search_bar'
+  | 'active_order'
+  | 'sevazo_pulse'
+  | 'delivery_context'
+  | 'categories'
+  | 'category_rail'
+  | 'hero_banner'
+  | 'buy_again'
+  | 'smart_basket'
+  | 'available_now'
+  | 'stores_nearby'
+  | 'trending'
+  | 'deals'
+  | 'picked_for_you'
+  | 'recently_viewed'
+  | 'smart_cart_bar';
+
+export interface DashboardSectionConfig {
+  id: DashboardSectionId;
+  enabled: boolean;
+  order: number;
+  title?: string;
+  subtitle?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface SevazoPulseData {
+  isActiveArea: boolean;
+  areaName: string;
+  productsAvailable: number;
+  storesOpen: number;
+  ridersNearby: number;
+  lastUpdated?: string;
+}
+
+export interface DeliveryContextData {
+  etaMinutes: number;
+  availableItemsCount: number;
+  areaName: string;
+  badgeText?: string;
+}
+
+export interface HomeFeedResponse {
+  sections: DashboardSectionConfig[];
+  deliveryContext: DeliveryContextData;
+  pulse?: SevazoPulseData;
+  activeOrder?: Order | null;
+  categories: Category[];
+  heroBanners: any[];
+  buyAgainProducts: Product[];
+  availableNowProducts: Product[];
+  topStores: Store[];
+  trendingProducts: Product[];
+  dealProducts: Product[];
+  recommendedProducts: Product[];
+  recentlyViewedProducts: Product[];
+}
+

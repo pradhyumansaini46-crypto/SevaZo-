@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../theme';
 import { Product } from '../types';
-import { Heart, Plus, Minus, Star, ShoppingBag } from 'lucide-react-native';
+import { Heart, Plus, Minus, Star, Zap, ShieldCheck, Pill, TrendingDown, Check } from 'lucide-react-native';
+import { triggerHaptic } from '../utils/haptics';
 
 interface ProductCardProps {
   product: Product;
@@ -42,180 +43,204 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
       : null);
 
+  const savings =
+    product.compareAtPrice && product.compareAtPrice > product.price
+      ? product.compareAtPrice - product.price
+      : 0;
+
+  const eta = product.deliveryEtaMinutes || 14;
+
   const imageUri =
     product.images && product.images.length > 0
       ? product.images[0]
       : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400';
 
-  if (horizontal) {
-    return (
-      <TouchableOpacity
-        activeOpacity={0.88}
-        onPress={onPress}
-        style={[styles.horizontalCard, style]}
-      >
-        <View style={styles.horizontalImageContainer}>
-          <Image source={{ uri: imageUri }} style={styles.horizontalImage} resizeMode="cover" />
-          {discount ? (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>{discount}% OFF</Text>
-            </View>
-          ) : null}
-        </View>
+  const [isJustAdded, setIsJustAdded] = useState(false);
 
-        <View style={styles.horizontalDetails}>
-          <View style={styles.topRow}>
-            <Text style={styles.unitText}>{product.unit || '1 unit'}</Text>
-            {onToggleWishlist ? (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={onToggleWishlist}
-                style={styles.wishlistBtn}
-              >
-                <Heart
-                  size={16}
-                  color={isWishlisted ? Colors.heartRed : Colors.textMuted}
-                  fill={isWishlisted ? Colors.heartRed : 'transparent'}
-                />
-              </TouchableOpacity>
-            ) : null}
-          </View>
+  const handleAdd = () => {
+    triggerHaptic('medium');
+    setIsJustAdded(true);
+    onAddToCart?.();
+    setTimeout(() => {
+      setIsJustAdded(false);
+    }, 400);
+  };
 
-          <Text numberOfLines={2} style={styles.title}>
-            {product.name}
-          </Text>
+  const handleIncrement = () => {
+    triggerHaptic('light');
+    onIncrement?.();
+  };
 
-          <View style={styles.ratingRow}>
-            <Star size={12} color={Colors.starGold} fill={Colors.starGold} />
-            <Text style={styles.ratingText}>
-              {product.rating ? product.rating.toFixed(1) : '4.5'}
-            </Text>
-            {product.reviewsCount ? (
-              <Text style={styles.reviewsCount}>({product.reviewsCount})</Text>
-            ) : null}
-          </View>
+  const handleDecrement = () => {
+    triggerHaptic('light');
+    onDecrement?.();
+  };
 
-          <View style={styles.priceAndActionRow}>
-            <View style={styles.priceContainer}>
-              <Text style={styles.price}>₹{product.price}</Text>
-              {product.compareAtPrice && product.compareAtPrice > product.price ? (
-                <Text style={styles.comparePrice}>₹{product.compareAtPrice}</Text>
-              ) : null}
-            </View>
-
-            {quantityInCart > 0 ? (
-              <View style={styles.stepperContainer}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={onDecrement}
-                  style={styles.stepperBtn}
-                >
-                  <Minus size={14} color={Colors.textInverse} />
-                </TouchableOpacity>
-                <Text style={styles.stepperQuantity}>{quantityInCart}</Text>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={onIncrement}
-                  style={styles.stepperBtn}
-                >
-                  <Plus size={14} color={Colors.textInverse} />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={onAddToCart}
-                style={styles.addBtn}
-              >
-                <Text style={styles.addBtnText}>ADD</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  }
+  const handleToggleWishlist = () => {
+    triggerHaptic('selection');
+    onToggleWishlist?.();
+  };
 
   return (
     <TouchableOpacity
-      activeOpacity={0.88}
+      activeOpacity={0.9}
       onPress={onPress}
-      style={[styles.gridCard, style]}
+      style={[horizontal ? styles.horizontalCard : styles.gridCard, style]}
     >
       {/* Top Image Box */}
-      <View style={styles.gridImageContainer}>
-        <Image source={{ uri: imageUri }} style={styles.gridImage} resizeMode="cover" />
-        
-        {discount ? (
-          <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>{discount}% OFF</Text>
-          </View>
-        ) : null}
+      <View style={horizontal ? styles.horizontalImageContainer : styles.gridImageContainer}>
+        <Image source={{ uri: imageUri }} style={styles.productImage} resizeMode="contain" />
 
+        {/* Wishlist Heart Top-Left */}
         {onToggleWishlist ? (
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={onToggleWishlist}
-            style={styles.gridWishlistBtn}
+            onPress={handleToggleWishlist}
+            style={styles.wishlistBtn}
           >
             <Heart
               size={15}
-              color={isWishlisted ? Colors.heartRed : Colors.textMuted}
+              color={isWishlisted ? Colors.heartRed : '#64748B'}
               fill={isWishlisted ? Colors.heartRed : 'transparent'}
             />
           </TouchableOpacity>
         ) : null}
+
+        {/* Offer Badge Top-Right */}
+        {discount ? (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>-{discount}%</Text>
+          </View>
+        ) : null}
+
+        {/* ⚡ Live ETA Pill on Image Bottom */}
+        <View style={styles.etaPill}>
+          <Zap size={10} color="#047857" fill="#047857" />
+          <Text style={styles.etaText}>{eta} min</Text>
+        </View>
       </View>
 
       {/* Info Section */}
-      <View style={styles.gridDetails}>
-        <View style={styles.unitRatingRow}>
-          <Text style={styles.unitText}>{product.unit || '1 pack'}</Text>
-          <View style={styles.ratingBadge}>
-            <Star size={10} color={Colors.starGold} fill={Colors.starGold} />
-            <Text style={styles.ratingBadgeText}>
-              {product.rating ? product.rating.toFixed(1) : '4.5'}
-            </Text>
-          </View>
+      <View style={styles.detailsContainer}>
+        {/* Category Adaptive Traits / Trait Badges */}
+        <View style={styles.traitBadgesRow}>
+          {product.backInStock ? (
+            <View style={styles.restockBadge}>
+              <Text style={styles.restockBadgeText}>Back in stock</Text>
+            </View>
+          ) : null}
+
+          {product.priceDrop && product.priceDrop > 0 ? (
+            <View style={styles.priceDropBadge}>
+              <TrendingDown size={10} color="#16A34A" />
+              <Text style={styles.priceDropBadgeText}>↓ ₹{product.priceDrop}</Text>
+            </View>
+          ) : null}
+
+          {product.prescriptionRequired ? (
+            <View style={styles.rxBadge}>
+              <Pill size={10} color="#DC2626" />
+              <Text style={styles.rxBadgeText}>Rx Required</Text>
+            </View>
+          ) : null}
+
+          {product.warranty ? (
+            <View style={styles.warrantyBadge}>
+              <ShieldCheck size={10} color="#4338CA" />
+              <Text style={styles.warrantyBadgeText}>{product.warranty}</Text>
+            </View>
+          ) : null}
+
+          {product.isVeg !== undefined ? (
+            <View style={styles.vegIndicator}>
+              <View
+                style={[
+                  styles.vegDot,
+                  { backgroundColor: product.isVeg ? '#16A34A' : '#DC2626' },
+                ]}
+              />
+            </View>
+          ) : null}
+
+          {product.colorsCount ? (
+            <View style={styles.colorsBadge}>
+              <Text style={styles.colorsBadgeText}>{product.colorsCount} colours</Text>
+            </View>
+          ) : null}
         </View>
 
-        <Text numberOfLines={2} style={styles.gridTitle}>
+        {/* Product Title */}
+        <Text numberOfLines={2} style={styles.titleText}>
           {product.name}
         </Text>
 
-        <View style={styles.gridFooter}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>₹{product.price}</Text>
-            {product.compareAtPrice && product.compareAtPrice > product.price ? (
-              <Text style={styles.comparePrice}>₹{product.compareAtPrice}</Text>
-            ) : null}
-          </View>
+        {/* Variant & Size / Weight */}
+        <Text style={styles.unitText}>{product.unit || '1 unit'}</Text>
 
+        {/* Rating & Reviews */}
+        <View style={styles.ratingRow}>
+          <Star size={11} color={Colors.starGold} fill={Colors.starGold} />
+          <Text style={styles.ratingScore}>
+            {product.rating ? product.rating.toFixed(1) : '4.6'}
+          </Text>
+          <Text style={styles.reviewsCount}>
+            ({product.reviewsCount ? (product.reviewsCount > 999 ? `${(product.reviewsCount / 1000).toFixed(1)}k` : product.reviewsCount) : '1.2k'})
+          </Text>
+        </View>
+
+        {/* Price & Savings */}
+        <View style={styles.priceRow}>
+          <Text style={styles.sellingPrice}>₹{product.price}</Text>
+          {product.compareAtPrice && product.compareAtPrice > product.price ? (
+            <Text style={styles.mrpPrice}>₹{product.compareAtPrice}</Text>
+          ) : null}
+        </View>
+
+        {savings > 0 ? (
+          <Text style={styles.savingsText}>Save ₹{savings}</Text>
+        ) : (
+          <View style={{ height: 14 }} />
+        )}
+
+        {/* Seller / Store Name */}
+        <Text numberOfLines={1} style={styles.sellerName}>
+          {product.storeName || 'FreshMart'}
+        </Text>
+
+        {/* Stepper / Add Button Action */}
+        <View style={styles.actionContainer}>
           {quantityInCart > 0 ? (
-            <View style={styles.gridStepperContainer}>
+            <View style={styles.stepperContainer}>
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={onDecrement}
-                style={styles.gridStepperBtn}
+                onPress={handleDecrement}
+                style={styles.stepperBtn}
               >
-                <Minus size={12} color={Colors.textInverse} />
+                <Minus size={13} color={Colors.primary} strokeWidth={3} />
               </TouchableOpacity>
-              <Text style={styles.gridStepperQuantity}>{quantityInCart}</Text>
+              <Text style={styles.stepperQuantity}>{quantityInCart}</Text>
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={onIncrement}
-                style={styles.gridStepperBtn}
+                onPress={handleIncrement}
+                style={styles.stepperBtn}
               >
-                <Plus size={12} color={Colors.textInverse} />
+                <Plus size={13} color={Colors.primary} strokeWidth={3} />
               </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={onAddToCart}
-              style={styles.gridAddBtn}
+              activeOpacity={0.85}
+              onPress={handleAdd}
+              style={[styles.addBtn, isJustAdded && styles.addBtnSuccess]}
             >
-              <Text style={styles.gridAddBtnText}>ADD</Text>
+              <Text style={[styles.addBtnText, isJustAdded && styles.addBtnSuccessText]}>
+                {isJustAdded ? 'ADDED' : 'ADD'}
+              </Text>
+              {isJustAdded ? (
+                <Check size={14} color="#059669" strokeWidth={3} />
+              ) : (
+                <Plus size={14} color={Colors.primary} strokeWidth={2.8} />
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -225,230 +250,303 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Grid Card Layout
+  // Grid Layout Card
   gridCard: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
-    marginBottom: Spacing.md,
-    ...Shadows.card,
+    marginBottom: Spacing.sm,
+    ...Shadows.small,
+  },
+  horizontalCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    ...Shadows.small,
   },
   gridImageContainer: {
     width: '100%',
-    height: 130,
-    backgroundColor: Colors.surfaceElevated,
+    height: 124,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
+    padding: Spacing.xs,
   },
-  gridImage: {
+  horizontalImageContainer: {
     width: '100%',
-    height: '100%',
+    height: 120,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    padding: Spacing.xs,
   },
-  gridWishlistBtn: {
+  productImage: {
+    width: '80%',
+    height: '80%',
+  },
+  wishlistBtn: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 6,
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 5,
     borderRadius: BorderRadius.full,
     ...Shadows.small,
+    zIndex: 10,
   },
   discountBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: Colors.badgeDiscount,
+    top: 6,
+    right: 6,
+    backgroundColor: '#DC2626',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: BorderRadius.xs,
+    zIndex: 10,
   },
   discountText: {
     ...Typography.caption,
     color: Colors.textInverse,
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 9,
   },
-  gridDetails: {
-    padding: Spacing.sm + 2,
-  },
-  unitRatingRow: {
+  etaPill: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 0.5,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: BorderRadius.xs,
+  },
+  etaText: {
+    ...Typography.caption,
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#047857',
+    marginLeft: 2,
+  },
+  detailsContainer: {
+    padding: Spacing.sm,
+  },
+  traitBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 4,
+    minHeight: 14,
   },
-  unitText: {
-    ...Typography.bodySmall,
-    color: Colors.textMuted,
-    fontWeight: '600',
+  restockBadge: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+    borderWidth: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginRight: 4,
   },
-  ratingBadge: {
+  restockBadgeText: {
+    ...Typography.caption,
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#2563EB',
+  },
+  priceDropBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.accentYellowLight,
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginRight: 4,
+  },
+  priceDropBadgeText: {
+    ...Typography.caption,
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#16A34A',
+    marginLeft: 2,
+  },
+  rxBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginRight: 4,
+  },
+  rxBadgeText: {
+    ...Typography.caption,
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#DC2626',
+    marginLeft: 2,
+  },
+  warrantyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginRight: 4,
+  },
+  warrantyBadgeText: {
+    ...Typography.caption,
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#4338CA',
+    marginLeft: 2,
+  },
+  vegIndicator: {
+    width: 12,
+    height: 12,
+    borderWidth: 1,
+    borderColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  vegDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  colorsBadge: {
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: BorderRadius.xs,
   },
-  ratingBadgeText: {
-    ...Typography.bodySmall,
-    fontSize: 10,
+  colorsBadgeText: {
+    ...Typography.caption,
+    fontSize: 8,
+    color: '#64748B',
+  },
+  titleText: {
+    ...Typography.bodyMedium,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#92400E',
-    marginLeft: 2,
-  },
-  gridTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '600',
     color: Colors.textPrimary,
-    minHeight: 36,
-    marginBottom: Spacing.xs,
+    lineHeight: 16,
+    minHeight: 32,
   },
-  gridFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  priceContainer: {
-    flexDirection: 'column',
-  },
-  price: {
-    ...Typography.priceMedium,
-    color: Colors.textPrice,
-  },
-  comparePrice: {
-    ...Typography.bodySmall,
-    color: Colors.textCompare,
-    textDecorationLine: 'line-through',
-    marginTop: -2,
-  },
-  gridAddBtn: {
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 5,
-    borderRadius: BorderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gridAddBtnText: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  gridStepperContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 3,
-  },
-  gridStepperBtn: {
-    padding: 3,
-  },
-  gridStepperQuantity: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
-    color: Colors.textInverse,
-    paddingHorizontal: 6,
-  },
-
-  // Horizontal Card Layout
-  horizontalCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
-    ...Shadows.small,
-  },
-  horizontalImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-    backgroundColor: Colors.surfaceElevated,
-    position: 'relative',
-  },
-  horizontalImage: {
-    width: '100%',
-    height: '100%',
-  },
-  horizontalDetails: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'space-between',
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  wishlistBtn: {
-    padding: 4,
-  },
-  title: {
-    ...Typography.bodyMedium,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+  unitText: {
+    ...Typography.caption,
+    fontSize: 10,
+    color: Colors.textMuted,
     marginTop: 2,
+    textTransform: 'none',
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    marginTop: 3,
   },
-  ratingText: {
+  ratingScore: {
     ...Typography.bodySmall,
-    fontWeight: '700',
-    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#92400E',
     marginLeft: 3,
   },
   reviewsCount: {
-    ...Typography.bodySmall,
+    ...Typography.caption,
+    fontSize: 9,
     color: Colors.textMuted,
     marginLeft: 2,
   },
-  priceAndActionRow: {
+  priceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'baseline',
     marginTop: 4,
   },
+  sellingPrice: {
+    ...Typography.priceSmall,
+    fontSize: 14,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    marginRight: 5,
+  },
+  mrpPrice: {
+    ...Typography.bodySmall,
+    fontSize: 11,
+    color: Colors.textMuted,
+    textDecorationLine: 'line-through',
+  },
+  savingsText: {
+    ...Typography.caption,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#16A34A',
+    marginTop: 1,
+    textTransform: 'none',
+  },
+  sellerName: {
+    ...Typography.caption,
+    fontSize: 9,
+    color: '#94A3B8',
+    marginTop: 2,
+    marginBottom: 6,
+    textTransform: 'none',
+  },
+  actionContainer: {
+    width: '100%',
+  },
   addBtn: {
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingVertical: 5,
+    borderRadius: BorderRadius.md,
+  },
+  addBtnSuccess: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#059669',
+  },
+  addBtnSuccessText: {
+    color: '#059669',
   },
   addBtnText: {
-    ...Typography.bodySmall,
-    fontWeight: '800',
+    ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '900',
     color: Colors.primary,
+    marginRight: 2,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    justifyContent: 'space-between',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
   },
   stepperBtn: {
-    padding: 4,
+    padding: 3,
   },
   stepperQuantity: {
-    ...Typography.bodyMedium,
-    fontWeight: '800',
-    color: Colors.textInverse,
-    paddingHorizontal: 8,
+    ...Typography.caption,
+    fontSize: 11,
+    fontWeight: '900',
+    color: Colors.primary,
   },
 });

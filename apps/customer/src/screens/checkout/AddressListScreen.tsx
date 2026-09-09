@@ -50,7 +50,7 @@ export const AddressListScreen: React.FC = () => {
       >
         <Button
           title="Add New Address"
-          onPress={() => navigation.navigate('AddEditAddress')}
+          onPress={() => navigation.navigate('RegisterLocation', { returnTo: 'AddressList' })}
           icon={<Plus size={18} color={Colors.textInverse} />}
           size="md"
           style={styles.addNewBtn}
@@ -100,7 +100,7 @@ export const AddressListScreen: React.FC = () => {
 
               <View style={styles.cardActions}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('AddEditAddress', { address: addr })}
+                  onPress={() => navigation.navigate('RegisterLocation', { returnTo: 'AddressList', address: addr })}
                   style={styles.actionLink}
                 >
                   <Text style={styles.actionLinkText}>Edit</Text>

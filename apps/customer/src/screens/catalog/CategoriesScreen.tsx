@@ -1,282 +1,272 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
-  Dimensions,
+  SafeAreaView,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../theme';
-import { Header } from '../../components/Header';
+import { Search, Mic, ArrowLeft } from 'lucide-react-native';
+import { BlinkitGroupedCategoryGrid } from '../../components/dashboard/BlinkitGroupedCategoryGrid';
+import {
+  BLINKIT_GROUPED_CATEGORIES,
+  GroupedCategorySection,
+  SubCategoryItem,
+} from '../../services/categoryCatalogData';
 import { customerApi } from '../../services/customerApi';
-import { Category } from '../../types';
-import { ChevronRight, Grid } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
+import { triggerHaptic } from '../../utils/haptics';
 
 export const CategoriesScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const [selectedPill, setSelectedPill] = useState<string>('all');
+  const [sections, setSections] = useState<GroupedCategorySection[]>(BLINKIT_GROUPED_CATEGORIES);
 
   useEffect(() => {
-    loadCategories();
+    let isMounted = true;
+    customerApi.getGroupedCategories().then((res) => {
+      if (isMounted && res && res.length > 0) {
+        setSections(res);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const loadCategories = async () => {
-    const data = await customerApi.getCategories();
-    setCategories(data);
-    if (data.length > 0) {
-      setSelectedCategory(data[0]);
-    }
+  const filteredSections =
+    selectedPill === 'all'
+      ? sections
+      : sections.filter((sec) => sec.id === selectedPill);
+
+  const handleSelectSubcategory = (
+    sub: SubCategoryItem,
+    section: GroupedCategorySection
+  ) => {
+    navigation.navigate('SearchResults', {
+      query: sub.query || sub.name,
+      categoryName: sub.name,
+      categoryId: sub.id,
+      sectionTitle: section.title,
+    });
+  };
+
+  const scrollToTop = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   return (
-    <View style={styles.container}>
-      <Header
-        title="All Categories"
-        subtitle="Browse fresh items by category"
-        showSearch
-        onPressSearch={() => navigation.navigate('Search')}
-      />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.layout}>
-        {/* Left Sidebar of Categories */}
-        <ScrollView
-          style={styles.sidebar}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.sidebarContent}
+      {/* Top Search Bar Header (Blinkit Style) */}
+      <View style={styles.topHeader}>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => {
+              triggerHaptic('light');
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('HomeTab');
+              }
+            }}
+          >
+            <ArrowLeft size={22} color="#0F172A" />
+          </TouchableOpacity>
+          <View style={styles.titleTextWrap}>
+            <Text style={styles.screenTitle}>All Categories</Text>
+            <Text style={styles.screenSubtitle}>Explore 60+ departments & essentials</Text>
+          </View>
+        </View>
+
+        {/* Search Bar Input Pill */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.searchBar}
+          onPress={() => {
+            triggerHaptic('light');
+            navigation.navigate('Search');
+          }}
         >
-          {categories.map((cat) => {
-            const isSelected = selectedCategory?.id === cat.id;
+          <Search size={18} color="#64748B" style={styles.searchIcon} />
+          <Text style={styles.searchPlaceholder}>
+            Search for atta, dal, coke and more
+          </Text>
+          <TouchableOpacity
+            style={styles.micButton}
+            onPress={() => {
+              triggerHaptic('light');
+              navigation.navigate('Search');
+            }}
+          >
+            <Mic size={18} color="#059669" />
+          </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Category Horizontal Filter Pills */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.pillsScrollContent}
+        >
+          <TouchableOpacity
+            activeOpacity={0.75}
+            style={[
+              styles.pillButton,
+              selectedPill === 'all' && styles.pillButtonActive,
+            ]}
+            onPress={() => {
+              triggerHaptic('selection');
+              setSelectedPill('all');
+            }}
+          >
+            <Text
+              style={[
+                styles.pillText,
+                selectedPill === 'all' && styles.pillTextActive,
+              ]}
+            >
+              All
+            </Text>
+          </TouchableOpacity>
+
+          {BLINKIT_GROUPED_CATEGORIES.map((cat) => {
+            const isSelected = selectedPill === cat.id;
             return (
               <TouchableOpacity
                 key={cat.id}
-                activeOpacity={0.8}
-                onPress={() => setSelectedCategory(cat)}
-                style={[
-                  styles.sidebarItem,
-                  isSelected && styles.sidebarItemSelected,
-                ]}
+                activeOpacity={0.75}
+                style={[styles.pillButton, isSelected && styles.pillButtonActive]}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setSelectedPill(cat.id);
+                }}
               >
-                <View
-                  style={[
-                    styles.sidebarIconBox,
-                    isSelected && { borderColor: Colors.primary, borderWidth: 1.5 },
-                  ]}
-                >
-                  <Image
-                    source={{ uri: cat.imageUrl || 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=150' }}
-                    style={styles.sidebarImage}
-                    resizeMode="cover"
-                  />
-                </View>
                 <Text
-                  numberOfLines={2}
-                  style={[
-                    styles.sidebarItemText,
-                    isSelected && styles.sidebarItemTextSelected,
-                  ]}
+                  style={[styles.pillText, isSelected && styles.pillTextActive]}
                 >
-                  {cat.name}
+                  {cat.title}
                 </Text>
-                {isSelected ? <View style={styles.activeBar} /> : null}
               </TouchableOpacity>
             );
           })}
         </ScrollView>
-
-        {/* Right Detail Pane */}
-        <ScrollView
-          style={styles.detailPane}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.detailContent}
-        >
-          {selectedCategory ? (
-            <>
-              {/* Category Banner Card */}
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() =>
-                  navigation.navigate('SearchResults', {
-                    categoryId: selectedCategory.id,
-                    categoryName: selectedCategory.name,
-                  })
-                }
-                style={styles.categoryBanner}
-              >
-                <View style={styles.bannerTextWrap}>
-                  <Text style={styles.categoryBannerTitle}>
-                    Explore All {selectedCategory.name}
-                  </Text>
-                  <Text style={styles.categoryBannerCount}>
-                    {selectedCategory.itemCount || 50}+ items available
-                  </Text>
-                </View>
-                <ChevronRight size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              {/* Subcategories Grid */}
-              <Text style={styles.subcategoriesTitle}>Subcategories</Text>
-              <View style={styles.subGrid}>
-                {selectedCategory.subcategories?.map((sub) => (
-                  <TouchableOpacity
-                    key={sub.id}
-                    activeOpacity={0.8}
-                    onPress={() =>
-                      navigation.navigate('SearchResults', {
-                        categoryId: selectedCategory.id,
-                        categoryName: `${selectedCategory.name} - ${sub.name}`,
-                      })
-                    }
-                    style={styles.subCard}
-                  >
-                    <View style={styles.subIconBox}>
-                      <Grid size={24} color={Colors.primary} />
-                    </View>
-                    <Text numberOfLines={2} style={styles.subName}>
-                      {sub.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          ) : null}
-        </ScrollView>
       </View>
-    </View>
+
+      {/* Main Grouped Category 4-Column Grid View */}
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollBody}
+      >
+        <BlinkitGroupedCategoryGrid
+          sections={filteredSections}
+          onPressSubcategory={handleSelectSubcategory}
+          onPressBackToTop={scrollToTop}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#FFFFFF',
   },
-  layout: {
-    flex: 1,
-    flexDirection: 'row',
+  topHeader: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 8 : 4,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  sidebar: {
-    width: 96,
-    backgroundColor: Colors.surfaceElevated,
-    borderRightWidth: 1,
-    borderRightColor: Colors.border,
-  },
-  sidebarContent: {
-    paddingVertical: Spacing.sm,
-  },
-  sidebarItem: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm + 2,
-    paddingHorizontal: 6,
-    position: 'relative',
-  },
-  sidebarItemSelected: {
-    backgroundColor: Colors.surface,
-  },
-  sidebarIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.surface,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  sidebarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  sidebarItemText: {
-    ...Typography.bodySmall,
-    fontSize: 10,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
-    lineHeight: 13,
-  },
-  sidebarItemTextSelected: {
-    color: Colors.primary,
-    fontWeight: '800',
-  },
-  activeBar: {
-    position: 'absolute',
-    left: 0,
-    top: 12,
-    bottom: 12,
-    width: 4,
-    backgroundColor: Colors.primary,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
-  },
-  detailPane: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  detailContent: {
-    padding: Spacing.md,
-  },
-  categoryBanner: {
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.lg,
+    marginBottom: 10,
   },
-  bannerTextWrap: {
-    flex: 1,
-  },
-  categoryBannerTitle: {
-    ...Typography.titleSmall,
-    color: Colors.primaryDark,
-    fontWeight: '800',
-  },
-  categoryBannerCount: {
-    ...Typography.bodySmall,
-    color: Colors.primary,
-    marginTop: 2,
-  },
-  subcategoriesTitle: {
-    ...Typography.titleSmall,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
-  },
-  subGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  subCard: {
-    width: (width - 96 - Spacing.md * 3) / 2,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    ...Shadows.small,
-  },
-  subIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryLight,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
+    marginRight: 10,
   },
-  subName: {
-    ...Typography.bodySmall,
+  titleTextWrap: {
+    flex: 1,
+  },
+  screenTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  screenSubtitle: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: '#64748B',
+    marginTop: 1,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 10,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 13.5,
+    color: '#94A3B8',
+    fontWeight: '400',
+  },
+  micButton: {
+    padding: 4,
+  },
+  pillsScrollContent: {
+    paddingVertical: 4,
+    gap: 8,
+  },
+  pillButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  pillButtonActive: {
+    backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
+  },
+  pillText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: Colors.textPrimary,
-    textAlign: 'center',
+    color: '#475569',
+  },
+  pillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  scrollBody: {
+    flexGrow: 1,
+    paddingBottom: 40,
   },
 });

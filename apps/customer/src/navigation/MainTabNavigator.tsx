@@ -1,125 +1,200 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  createBottomTabNavigator,
+  BottomTabBarProps,
+} from '@react-navigation/bottom-tabs';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { MainTabParamList } from '../types';
-import { Colors, Typography, Shadows } from '../theme';
+import { Colors, Shadows } from '../theme';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { CategoriesScreen } from '../screens/catalog/CategoriesScreen';
-import { CartScreen } from '../screens/cart/CartScreen';
 import { OrdersScreen } from '../screens/orders/OrdersScreen';
+import { CouponScreen } from '../screens/checkout/CouponScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
-import {
-  Home,
-  LayoutGrid,
-  ShoppingBag,
-  Package,
-  User,
-} from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCartStore } from '../stores/cartStore';
+import { triggerHaptic } from '../utils/haptics';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-export const MainTabNavigator: React.FC = () => {
+const TAB_CONFIG: Record<string, { label: string; icon: any }> = {
+  HomeTab: {
+    label: 'Home',
+    icon: require('../../assets/images/tabs/tab_home_3d.jpg'),
+  },
+  OrdersTab: {
+    label: 'Order Again',
+    icon: require('../../assets/images/tabs/tab_orders_3d.jpg'),
+  },
+  CategoriesTab: {
+    label: 'Category',
+    icon: require('../../assets/images/tabs/tab_categories_3d.jpg'),
+  },
+  OffersTab: {
+    label: 'Offers',
+    icon: require('../../assets/images/tabs/tab_offers_3d.jpg'),
+  },
+  ProfileTab: {
+    label: 'SevaZo',
+    icon: require('../../assets/images/tabs/tab_sevazo_3d.jpg'),
+  },
+};
+
+const CustomTabBar: React.FC<BottomTabBarProps> = ({
+  state,
+  descriptors,
+  navigation,
+}) => {
   const insets = useSafeAreaInsets();
-  const { getTotalCount } = useCartStore();
-  const cartCount = getTotalCount();
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : 8;
+  // Ensure generous bottom padding on both Safari/web (insets=0) and iPhone native (insets=34)
+  const bottomPadding = Math.max(insets.bottom, 12);
 
   return (
+    <View style={[styles.tabBarContainer, { paddingBottom: bottomPadding }]}>
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
+        const config = TAB_CONFIG[route.name] || {
+          label: route.name,
+          icon: TAB_CONFIG.HomeTab.icon,
+        };
+
+        const onPress = () => {
+          triggerHaptic('selection');
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: 'tabLongPress',
+            target: route.key,
+          });
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={config.label}
+            activeOpacity={0.75}
+            onPress={onPress}
+            onLongPress={onLongPress}
+            style={styles.tabButton}
+          >
+            <View
+              style={[
+                styles.iconBox,
+                isFocused && styles.iconBoxFocused,
+              ]}
+            >
+              <Image
+                source={config.icon}
+                style={[
+                  styles.tabIconImg,
+                  isFocused
+                    ? styles.tabIconImgFocused
+                    : styles.tabIconImgInactive,
+                ]}
+                resizeMode="cover"
+              />
+            </View>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.tabLabel,
+                isFocused ? styles.tabLabelFocused : styles.tabLabelInactive,
+              ]}
+            >
+              {config.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+export const MainTabNavigator: React.FC = () => {
+  return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          height: 56 + bottomPadding,
-          paddingBottom: bottomPadding,
-          paddingTop: 8,
-          ...Shadows.small,
-        },
-        tabBarLabelStyle: {
-          ...Typography.caption,
-          fontSize: 10,
-          fontWeight: '700',
-        },
       }}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={22} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="CategoriesTab"
-        component={CategoriesScreen}
-        options={{
-          tabBarLabel: 'Categories',
-          tabBarIcon: ({ color, size }) => <LayoutGrid size={22} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="CartTab"
-        component={CartScreen}
-        options={{
-          tabBarLabel: 'Cart',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ position: 'relative' }}>
-              <ShoppingBag size={22} color={color} />
-              {cartCount > 0 ? (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="OrdersTab"
-        component={OrdersScreen}
-        options={{
-          tabBarLabel: 'Orders',
-          tabBarIcon: ({ color, size }) => <Package size={22} color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={22} color={color} />,
-        }}
-      />
+      <Tab.Screen name="HomeTab" component={HomeScreen} />
+      <Tab.Screen name="OrdersTab" component={OrdersScreen} />
+      <Tab.Screen name="CategoriesTab" component={CategoriesScreen} />
+      <Tab.Screen name="OffersTab" component={CouponScreen} />
+      <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -8,
-    backgroundColor: Colors.danger,
-    borderRadius: 10,
-    minWidth: 16,
-    height: 16,
+  tabBarContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1.2,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 8,
+    ...Shadows.card,
+  },
+  tabButton: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 2,
+    paddingVertical: 2,
   },
-  badgeText: {
-    ...Typography.caption,
-    fontSize: 9,
-    fontWeight: '900',
-    color: Colors.textInverse,
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBoxFocused: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1.2,
+    borderColor: '#F59E0B',
+  },
+  tabIconImg: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+  },
+  tabIconImgFocused: {
+    transform: [{ scale: 1.06 }],
+  },
+  tabIconImgInactive: {
+    opacity: 0.68,
+  },
+  tabLabel: {
+    fontSize: 9.5,
+    marginTop: 3,
+    textAlign: 'center',
+    letterSpacing: 0,
+  },
+  tabLabelFocused: {
+    color: '#0F172A',
+    fontWeight: '800',
+  },
+  tabLabelInactive: {
+    color: '#64748B',
+    fontWeight: '600',
   },
 });

@@ -100,6 +100,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const hasAddr = (response as any).hasAddress ?? (response.customer as any)?.addresses?.length > 0;
       const nextAction = response.nextAction || (hasAddr ? 'OPEN_HOME' : 'LOCATION_SETUP');
 
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.customer));
+
       set({
         isAuthenticated: true,
         isGuest: false,
@@ -110,8 +112,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       return {
         ...response,
-        profileCompleted: hasAddr,
-        nextAction: (nextAction as any),
+        profileCompleted: true,
+        nextAction: (mode === 'REGISTER' ? 'ONBOARDING_STEPS' : 'OPEN_HOME') as any,
       };
     } catch {
       const sessionToken = `jwt-customer-${Date.now()}`;
@@ -129,8 +131,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         walletBalance: 0,
         loyaltyTier: 'BRONZE',
         createdAt: new Date().toISOString(),
-        profileCompleted: false,
+        profileCompleted: true,
       };
+
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newCustomer));
 
       set({
         isAuthenticated: true,
@@ -143,8 +147,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return {
         token: sessionToken,
         customer: newCustomer,
-        profileCompleted: false,
-        nextAction: 'LOCATION_SETUP' as any,
+        profileCompleted: true,
+        nextAction: (mode === 'REGISTER' ? 'ONBOARDING_STEPS' : 'OPEN_HOME') as any,
       };
     }
   },
@@ -229,15 +233,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       const updated = await customerApi.updateProfile(data);
-      set((state) => ({
-        customer: state.customer ? { ...state.customer, ...updated } : updated,
+      const current = get().customer;
+      const merged = current ? { ...current, ...updated } : (updated as CustomerUser);
+      set({
+        customer: merged,
         isLoading: false,
-      }));
+      });
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(merged));
     } catch {
-      set((state) => ({
-        customer: state.customer ? { ...state.customer, ...data } : (data as CustomerUser),
+      const current = get().customer;
+      const merged = current ? { ...current, ...data } : (data as CustomerUser);
+      set({
+        customer: merged,
         isLoading: false,
-      }));
+      });
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(merged));
     }
   },
 
@@ -259,16 +269,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       setAuthToken(token);
-      const user = await customerApi.getMe();
-      if (user && user.id) {
-        set({
-          isAuthenticated: true,
-          isGuest: false,
-          token,
-          customer: user,
-        });
-        const hasAddr = Boolean((user as any).addresses?.length > 0 || user.profileCompleted);
-        return hasAddr ? 'OPEN_HOME' : 'RESUME_REGISTRATION';
+      try {
+        const user = await customerApi.getMe();
+        if (user && user.id) {
+          set({
+            isAuthenticated: true,
+            isGuest: false,
+            token,
+            customer: user,
+          });
+          return 'OPEN_HOME';
+        }
+      } catch {
+        // Fallback to local user data if network/mock API is down
+        const storedUser = await appStorage.getItem(STORAGE_KEYS.USER_DATA);
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            if (user && user.id) {
+              set({
+                isAuthenticated: true,
+                isGuest: false,
+                token,
+                customer: user,
+              });
+              return 'OPEN_HOME';
+            }
+          } catch {
+            // ignore parse error
+          }
+        }
       }
 
       set({ isAuthenticated: false, isGuest: false, customer: null, token: null });

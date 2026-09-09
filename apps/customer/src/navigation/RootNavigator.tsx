@@ -13,10 +13,12 @@ import { StoreScreen } from '../screens/store/StoreScreen';
 import { SearchScreen } from '../screens/catalog/SearchScreen';
 import { SearchResultsScreen } from '../screens/catalog/SearchResultsScreen';
 import { WishlistScreen } from '../screens/wishlist/WishlistScreen';
+import { CartScreen } from '../screens/cart/CartScreen';
 
 import { CheckoutScreen } from '../screens/checkout/CheckoutScreen';
 import { AddressListScreen } from '../screens/checkout/AddressListScreen';
 import { AddEditAddressScreen } from '../screens/checkout/AddEditAddressScreen';
+import { RegisterLocationScreen } from '../screens/auth/RegisterLocationScreen';
 import { CouponScreen } from '../screens/checkout/CouponScreen';
 import { PaymentScreen } from '../screens/checkout/PaymentScreen';
 
@@ -55,11 +57,13 @@ export const RootNavigator: React.FC = () => {
         <Stack.Screen name="SearchResults" component={SearchResultsScreen} />
         <Stack.Screen name="Reviews" component={ReviewsScreen} />
         <Stack.Screen name="Wishlist" component={WishlistScreen} />
+        <Stack.Screen name="Cart" component={CartScreen} />
 
         {/* Checkout & Address */}
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
         <Stack.Screen name="AddressList" component={AddressListScreen} />
         <Stack.Screen name="AddEditAddress" component={AddEditAddressScreen} />
+        <Stack.Screen name="RegisterLocation" component={RegisterLocationScreen} />
         <Stack.Screen name="CouponList" component={CouponScreen} />
         <Stack.Screen name="Payment" component={PaymentScreen} />
 

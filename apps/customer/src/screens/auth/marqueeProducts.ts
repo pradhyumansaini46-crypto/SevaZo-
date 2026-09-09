@@ -1,3 +1,5 @@
+import { Image } from 'react-native';
+
 // 100 Verified High-Quality Transparent PNG Product SKUs across Grocery, Dairy, Electronics, Personal Care & Grooming
 export interface MarqueeProduct {
   id: string;

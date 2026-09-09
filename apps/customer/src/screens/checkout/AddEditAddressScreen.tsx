@@ -24,24 +24,61 @@ export const AddEditAddressScreen: React.FC = () => {
   const { addAddress, updateAddress } = useLocationStore();
 
   const [label, setLabel] = useState<'Home' | 'Work' | 'Other'>(
-    existingAddress?.label || 'Home'
+    (existingAddress?.label === 'Home' || existingAddress?.label === 'Work' || existingAddress?.label === 'Other')
+      ? existingAddress.label
+      : 'Home'
   );
   const [line1, setLine1] = useState(existingAddress?.line1 || '');
   const [line2, setLine2] = useState(existingAddress?.line2 || '');
   const [landmark, setLandmark] = useState(existingAddress?.landmark || '');
-  const [city, setCity] = useState(existingAddress?.city || '');
-  const [state, setState] = useState(existingAddress?.state || '');
-  const [pincode, setPincode] = useState(existingAddress?.pincode || '');
+  const [city, setCity] = useState(existingAddress?.city || 'Jaipur');
+  const [state, setState] = useState(existingAddress?.state || 'Rajasthan');
+  const [pincode, setPincode] = useState(existingAddress?.pincode || '302017');
   const [isDefault, setIsDefault] = useState(existingAddress?.isDefault || false);
   const [error, setError] = useState('');
 
   const handleUseCurrentLocation = () => {
-    setLine1('Flat 304, Palm Grove Residency, 100ft Road');
-    setLine2('Indiranagar, Stage 2');
-    setLandmark('Opposite Cafe Coffee Day');
-    setCity('Bengaluru');
-    setState('Karnataka');
-    setPincode('560038');
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await res.json();
+            const addr = data?.address || {};
+            setLine1(addr.house_number || addr.building || 'Flat 304, Kalpatru Splendor');
+            setLine2([addr.road, addr.suburb || addr.neighbourhood].filter(Boolean).join(', ') || 'Jagatpura, Malviya Nagar');
+            setCity(addr.city || addr.town || 'Jaipur');
+            setState(addr.state || 'Rajasthan');
+            setPincode(addr.postcode?.replace(/\D/g, '').slice(0, 6) || '302017');
+          } catch {
+            setLine1('Flat 304, Kalpatru Splendor');
+            setLine2('Jagatpura, Malviya Nagar');
+            setLandmark('Near Jagatpura Flyover');
+            setCity('Jaipur');
+            setState('Rajasthan');
+            setPincode('302017');
+          }
+        },
+        () => {
+          setLine1('Flat 304, Kalpatru Splendor');
+          setLine2('Jagatpura, Malviya Nagar');
+          setLandmark('Near Jagatpura Flyover');
+          setCity('Jaipur');
+          setState('Rajasthan');
+          setPincode('302017');
+        }
+      );
+    } else {
+      setLine1('Flat 304, Kalpatru Splendor');
+      setLine2('Jagatpura, Malviya Nagar');
+      setLandmark('Near Jagatpura Flyover');
+      setCity('Jaipur');
+      setState('Rajasthan');
+      setPincode('302017');
+    }
   };
 
   const handleSave = () => {
@@ -77,7 +114,7 @@ export const AddEditAddressScreen: React.FC = () => {
       <Header
         showBack
         onPressBack={() => navigation.goBack()}
-        title={existingAddress ? 'Edit Address' : 'Add New Address'}
+        title={existingAddress ? 'Edit Residential Address' : 'Residential Address'}
       />
 
       <ScrollView
@@ -134,21 +171,21 @@ export const AddEditAddressScreen: React.FC = () => {
         {/* Address Inputs */}
         <Input
           label="House / Flat / Block No. *"
-          placeholder="e.g. Flat 402, Green Glen Heights"
+          placeholder="e.g. Flat 304, Kalpatru Splendor"
           value={line1}
           onChangeText={setLine1}
         />
 
         <Input
           label="Apartment / Road / Area"
-          placeholder="e.g. 12th Main, HAL 2nd Stage"
+          placeholder="e.g. Jagatpura, Malviya Nagar"
           value={line2}
           onChangeText={setLine2}
         />
 
         <Input
           label="Nearby Landmark"
-          placeholder="e.g. Opposite Toit Brewpub"
+          placeholder="e.g. Near Jagatpura Flyover"
           value={landmark}
           onChangeText={setLandmark}
         />
@@ -157,7 +194,7 @@ export const AddEditAddressScreen: React.FC = () => {
           <View style={{ flex: 1, marginRight: Spacing.sm }}>
             <Input
               label="Pincode *"
-              placeholder="e.g. 560038"
+              placeholder="e.g. 302017"
               keyboardType="number-pad"
               maxLength={6}
               value={pincode}
@@ -167,7 +204,7 @@ export const AddEditAddressScreen: React.FC = () => {
           <View style={{ flex: 1 }}>
             <Input
               label="City *"
-              placeholder="e.g. Bengaluru"
+              placeholder="e.g. Jaipur"
               value={city}
               onChangeText={setCity}
             />
@@ -176,7 +213,7 @@ export const AddEditAddressScreen: React.FC = () => {
 
         <Input
           label="State *"
-          placeholder="e.g. Karnataka"
+          placeholder="e.g. Rajasthan"
           value={state}
           onChangeText={setState}
         />

@@ -16,6 +16,8 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { triggerHaptic } from '../utils/haptics';
 
 interface HeaderProps {
   title?: string;
@@ -41,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
   showLocation = false,
-  locationAddress = 'Home - Indiranagar, Bengaluru',
+  locationAddress = 'Home - Kalpatru Splendor, Jaipur',
   onPressLocation,
   showBack = false,
   onPressBack,
@@ -57,19 +59,29 @@ export const Header: React.FC<HeaderProps> = ({
   style,
 }) => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const topPadding = insets.top > 0 ? insets.top + 4 : Spacing.md;
+
+  const handleBack = () => {
+    triggerHaptic('light');
+    if (onPressBack) {
+      onPressBack();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }, style]}>
       <View style={styles.contentRow}>
-        {/* Left Side: Back Button or Location */}
+        {/* Left Side: Modern Back Button or Location */}
         {showBack ? (
           <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={onPressBack}
+            activeOpacity={0.75}
+            onPress={handleBack}
             style={styles.backBtn}
           >
-            <ArrowLeft size={22} color={Colors.textPrimary} />
+            <ArrowLeft size={19} color="#0F172A" strokeWidth={2.4} />
           </TouchableOpacity>
         ) : null}
 
@@ -168,8 +180,16 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   backBtn: {
-    padding: Spacing.xs,
-    marginRight: Spacing.sm,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    ...Shadows.small,
   },
   locationContainer: {
     flex: 1,

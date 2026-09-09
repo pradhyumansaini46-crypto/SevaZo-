@@ -26,7 +26,7 @@ export const Colors = {
   infoLight: '#EFF6FF',
 
   // Neutral & Surfaces
-  background: '#F8FAFC',       // Slate 50
+  background: '#F8FAF9',       // Soft off-white
   surface: '#FFFFFF',          // Pure White
   surfaceCard: '#FFFFFF',
   surfaceElevated: '#F1F5F9',  // Slate 100

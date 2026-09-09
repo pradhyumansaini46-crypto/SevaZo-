@@ -44,11 +44,15 @@ export const OrderConfirmationScreen: React.FC = () => {
         <View style={styles.stepsCard}>
           <View style={styles.stepItem}>
             <View style={styles.stepDotActive} />
-            <Text style={styles.stepText}>Order Confirmed & Payment Verified</Text>
+            <Text style={styles.stepText}>Payment Received & Verified (UPI/Card)</Text>
           </View>
           <View style={styles.stepItem}>
             <View style={styles.stepDotActive} />
-            <Text style={styles.stepText}>Rider Assigned (Santosh Rawat)</Text>
+            <Text style={styles.stepText}>Order Request Sent to Vendor Partner 🔔</Text>
+          </View>
+          <View style={styles.stepItem}>
+            <View style={styles.stepDotActive} />
+            <Text style={styles.stepText}>Store Preparing & Packing Items</Text>
           </View>
           <View style={styles.stepItem}>
             <View style={styles.stepDotPending} />

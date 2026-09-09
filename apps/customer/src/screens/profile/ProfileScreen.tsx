@@ -116,7 +116,12 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="My Profile" subtitle="Account dashboard" />
+      <Header
+        showBack
+        onPressBack={() => navigation.goBack()}
+        title="My Profile"
+        subtitle="Account dashboard"
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

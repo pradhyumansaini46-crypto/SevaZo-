@@ -49,7 +49,7 @@ export const SupportScreen: React.FC = () => {
   const handleCreateTicket = async () => {
     if (!subject.trim() || !message.trim()) return;
     setCreating(true);
-    const newTkt = await customerApi.createSupportTicket(subject, message);
+    const newTkt = await customerApi.createSupportTicket({ subject, message });
     setTickets([newTkt, ...tickets]);
     setCreating(false);
     setNewTicketModal(false);

@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+import { tursoDb } from './tursoDatabase';
 import {
   VendorUser,
   Product,
@@ -26,6 +27,64 @@ let localProducts = [...mockProducts];
 let localOrders = [...mockOrders];
 let localVendor = { ...blankDraftVendor };
 let localLogs = [...mockInventoryLogs];
+
+// Real-time synchronization with Customer orders across tabs & windows
+if (typeof window !== 'undefined' && window.addEventListener) {
+  const syncIncomingOrder = (orderData: any) => {
+    if (!orderData) return;
+    const exists = localOrders.some((o) => o.id === orderData.id || o.orderNumber === orderData.orderNumber);
+    if (!exists) {
+      const formattedOrder: Order = {
+        id: orderData.id || `ord-${Date.now()}`,
+        orderNumber: orderData.orderNumber || `SVZ-${Date.now()}`,
+        customerId: orderData.customerId || 'cust-01',
+        customer: {
+          id: orderData.customerId || 'cust-01',
+          name: orderData.customerName || 'Customer',
+          phone: orderData.customerPhone || '9876543210',
+        },
+        vendorId: orderData.vendorId || localVendor.id || 'vnd-001',
+        deliveryAddress: typeof orderData.deliveryAddress === 'object'
+          ? orderData.deliveryAddress
+          : { line1: orderData.deliveryAddress || '123 Main St', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' },
+        status: 'PENDING',
+        paymentStatus: orderData.paymentStatus || 'PAID',
+        paymentMethod: orderData.paymentMethod || 'UPI',
+        subtotal: orderData.subtotal || orderData.totalAmount || 0,
+        deliveryFee: orderData.deliveryFee || 0,
+        tax: orderData.tax || 0,
+        discount: orderData.discount || 0,
+        total: orderData.totalAmount || orderData.subtotal || 0,
+        items: (orderData.items || []).map((item: any, idx: number) => ({
+          id: item.id || `item-${idx}`,
+          orderId: orderData.id,
+          productId: item.productId || `prod-${idx}`,
+          name: item.productName || item.name || 'Item',
+          quantity: item.quantity || 1,
+          price: item.unitPrice || item.price || 0,
+          total: (item.unitPrice || item.price || 0) * (item.quantity || 1),
+        })),
+        createdAt: orderData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      localOrders = [formattedOrder, ...localOrders];
+      console.log('[VendorApi] Received real-time customer order:', formattedOrder.orderNumber);
+    }
+  };
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'sevazo_last_vendor_order' && event.newValue) {
+      try {
+        const payload = JSON.parse(event.newValue);
+        if (payload?.order) syncIncomingOrder(payload.order);
+      } catch {}
+    }
+  });
+
+  window.addEventListener('sevazo_new_vendor_order', ((event: CustomEvent) => {
+    if (event.detail?.order) syncIncomingOrder(event.detail.order);
+  }) as EventListener);
+}
 
 export const VendorApi = {
   // 1. Auth & Profile
@@ -106,7 +165,7 @@ export const VendorApi = {
     }
   },
 
-  async registerOtp(payload: { phone: string; email: string }): Promise<{ success: boolean; message: string }> {
+  async registerOtp(payload: { phone: string; email?: string }): Promise<{ success: boolean; message: string }> {
     try {
       return await apiClient.post('/vendor/auth/register-otp', payload);
     } catch {
@@ -114,7 +173,7 @@ export const VendorApi = {
     }
   },
 
-  async verifyRegisterOtp(payload: { phone: string; email: string; otp: string }): Promise<{ accessToken: string; refreshToken?: string; vendor: VendorUser; status?: string; nextAction?: string }> {
+  async verifyRegisterOtp(payload: { phone: string; email?: string; otp: string }): Promise<{ accessToken: string; refreshToken?: string; vendor: VendorUser; status?: string; nextAction?: string }> {
     try {
       const res: any = await apiClient.post('/vendor/auth/verify-register-otp', payload);
       return res;
@@ -129,7 +188,7 @@ export const VendorApi = {
       const resolvedVendor = {
         ...localVendor,
         phone: payload.phone,
-        email: payload.email,
+        email: payload.email || localVendor.email || '',
         status: status as any,
         approvalStatus: 'PENDING' as any,
         currentOnboardingStep: 1,
@@ -711,10 +770,57 @@ export const VendorApi = {
 
   // 5. Orders
   async getOrders(params?: { tab?: string; page?: number }): Promise<{ items: Order[]; total: number }> {
+    const tab = (params?.tab || 'NEW').toUpperCase();
+
+    // 1. Try fetching directly from Turso database
+    if (tursoDb.isConfigured()) {
+      try {
+        const dbOrders = await tursoDb.getVendorOrders(localVendor.id, tab);
+        if (dbOrders && dbOrders.length > 0) {
+          const mapped: Order[] = dbOrders.map((o: any) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            customerId: o.userId || 'cust-01',
+            customer: {
+              id: o.userId || 'cust-01',
+              name: o.customerName || 'Customer',
+              phone: o.customerPhone || '9876543210',
+            },
+            vendorId: o.vendorId || localVendor.id || 'vnd-001',
+            deliveryAddress: typeof o.deliveryAddress === 'object'
+              ? o.deliveryAddress
+              : { line1: o.deliveryAddress || '123 Main St', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' },
+            status: o.status,
+            paymentStatus: o.paymentStatus || 'PAID',
+            paymentMethod: o.paymentMethod || 'UPI',
+            subtotal: o.totalAmount || 0,
+            deliveryFee: 0,
+            tax: 0,
+            discount: 0,
+            total: o.totalAmount || 0,
+            items: (o.items || []).map((item: any, idx: number) => ({
+              id: item.id || `item-${idx}`,
+              orderId: o.id,
+              productId: item.productId || `prod-${idx}`,
+              name: item.productName || item.name || 'Item',
+              quantity: item.quantity || 1,
+              price: item.unitPrice || item.price || 0,
+              total: (item.unitPrice || item.price || 0) * (item.quantity || 1),
+            })),
+            createdAt: o.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }));
+          return { items: mapped, total: mapped.length };
+        }
+      } catch (err) {
+        console.warn('[Turso] Vendor getOrders error:', err);
+      }
+    }
+
+    // 2. Try backend API
     try {
       return await apiClient.get('/vendor/orders', { params });
     } catch {
-      const tab = (params?.tab || 'NEW').toUpperCase();
       let filtered = localOrders;
       if (tab === 'NEW') filtered = localOrders.filter((o) => o.status === 'PENDING');
       else if (tab === 'ACCEPTED') filtered = localOrders.filter((o) => o.status === 'CONFIRMED');
@@ -727,6 +833,16 @@ export const VendorApi = {
   },
 
   async getOrderById(id: string): Promise<Order> {
+    if (tursoDb.isConfigured()) {
+      try {
+        const dbOrders = await tursoDb.getVendorOrders(localVendor.id);
+        const found = dbOrders.find((o) => o.id === id || o.orderNumber === id);
+        if (found) return found as any;
+      } catch (err) {
+        console.warn('[Turso] Vendor getOrderById error:', err);
+      }
+    }
+
     try {
       return await apiClient.get(`/vendor/orders/${id}`);
     } catch {
@@ -737,6 +853,14 @@ export const VendorApi = {
   },
 
   async acceptOrder(id: string, prepTimeMinutes = 15): Promise<Order> {
+    if (tursoDb.isConfigured()) {
+      try {
+        await tursoDb.updateOrderStatus(id, 'CONFIRMED');
+      } catch (err) {
+        console.warn('[Turso] Vendor acceptOrder error:', err);
+      }
+    }
+
     try {
       const res: any = await apiClient.patch(`/vendor/orders/${id}/accept`, { prepTimeMinutes });
       return res.order || res;
@@ -747,6 +871,14 @@ export const VendorApi = {
   },
 
   async rejectOrder(id: string, reason: string): Promise<Order> {
+    if (tursoDb.isConfigured()) {
+      try {
+        await tursoDb.updateOrderStatus(id, 'CANCELLED');
+      } catch (err) {
+        console.warn('[Turso] Vendor rejectOrder error:', err);
+      }
+    }
+
     try {
       const res: any = await apiClient.patch(`/vendor/orders/${id}/reject`, { reason });
       return res.order || res;
@@ -757,6 +889,14 @@ export const VendorApi = {
   },
 
   async markPreparing(id: string): Promise<Order> {
+    if (tursoDb.isConfigured()) {
+      try {
+        await tursoDb.updateOrderStatus(id, 'PREPARING');
+      } catch (err) {
+        console.warn('[Turso] Vendor markPreparing error:', err);
+      }
+    }
+
     try {
       const res: any = await apiClient.patch(`/vendor/orders/${id}/preparing`);
       return res.order || res;
@@ -767,6 +907,14 @@ export const VendorApi = {
   },
 
   async markReady(id: string): Promise<Order> {
+    if (tursoDb.isConfigured()) {
+      try {
+        await tursoDb.updateOrderStatus(id, 'READY_FOR_PICKUP');
+      } catch (err) {
+        console.warn('[Turso] Vendor markReady error:', err);
+      }
+    }
+
     try {
       const res: any = await apiClient.patch(`/vendor/orders/${id}/ready`);
       return res.order || res;
@@ -777,6 +925,28 @@ export const VendorApi = {
   },
 
   async getLiveStats(): Promise<any> {
+    if (tursoDb.isConfigured()) {
+      try {
+        const allOrders = await tursoDb.getVendorOrders(localVendor.id);
+        const newOrders = allOrders.filter((o) => o.status === 'PENDING').length;
+        const acceptedOrders = allOrders.filter((o) => o.status === 'CONFIRMED').length;
+        const preparingOrders = allOrders.filter((o) => o.status === 'PREPARING').length;
+        const readyOrders = allOrders.filter((o) => o.status === 'READY_FOR_PICKUP').length;
+        const todaySales = allOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+        return {
+          newOrders,
+          acceptedOrders,
+          preparingOrders,
+          readyOrders,
+          activePipeline: newOrders + acceptedOrders + preparingOrders + readyOrders,
+          todaySales,
+          todayOrderCount: allOrders.length,
+        };
+      } catch (err) {
+        console.warn('[Turso] Vendor getLiveStats error:', err);
+      }
+    }
+
     try {
       return await apiClient.get('/vendor/orders/live-stats');
     } catch {

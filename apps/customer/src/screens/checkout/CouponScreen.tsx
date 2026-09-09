@@ -47,7 +47,11 @@ export const CouponScreen: React.FC = () => {
     if (onApplyCoupon) {
       onApplyCoupon(coupon);
     }
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Cart');
+    }
   };
 
   const handleManualApply = () => {
@@ -76,10 +80,10 @@ export const CouponScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header
-        showBack
-        onPressBack={() => navigation.goBack()}
+        showBack={navigation.canGoBack()}
+        onPressBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('HomeTab'))}
         title="Coupons & Offers"
-        subtitle="Save extra on your order"
+        subtitle="Exclusive deals & savings"
       />
 
       <ScrollView

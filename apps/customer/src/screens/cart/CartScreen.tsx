@@ -55,6 +55,8 @@ export const CartScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header
+        showBack
+        onPressBack={() => navigation.goBack()}
         title="My Shopping Cart"
         subtitle={`${items.length} unique items`}
         rightAction={

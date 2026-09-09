@@ -58,6 +58,26 @@ export const OrdersScreen: React.FC<{ route: any; navigation: any }> = ({
 
   useEffect(() => {
     loadOrders();
+
+    const handleIncoming = () => {
+      loadOrders();
+      useOrderStore.getState().triggerIncomingAlert();
+    };
+
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('sevazo_new_vendor_order', handleIncoming);
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'sevazo_last_vendor_order') {
+          handleIncoming();
+        }
+      });
+    }
+
+    return () => {
+      if (typeof window !== 'undefined' && window.removeEventListener) {
+        window.removeEventListener('sevazo_new_vendor_order', handleIncoming);
+      }
+    };
   }, [activeTab]);
 
   const handleAccept = async (order: Order) => {

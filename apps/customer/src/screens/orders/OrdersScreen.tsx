@@ -63,6 +63,8 @@ export const OrdersScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header
+        showBack
+        onPressBack={() => navigation.goBack()}
         title="My Orders"
         subtitle="Track active & past deliveries"
       />

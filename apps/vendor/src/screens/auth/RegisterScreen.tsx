@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { ArrowRight, Mail, ShieldCheck } from 'lucide-react-native';
 import { Spacing, BorderRadius } from '../../theme';
-import { phoneSchema, emailSchema } from '../../validation/schemas';
+import { phoneSchema } from '../../validation/schemas';
 import { InteractiveLamp } from '../../components/InteractiveLamp';
 import { VendorApi } from '../../services/vendorApi';
 import { normalizeApiError } from '../../utils';
@@ -24,7 +24,7 @@ export const RegisterScreen = ({ navigation }: any) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isPhoneValid = phone.replace(/\D/g, '').length === 10;
-  const isEmailValid = email.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isEmailValid = !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const handleCreateAccount = async () => {
     setValidationError(null);
@@ -35,20 +35,19 @@ export const RegisterScreen = ({ navigation }: any) => {
       return;
     }
 
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      setValidationError(emailResult.error.errors[0]?.message || 'Please enter a valid business email address');
+    if (email.trim() && !isEmailValid) {
+      setValidationError('Please enter a valid email address');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await VendorApi.registerOtp({ phone, email });
+      const res = await VendorApi.registerOtp({ phone, email: email.trim() || undefined });
       navigation.navigate('OtpVerification', {
         phone,
-        email,
+        email: email.trim() || undefined,
         isRegister: true,
-        message: res.message,
+        message: res.message || `OTP sent to +91 ${phone}`,
       });
     } catch (err: any) {
       const normalized = normalizeApiError(err);
@@ -98,7 +97,7 @@ export const RegisterScreen = ({ navigation }: any) => {
             isLampOn ? styles.cardIlluminated : styles.cardDimmed,
           ]}
         >
-          {/* 3. Water Droplet Sliding Segmented Control */}
+          {/* 3. Sliding Segmented Control */}
           <View style={styles.tabPillContainer}>
             <TouchableOpacity
               style={styles.tabBtn}
@@ -120,7 +119,7 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.headingBlock}>
             <Text style={styles.headingTitle}>Register Your Business</Text>
             <Text style={styles.headingSubtitle}>
-              Join SevaZo as a verified merchant. We verify your business account via a 6-digit Gmail OTP from Support@sevazo.in.
+              Join India's fastest-growing hyperlocal merchant network.
             </Text>
           </View>
 
@@ -128,7 +127,10 @@ export const RegisterScreen = ({ navigation }: any) => {
           <View style={styles.formGroup}>
             {/* Mobile Number */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Primary Mobile Number *</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Mobile Number *</Text>
+              </View>
+
               <View
                 style={[
                   styles.inputRow,
@@ -147,14 +149,17 @@ export const RegisterScreen = ({ navigation }: any) => {
                   keyboardType="phone-pad"
                   maxLength={10}
                   accessible={true}
-                  accessibilityLabel="Primary Mobile Number"
+                  accessibilityLabel="Mobile Number"
                 />
               </View>
             </View>
 
-            {/* Business / Owner Email Address */}
+            {/* Email Address (Optional) */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Business / Owner Email *</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Business Email (Optional)</Text>
+              </View>
+
               <View style={styles.inputRow}>
                 <View style={styles.iconPrefix}>
                   <Mail size={18} color="#94A3B8" />
@@ -166,12 +171,12 @@ export const RegisterScreen = ({ navigation }: any) => {
                     setEmail(val);
                     if (validationError) setValidationError(null);
                   }}
-                  placeholder="store.owner@example.com"
+                  placeholder="e.g. store@example.com"
                   placeholderTextColor="#94A3B8"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   accessible={true}
-                  accessibilityLabel="Business Email Address"
+                  accessibilityLabel="Email Address"
                 />
               </View>
             </View>
@@ -187,7 +192,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={[
                   styles.submitPill,
-                  isPhoneValid && isEmailValid ? styles.submitPillActive : styles.submitPillInactive,
+                  isPhoneValid ? styles.submitPillActive : styles.submitPillInactive,
                 ]}
                 onPress={handleCreateAccount}
                 disabled={isButtonDisabled}
@@ -196,25 +201,25 @@ export const RegisterScreen = ({ navigation }: any) => {
                 <Text
                   style={[
                     styles.submitPillText,
-                    isPhoneValid && isEmailValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
+                    isPhoneValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
                   ]}
                 >
-                  {isLoading ? 'Creating Account...' : 'Register Business'}
+                  {isLoading ? 'Creating Account...' : 'Register & Continue'}
                 </Text>
                 <ArrowRight
                   size={18}
-                  color={isPhoneValid && isEmailValid ? '#FFFFFF' : '#94A3B8'}
+                  color={isPhoneValid ? '#FFFFFF' : '#94A3B8'}
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Switch to Login Link */}
+          {/* Switch to Sign In Link */}
           <View style={styles.switchModeContainer}>
-            <Text style={styles.switchModeText}>Already have a vendor account? </Text>
+            <Text style={styles.switchModeText}>Already registered? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.switchModeLink}>Sign in</Text>
+              <Text style={styles.switchModeLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -223,7 +228,7 @@ export const RegisterScreen = ({ navigation }: any) => {
         <View style={styles.trustFooter}>
           <ShieldCheck size={16} color="#10B981" />
           <Text style={styles.trustFooterText}>
-            Official verified merchant partner registration portal
+            Official verified merchant registration portal
           </Text>
         </View>
       </ScrollView>
@@ -323,13 +328,18 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   formGroup: {
-    gap: 16,
+    gap: Spacing.md + 2,
   },
   inputContainer: {
-    gap: 8,
+    gap: 6,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   inputLabel: {
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '700',
     color: '#334155',
   },
@@ -337,50 +347,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     overflow: 'hidden',
-    minHeight: 54,
   },
   inputErrorRow: {
     borderColor: '#EF4444',
     backgroundColor: '#FEF2F2',
   },
   countryCodeBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 15,
-    borderRightWidth: 1.5,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
+    borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
     backgroundColor: '#F1F5F9',
   },
   countryCodeText: {
     color: '#0F172A',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   iconPrefix: {
-    paddingLeft: 14,
-    paddingRight: 4,
+    paddingLeft: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textInput: {
     flex: 1,
     color: '#0F172A',
-    fontSize: 15.5,
+    fontSize: 14,
     fontWeight: '600',
-    paddingHorizontal: 14,
-    paddingVertical: 15,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
   },
   actionTrack: {
     position: 'relative',
-    height: 60,
+    height: 56,
     backgroundColor: '#F1F5F9',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: Spacing.sm,
     overflow: 'hidden',
   },
   submitPill: {
@@ -407,7 +417,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   submitPillText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   submitPillTextActive: {

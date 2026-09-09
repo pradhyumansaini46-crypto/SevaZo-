@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "@hookform/resolvers": "^5.9.1",
+    "@libsql/client": "^0.18.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/core": "^7.2.0",
     "@react-navigation/elements": "^2.2.5",

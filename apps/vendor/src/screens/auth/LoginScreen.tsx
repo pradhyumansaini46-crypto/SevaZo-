@@ -17,29 +17,29 @@ import { VendorApi } from '../../services/vendorApi';
 import { normalizeApiError } from '../../utils';
 
 export const LoginScreen = ({ navigation }: any) => {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [isLampOn, setIsLampOn] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isPhoneValid = phone.replace(/\D/g, '').length === 10;
 
   const handleContinue = async () => {
     setValidationError(null);
 
-    if (!isEmailValid) {
-      setValidationError('Please enter a valid email address (e.g. name@icloud.com, name@yahoo.com, name@gmail.com)');
+    const result = phoneSchema.safeParse(phone);
+    if (!result.success) {
+      setValidationError(result.error.errors[0]?.message || 'Please enter a valid 10-digit mobile number');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await VendorApi.sendOtp(email.trim());
+      const res = await VendorApi.sendOtp(phone);
       navigation.navigate('OtpVerification', {
-        phone: '9876543210',
-        email: email.trim(),
+        phone,
         isRegister: false,
-        message: res.message || 'OTP sent successfully to your email from Support@sevazo.in',
+        message: res.message || `OTP sent to +91 ${phone}`,
       });
     } catch (err: any) {
       const normalized = normalizeApiError(err);
@@ -53,7 +53,13 @@ export const LoginScreen = ({ navigation }: any) => {
     }
   };
 
-  const isButtonDisabled = !isEmailValid || isLoading;
+  const handlePhoneChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    setPhone(cleaned);
+    if (validationError) setValidationError(null);
+  };
+
+  const isButtonDisabled = !isPhoneValid || isLoading;
 
   return (
     <KeyboardAvoidingView
@@ -81,7 +87,7 @@ export const LoginScreen = ({ navigation }: any) => {
             isLampOn ? styles.cardIlluminated : styles.cardDimmed,
           ]}
         >
-          {/* 3. Water Droplet Sliding Segmented Control */}
+          {/* 3. Sliding Segmented Control */}
           <View style={styles.tabPillContainer}>
             <TouchableOpacity
               style={[styles.tabBtn, styles.tabBtnActive]}
@@ -103,29 +109,37 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.headingBlock}>
             <Text style={styles.headingTitle}>Sign in to SevaZo</Text>
             <Text style={styles.headingSubtitle}>
-              Welcome back merchant. Enter your registered email address to receive OTP from Support@sevazo.in.
+              Welcome back merchant. Enter your mobile number to receive a secure OTP.
             </Text>
           </View>
 
           {/* Form Fields */}
           <View style={styles.formGroup}>
+            {/* Mobile Number */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Registered Email Address *</Text>
-              <View style={[styles.inputRow, Boolean(validationError) && styles.inputErrorRow]}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>Mobile Number *</Text>
+              </View>
+
+              <View
+                style={[
+                  styles.inputRow,
+                  Boolean(validationError) && styles.inputErrorRow,
+                ]}
+              >
+                <View style={styles.countryCodeBadge}>
+                  <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
+                </View>
                 <TextInput
                   style={styles.textInput}
-                  value={email}
-                  onChangeText={(val) => {
-                    setEmail(val);
-                    if (validationError) setValidationError(null);
-                  }}
-                  placeholder="Enter email (e.g. merchant@icloud.com)"
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  placeholder="Enter 10-digit number"
                   placeholderTextColor="#94A3B8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                  keyboardType="phone-pad"
+                  maxLength={10}
                   accessible={true}
-                  accessibilityLabel="Registered Email Address"
+                  accessibilityLabel="Mobile Number"
                 />
               </View>
             </View>
@@ -141,7 +155,7 @@ export const LoginScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={[
                   styles.submitPill,
-                  !isButtonDisabled ? styles.submitPillActive : styles.submitPillInactive,
+                  isPhoneValid ? styles.submitPillActive : styles.submitPillInactive,
                 ]}
                 onPress={handleContinue}
                 disabled={isButtonDisabled}
@@ -150,14 +164,14 @@ export const LoginScreen = ({ navigation }: any) => {
                 <Text
                   style={[
                     styles.submitPillText,
-                    !isButtonDisabled ? styles.submitPillTextActive : styles.submitPillTextInactive,
+                    isPhoneValid ? styles.submitPillTextActive : styles.submitPillTextInactive,
                   ]}
                 >
-                  {isLoading ? 'Sending Code...' : 'Send Verification Code'}
+                  {isLoading ? 'Sending Code...' : 'Get Verification Code'}
                 </Text>
                 <ArrowRight
                   size={18}
-                  color={!isButtonDisabled ? '#FFFFFF' : '#94A3B8'}
+                  color={isPhoneValid ? '#FFFFFF' : '#94A3B8'}
                   strokeWidth={2.5}
                 />
               </TouchableOpacity>
@@ -168,7 +182,7 @@ export const LoginScreen = ({ navigation }: any) => {
           <View style={styles.switchModeContainer}>
             <Text style={styles.switchModeText}>New to SevaZo? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.switchModeLink}>Register Your Business</Text>
+              <Text style={styles.switchModeLink}>Register your Business</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -277,13 +291,18 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   formGroup: {
-    gap: 16,
+    gap: Spacing.md + 2,
   },
   inputContainer: {
-    gap: 8,
+    gap: 6,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   inputLabel: {
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '700',
     color: '#334155',
   },
@@ -291,46 +310,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     overflow: 'hidden',
-    minHeight: 54,
   },
   inputErrorRow: {
     borderColor: '#EF4444',
     backgroundColor: '#FEF2F2',
   },
   countryCodeBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 15,
-    borderRightWidth: 1.5,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
+    borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
     backgroundColor: '#F1F5F9',
   },
   countryCodeText: {
     color: '#0F172A',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   textInput: {
     flex: 1,
     color: '#0F172A',
-    fontSize: 15.5,
+    fontSize: 14,
     fontWeight: '600',
-    paddingHorizontal: 14,
-    paddingVertical: 15,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 13,
   },
   actionTrack: {
     position: 'relative',
-    height: 60,
+    height: 56,
     backgroundColor: '#F1F5F9',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: Spacing.sm,
     overflow: 'hidden',
   },
   submitPill: {
@@ -357,7 +375,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   submitPillText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   submitPillTextActive: {
